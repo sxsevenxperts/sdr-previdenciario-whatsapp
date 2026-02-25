@@ -91,15 +91,21 @@
     },
     {
       "parameters": {
-        "toolDescription": "Busca informações atualizadas na internet sobre legislação previdenciária, benefícios do INSS, jurisprudência e notícias relevantes. Use quando precisar validar informações ou buscar dados atuais.",
+        "name": "busca_web",
+        "description": "Busca informações atualizadas na internet sobre legislação previdenciária, benefícios do INSS, jurisprudência e notícias relevantes. Use quando precisar validar informações ou buscar dados atuais. Input: a query de busca em português.",
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"api_key\": \"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\", \"query\": \"{query}\", \"search_depth\": \"basic\", \"max_results\": 5}",
         "options": {}
       },
       "id": "node-tool-tavily",
       "name": "Tool: Busca na Web (Tavily)",
-      "type": "@n8n/n8n-nodes-langchain.toolTavilySearch",
-      "typeVersion": 1,
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
       "position": [1200, 620],
-      "notes": "Configure a credencial Tavily API. Chave gratuita em tavily.com."
+      "notes": "Chama a API do Tavily via HTTP. Compatível com todas as versões do n8n."
     },
     {
       "parameters": {
