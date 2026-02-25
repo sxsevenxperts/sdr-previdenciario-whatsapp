@@ -47,7 +47,7 @@
     },
     {
       "parameters": {
-        "jsCode": "// Extrai metadados do formulário\nconst form = $input.first().json;\nconst binaryData = $input.first().binary;\n\nreturn [{\n  json: {\n    nome: form['Nome do documento'],\n    categoria: form['Categoria'],\n    arquivo: 'Arquivo PDF',\n    uploadedAt: new Date().toISOString()\n  },\n  binary: binaryData\n}];"
+        "jsCode": "const form = $input.first().json;\nconst binaryData = $input.first().binary;\n\nreturn [{\n  json: {\n    nome: form['Nome do documento'],\n    categoria: form['Categoria'],\n    uploadedAt: new Date().toISOString()\n  },\n  binary: binaryData\n}];"
       },
       "id": "node-extrai-metadados",
       "name": "Extrai metadados",
@@ -64,8 +64,27 @@
       "name": "Extrai texto do PDF",
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
-      "position": [440, 300],
-      "notes": "Converte o PDF em texto para processar."
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              { "name": "nome", "value": "={{ $('Extrai metadados').first().json.nome }}" },
+              { "name": "categoria", "value": "={{ $('Extrai metadados').first().json.categoria }}" },
+              { "name": "uploadedAt", "value": "={{ $('Extrai metadados').first().json.uploadedAt }}" }
+            ]
+          }
+        }
+      },
+      "id": "node-data-loader",
+      "name": "Carregador de Documento",
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1,
+      "position": [660, 380],
+      "notes": "Converte o PDF em Document para o vector store. O Text Splitter conecta como subnó abaixo."
     },
     {
       "parameters": {
@@ -77,8 +96,8 @@
       "name": "Divide em pedaços (chunks)",
       "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
       "typeVersion": 1,
-      "position": [660, 300],
-      "notes": "Divide o texto em blocos de 1000 caracteres com 200 de sobreposição para melhor busca."
+      "position": [660, 560],
+      "notes": "Subnó do Carregador de Documento. Divide em blocos de 1000 chars."
     },
     {
       "parameters": {
@@ -89,37 +108,31 @@
       "name": "Gera embeddings (OpenAI)",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1.2,
-      "position": [880, 160],
-      "notes": "Converte o texto em vetores numéricos para busca semântica. Requer credencial OpenAI."
+      "position": [880, 560],
+      "notes": "Subnó do Salva vetores. Requer credencial OpenAI."
     },
     {
       "parameters": {
         "mode": "insert",
         "tableName": "documentos_conhecimento",
-        "options": {
-          "metadataColumns": [
-            { "column": "nome_documento", "value": "={{ $('Extrai metadados').first().json.nome }}" },
-            { "column": "categoria", "value": "={{ $('Extrai metadados').first().json.categoria }}" },
-            { "column": "upload_em", "value": "={{ $('Extrai metadados').first().json.uploadedAt }}" }
-          ]
-        }
+        "options": {}
       },
       "id": "node-salva-vetores",
       "name": "Salva vetores no Supabase",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
       "typeVersion": 1,
-      "position": [880, 380],
-      "notes": "Salva os chunks com embeddings na tabela documentos_conhecimento do Supabase."
+      "position": [880, 300],
+      "notes": "Salva os chunks com embeddings na tabela documentos_conhecimento."
     },
     {
       "parameters": {
-        "respondWith": "text",
-        "responseText": "✅ PDF processado e adicionado à base de conhecimento! O agente já pode consultá-lo.",
+        "formTitle": "✅ PDF Processado!",
+        "formDescription": "O documento foi adicionado à base de conhecimento. O agente já pode consultá-lo.",
         "options": {}
       },
-      "id": "node-resposta-upload",
+      "id": "node-confirma-upload",
       "name": "Confirma upload",
-      "type": "n8n-nodes-base.respondToWebhook",
+      "type": "n8n-nodes-base.formCompletion",
       "typeVersion": 1,
       "position": [1100, 300]
     }
@@ -132,10 +145,13 @@
       "main": [[{ "node": "Extrai texto do PDF", "type": "main", "index": 0 }]]
     },
     "Extrai texto do PDF": {
-      "main": [[{ "node": "Divide em pedaços (chunks)", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Salva vetores no Supabase", "type": "main", "index": 0 }]]
+    },
+    "Carregador de Documento": {
+      "ai_document": [[{ "node": "Salva vetores no Supabase", "type": "ai_document", "index": 0 }]]
     },
     "Divide em pedaços (chunks)": {
-      "main": [[{ "node": "Salva vetores no Supabase", "type": "main", "index": 0 }]]
+      "ai_textSplitter": [[{ "node": "Carregador de Documento", "type": "ai_textSplitter", "index": 0 }]]
     },
     "Gera embeddings (OpenAI)": {
       "ai_embedding": [[{ "node": "Salva vetores no Supabase", "type": "ai_embedding", "index": 0 }]]
@@ -146,5 +162,5 @@
   },
   "settings": { "executionOrder": "v1" },
   "tags": ["pdf", "conhecimento", "rag", "sdr"],
-  "meta": { "description": "Formulário para upload de PDFs que serão usados como base de conhecimento pelo agente.", "version": "1.0.0" }
+  "meta": { "description": "Formulário para upload de PDFs. Usa Default Data Loader + Text Splitter + Embeddings para salvar no Supabase Vector Store.", "version": "2.0.0" }
 }
