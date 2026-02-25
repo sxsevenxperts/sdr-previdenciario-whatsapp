@@ -170,12 +170,11 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "url": "https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/TESTE",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" }]
+          "parameters": [{ "name": "apikey", "value": "32AEB8FC2DE4-4F79-A823-E620A11C224F" }]
         },
         "sendBody": true,
         "specifyBody": "json",
@@ -209,12 +208,11 @@
     },
     {
       "parameters": {
-        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE }}",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
+        "method": "POST",
+        "url": "https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/TESTE",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" }]
+          "parameters": [{ "name": "apikey", "value": "32AEB8FC2DE4-4F79-A823-E620A11C224F" }]
         },
         "sendBody": true,
         "specifyBody": "json",
