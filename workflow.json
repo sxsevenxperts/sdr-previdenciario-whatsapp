@@ -1,0 +1,365 @@
+{
+  "name": "SDR Previdenciário — WhatsApp IA",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-entrada",
+      "name": "Webhook — Recebe mensagem WhatsApp",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "notes": "Configure este endpoint na Evolution API como webhook de mensagens recebidas."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrai dados da mensagem recebida da Evolution API\nconst body = $input.first().json;\n\nconst numero = body.data?.key?.remoteJid?.replace('@s.whatsapp.net', '') || '';\nconst mensagem = body.data?.message?.conversation \n  || body.data?.message?.extendedTextMessage?.text \n  || '';\nconst tipoMensagem = body.data?.messageType || 'conversation';\nconst nomeContato = body.data?.pushName || 'Lead';\n\n// Verifica se é mensagem de arquivo\nconst temArquivo = ['imageMessage', 'documentMessage', 'audioMessage'].includes(tipoMensagem);\nconst urlArquivo = body.data?.message?.[tipoMensagem]?.url || null;\n\nreturn [{\n  json: {\n    numero,\n    mensagem,\n    tipoMensagem,\n    nomeContato,\n    temArquivo,\n    urlArquivo,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      },
+      "id": "normaliza-mensagem",
+      "name": "Normaliza dados da mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "id": "cond-arquivo",
+              "leftValue": "={{ $json.temArquivo }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ]
+        }
+      },
+      "id": "switch-tipo",
+      "name": "É arquivo ou texto?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300],
+      "notes": "Rota true = arquivo enviado. Rota false = mensagem de texto."
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/downloadBase64/{{ $env.EVOLUTION_INSTANCE }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $json }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "download-arquivo",
+      "name": "Baixa arquivo (base64)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 180],
+      "notes": "Baixa o arquivo enviado pelo lead como base64 para passar ao agente."
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "sessao_{{ $json.numero }}",
+        "options": {}
+      },
+      "id": "redis-get-sessao",
+      "name": "Redis — Busca histórico da sessão",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [900, 420],
+      "notes": "Recupera o histórico de mensagens da sessão do lead pelo número de telefone."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Monta histórico de mensagens para o agente\nconst dadosMensagem = $('Normaliza dados da mensagem').first().json;\nconst sessaoRedis = $input.first().json;\n\nlet historico = [];\ntry {\n  historico = JSON.parse(sessaoRedis || '[]');\n} catch(e) {\n  historico = [];\n}\n\n// Adiciona mensagem atual do usuário ao histórico\nhistorico.push({\n  role: 'user',\n  content: dadosMensagem.mensagem || '[Arquivo enviado]'\n});\n\nreturn [{\n  json: {\n    ...dadosMensagem,\n    historico,\n    historicoJson: JSON.stringify(historico)\n  }\n}];"
+      },
+      "id": "monta-historico",
+      "name": "Monta histórico da conversa",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "={{ $json.mensagem }}",
+        "options": {
+          "systemMessage": "={{ $('Monta histórico da conversa').first().json.historicoJson }}",
+          "maxIterations": 5
+        }
+      },
+      "id": "agente-ia",
+      "name": "Agente SDR — IA Previdenciária",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [1340, 300],
+      "notes": "Configure o system prompt com o conteúdo de agent-prompt.md. Conecte as tools: Tavily (busca web) e Memory."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Verifica se o agente retornou JSON de qualificação\nconst respostaAgente = $input.first().json.output || '';\nconst numero = $('Normaliza dados da mensagem').first().json.numero;\n\nlet dadosQualificacao = null;\nlet qualificado = false;\n\n// Tenta extrair JSON da resposta\ntry {\n  const jsonMatch = respostaAgente.match(/\\{[\\s\\S]*\\}/);\n  if (jsonMatch) {\n    dadosQualificacao = JSON.parse(jsonMatch[0]);\n    qualificado = dadosQualificacao.qualificado === true;\n  }\n} catch(e) {\n  // Resposta normal sem JSON de qualificação\n}\n\n// Extrai apenas o texto da resposta (sem o JSON)\nconst textoResposta = respostaAgente.replace(/```json[\\s\\S]*```/g, '').trim();\n\nreturn [{\n  json: {\n    numero,\n    textoResposta,\n    qualificado,\n    dadosQualificacao,\n    conversaEncerrada: qualificado !== null && dadosQualificacao !== null\n  }\n}];"
+      },
+      "id": "processa-resposta",
+      "name": "Processa resposta do agente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $json.numero }}\",\n  \"text\": \"{{ $json.textoResposta }}\"\n}",
+        "options": {}
+      },
+      "id": "envia-resposta-lead",
+      "name": "Envia resposta ao lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 180]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond-qualificado",
+              "leftValue": "={{ $json.qualificado }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ]
+        }
+      },
+      "id": "switch-qualificado",
+      "name": "Lead qualificado?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1780, 420],
+      "notes": "Rota true = qualificado, envia relatório ao advogado. Rota false = apenas salva na sessão."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Monta relatório formatado para o advogado\nconst dados = $('Processa resposta do agente').first().json.dadosQualificacao;\n\nconst emojiBeneficio = {\n  'aposentadoria': '👴',\n  'pensao': '👥',\n  'auxilio_doenca': '🏥',\n  'bpc': '🤝',\n  'revisao': '🔄',\n  'outro': '📋'\n};\n\nconst emoji = emojiBeneficio[dados.beneficio] || '📋';\n\nconst relatorio = `🟢 *LEAD QUALIFICADO — DIREITO PREVIDENCIÁRIO*\n\n👤 *Nome:* ${dados.nome}\n📱 *Celular:* ${dados.celular}\n${emoji} *Benefício:* ${dados.beneficio?.replace('_', ' ')?.toUpperCase()}\n⚖️ *Tese:* ${dados.tese}\n📄 *Documentos:* ${(dados.documentos || []).join(', ') || 'Não informado'}\n🗒️ *Histórico:* ${dados.historico || 'Não informado'}\n🕐 *Atendimento:* ${new Date().toLocaleString('pt-BR', {timeZone: 'America/Sao_Paulo'})}`;\n\nreturn [{ json: { relatorio } }];"
+      },
+      "id": "monta-relatorio",
+      "name": "Monta relatório do lead",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.EVOLUTION_API_URL }}/message/sendText/{{ $env.EVOLUTION_INSTANCE }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $env.EVOLUTION_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"number\": \"{{ $env.NUMERO_ADVOGADO }}\",\n  \"text\": \"{{ $json.relatorio }}\"\n}",
+        "options": {}
+      },
+      "id": "envia-relatorio-advogado",
+      "name": "Envia relatório ao advogado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2220, 300],
+      "notes": "Envia o relatório completo para o número do advogado configurado em NUMERO_ADVOGADO."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Salva/atualiza o histórico da sessão no Redis\n// TTL de 24h (86400 segundos)\nconst numero = $('Normaliza dados da mensagem').first().json.numero;\nconst historicoAtual = $('Monta histórico da conversa').first().json.historico;\nconst respostaAgente = $('Agente SDR — IA Previdenciária').first().json.output || '';\n\n// Adiciona resposta do agente ao histórico\nhistoricoAtual.push({\n  role: 'assistant',\n  content: respostaAgente\n});\n\n// Mantém apenas as últimas 20 mensagens para não crescer demais\nconst historicoTrimmed = historicoAtual.slice(-20);\n\nreturn [{\n  json: {\n    key: `sessao_${numero}`,\n    value: JSON.stringify(historicoTrimmed),\n    ttl: 86400\n  }\n}];"
+      },
+      "id": "prepara-sessao-redis",
+      "name": "Prepara dados para salvar sessão",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 500]
+    },
+    {
+      "parameters": {
+        "operation": "set",
+        "key": "={{ $json.key }}",
+        "value": "={{ $json.value }}",
+        "expire": true,
+        "ttl": "={{ $json.ttl }}",
+        "options": {}
+      },
+      "id": "redis-set-sessao",
+      "name": "Redis — Salva histórico da sessão",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [2220, 500],
+      "notes": "Salva o histórico com TTL de 24h. Após esse período a conversa é zerada."
+    },
+    {
+      "parameters": {
+        "respondWith": "allIncomingItems",
+        "options": {}
+      },
+      "id": "webhook-response",
+      "name": "Responde webhook (200 OK)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2440, 300],
+      "notes": "Retorna 200 para a Evolution API confirmar recebimento do webhook."
+    }
+  ],
+  "connections": {
+    "Webhook — Recebe mensagem WhatsApp": {
+      "main": [
+        [{ "node": "Normaliza dados da mensagem", "type": "main", "index": 0 }]
+      ]
+    },
+    "Normaliza dados da mensagem": {
+      "main": [
+        [{ "node": "É arquivo ou texto?", "type": "main", "index": 0 }]
+      ]
+    },
+    "É arquivo ou texto?": {
+      "main": [
+        [{ "node": "Baixa arquivo (base64)", "type": "main", "index": 0 }],
+        [{ "node": "Redis — Busca histórico da sessão", "type": "main", "index": 0 }]
+      ]
+    },
+    "Baixa arquivo (base64)": {
+      "main": [
+        [{ "node": "Redis — Busca histórico da sessão", "type": "main", "index": 0 }]
+      ]
+    },
+    "Redis — Busca histórico da sessão": {
+      "main": [
+        [{ "node": "Monta histórico da conversa", "type": "main", "index": 0 }]
+      ]
+    },
+    "Monta histórico da conversa": {
+      "main": [
+        [{ "node": "Agente SDR — IA Previdenciária", "type": "main", "index": 0 }]
+      ]
+    },
+    "Agente SDR — IA Previdenciária": {
+      "main": [
+        [{ "node": "Processa resposta do agente", "type": "main", "index": 0 }]
+      ]
+    },
+    "Processa resposta do agente": {
+      "main": [
+        [
+          { "node": "Envia resposta ao lead", "type": "main", "index": 0 },
+          { "node": "Lead qualificado?", "type": "main", "index": 0 },
+          { "node": "Prepara dados para salvar sessão", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Lead qualificado?": {
+      "main": [
+        [{ "node": "Monta relatório do lead", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Monta relatório do lead": {
+      "main": [
+        [{ "node": "Envia relatório ao advogado", "type": "main", "index": 0 }]
+      ]
+    },
+    "Envia relatório ao advogado": {
+      "main": [
+        [{ "node": "Responde webhook (200 OK)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Envia resposta ao lead": {
+      "main": [
+        [{ "node": "Responde webhook (200 OK)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepara dados para salvar sessão": {
+      "main": [
+        [{ "node": "Redis — Salva histórico da sessão", "type": "main", "index": 0 }]
+      ]
+    },
+    "Redis — Salva histórico da sessão": {
+      "main": [
+        [{ "node": "Responde webhook (200 OK)", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "templateId": "sdr-previdenciario-whatsapp",
+    "description": "Agente SDR para qualificação de leads de Direito Previdenciário via WhatsApp",
+    "version": "1.0.0"
+  },
+  "tags": ["whatsapp", "ia", "sdr", "previdenciario", "n8n"],
+  "_envVarsRequired": [
+    "EVOLUTION_API_URL",
+    "EVOLUTION_API_KEY",
+    "EVOLUTION_INSTANCE",
+    "NUMERO_ADVOGADO",
+    "OPENAI_API_KEY",
+    "TAVILY_API_KEY"
+  ],
+  "_setupInstructions": {
+    "1_evolution_api": "Configure a Evolution API e crie uma instância. Adicione o endpoint /webhook/whatsapp-webhook como webhook de mensagens.",
+    "2_credenciais_n8n": "Configure as credenciais: Evolution API (httpHeaderAuth), OpenAI, Tavily e Redis.",
+    "3_agente_ia": "No node 'Agente SDR', cole o conteúdo de agent-prompt.md no System Message. Adicione as tools: Tavily Search e Buffer Memory (Redis).",
+    "4_variaveis_env": "Configure as variáveis de ambiente listadas em _envVarsRequired no painel do n8n.",
+    "5_numero_advogado": "Defina NUMERO_ADVOGADO com o número que receberá os leads qualificados (formato: 5511999999999)."
+  }
+}
