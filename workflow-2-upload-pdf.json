@@ -126,14 +126,22 @@
     },
     {
       "parameters": {
-        "formTitle": "✅ PDF Processado!",
-        "formDescription": "O documento foi adicionado à base de conhecimento. O agente já pode consultá-lo.",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "status",
+              "name": "status",
+              "value": "PDF processado e salvo na base de conhecimento com sucesso!",
+              "type": "string"
+            }
+          ]
+        },
         "options": {}
       },
       "id": "node-confirma-upload",
       "name": "Confirma upload",
-      "type": "n8n-nodes-base.formCompletion",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
       "position": [1100, 300]
     }
   ],
