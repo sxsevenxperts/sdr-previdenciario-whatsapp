@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SDR Previdenciário — Painel</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+
+    /* LOGIN */
+    #login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+    .login-box { background: #fff; padding: 48px 40px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); width: 100%; max-width: 420px; }
+    .login-box h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; color: #1a1a2e; }
+    .login-box p { color: #666; margin-bottom: 32px; font-size: 14px; }
+    .form-group { margin-bottom: 16px; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #444; }
+    .form-group input { width: 100%; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border 0.2s; }
+    .form-group input:focus { outline: none; border-color: #4f46e5; }
+    .btn-primary { width: 100%; padding: 13px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-primary:hover { background: #4338ca; }
+    .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; }
+    .error-msg { color: #ef4444; font-size: 13px; margin-top: 12px; text-align: center; }
+
+    /* DASHBOARD */
+    #dashboard-page { display: none; min-height: 100vh; }
+    .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: #1a1a2e; padding: 24px 0; display: flex; flex-direction: column; }
+    .sidebar .logo { padding: 0 24px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar .logo h2 { color: #fff; font-size: 16px; font-weight: 700; }
+    .sidebar .logo p { color: #a5b4fc; font-size: 12px; margin-top: 2px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 24px; color: rgba(255,255,255,0.6); cursor: pointer; transition: all 0.2s; font-size: 14px; border-left: 3px solid transparent; }
+    .nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
+    .nav-item.active { color: #a5b4fc; border-left-color: #a5b4fc; background: rgba(165,180,252,0.1); }
+    .nav-item .icon { font-size: 18px; width: 20px; text-align: center; }
+    .sidebar-bottom { margin-top: auto; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .btn-logout { width: 100%; padding: 10px; background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
+    .btn-logout:hover { background: rgba(239,68,68,0.25); }
+    .main-content { margin-left: 240px; padding: 32px; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-size: 22px; font-weight: 700; }
+    .page-header p { color: #666; font-size: 14px; margin-top: 4px; }
+    .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .card h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+    .field-group { margin-bottom: 18px; }
+    .field-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #444; }
+    .field-group input, .field-group textarea, .field-group select { width: 100%; padding: 10px 12px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: inherit; transition: border 0.2s; resize: vertical; }
+    .field-group input:focus, .field-group textarea:focus { outline: none; border-color: #4f46e5; }
+    .field-group textarea { min-height: 100px; line-height: 1.6; }
+    .btn-save { padding: 11px 28px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-save:hover { background: #4338ca; }
+    .btn-save:disabled { background: #a5b4fc; }
+    .save-status { display: inline-block; margin-left: 12px; font-size: 13px; color: #16a34a; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: #f0f2f5; padding: 4px; border-radius: 10px; width: fit-content; }
+    .tab-btn { padding: 8px 18px; border: none; background: transparent; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; transition: all 0.2s; }
+    .tab-btn.active { background: #fff; color: #4f46e5; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .upload-area { border: 2px dashed #d1d5db; border-radius: 10px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; }
+    .upload-area:hover { border-color: #4f46e5; background: #f5f3ff; }
+    .upload-area p { color: #666; font-size: 14px; margin-top: 8px; }
+    .upload-area input[type=file] { display: none; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-green { background: #dcfce7; color: #16a34a; }
+    .badge-red { background: #fee2e2; color: #dc2626; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    table th { text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 600; color: #555; border-bottom: 1px solid #e5e7eb; }
+    table td { padding: 12px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
+    table tr:hover td { background: #f8fafc; }
+    .empty-state { text-align: center; padding: 48px; color: #aaa; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .stat-card .label { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; color: #1a1a2e; }
+    .stat-card .sub { font-size: 12px; color: #666; margin-top: 2px; }
+    .loading { color: #888; font-size: 13px; }
+    .pdf-list { margin-top: 12px; }
+    .pdf-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+    .pdf-item span { color: #444; }
+    .pdf-badge { background: #e0e7ff; color: #4f46e5; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .upload-btn { padding: 10px 20px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+    .upload-btn:disabled { background: #a5b4fc; }
+    .progress-bar { height: 4px; background: #e5e7eb; border-radius: 4px; margin-top: 12px; overflow: hidden; display: none; }
+    .progress-fill { height: 100%; background: #4f46e5; border-radius: 4px; transition: width 0.3s; }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-page">
+  <div class="login-box">
+    <h1>⚖️ SDR Previdenciário</h1>
+    <p>Painel de administração do agente IA</p>
+    <div class="form-group">
+      <label>E-mail</label>
+      <input type="email" id="login-email" placeholder="seu@email.com" />
+    </div>
+    <div class="form-group">
+      <label>Senha</label>
+      <input type="password" id="login-password" placeholder="••••••••" />
+    </div>
+    <button class="btn-primary" id="btn-login" onclick="login()">Entrar</button>
+    <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard-page">
+  <div class="sidebar">
+    <div class="logo">
+      <h2>⚖️ SDR Previdenciário</h2>
+      <p>Painel de Administração</p>
+    </div>
+    <div style="padding: 16px 0; flex: 1;">
+      <div class="nav-item active" onclick="showPage('overview', this)">
+        <span class="icon">📊</span> Visão Geral
+      </div>
+      <div class="nav-item" onclick="showPage('agente', this)">
+        <span class="icon">🤖</span> Agente & Prompt
+      </div>
+      <div class="nav-item" onclick="showPage('comunicacao', this)">
+        <span class="icon">💬</span> Comunicação
+      </div>
+      <div class="nav-item" onclick="showPage('qualificacao', this)">
+        <span class="icon">✅</span> Qualificação
+      </div>
+      <div class="nav-item" onclick="showPage('pdfs', this)">
+        <span class="icon">📄</span> Base de PDFs
+      </div>
+      <div class="nav-item" onclick="showPage('leads', this)">
+        <span class="icon">👥</span> Leads
+      </div>
+    </div>
+    <div class="sidebar-bottom">
+      <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="page-header">
+        <h1>Visão Geral</h1>
+        <p>Resumo do desempenho do agente SDR</p>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="label">Total de Leads</div>
+          <div class="value" id="stat-total">—</div>
+          <div class="sub">atendimentos realizados</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Qualificados</div>
+          <div class="value" id="stat-qual" style="color:#16a34a">—</div>
+          <div class="sub">encaminhados ao advogado</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Taxa de Qualificação</div>
+          <div class="value" id="stat-taxa">—</div>
+          <div class="sub">dos atendimentos</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📋 Últimos Leads</h3>
+        <div id="overview-leads"><p class="loading">Carregando...</p></div>
+      </div>
+    </div>
+
+    <!-- AGENTE -->
+    <div class="page" id="page-agente">
+      <div class="page-header">
+        <h1>🤖 Agente & Prompt</h1>
+        <p>Configure as instruções e personalidade do agente</p>
+      </div>
+      <div class="card">
+        <h3>🎯 Objetivo</h3>
+        <div class="field-group">
+          <label>Qual é o objetivo do agente?</label>
+          <textarea id="cfg-objetivo" placeholder="Ex: Qualificar leads de Direito Previdenciário e encaminhar ao advogado."></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📝 Prompt Principal</h3>
+        <div class="field-group">
+          <label>Instruções detalhadas do agente (quanto mais específico, melhor)</label>
+          <textarea id="cfg-prompt" style="min-height:200px" placeholder="Você é um assistente de triagem jurídica especializado em Direito Previdenciário..."></textarea>
+        </div>
+      </div>
+      <button class="btn-save" onclick="saveConfigs(['objetivo','prompt_sistema'])">💾 Salvar</button>
+      <span class="save-status" id="save-agente"></span>
+    </div>
+
+    <!-- COMUNICAÇÃO -->
+    <div class="page" id="page-comunicacao">
+      <div class="page-header">
+        <h1>💬 Comunicação</h1>
+        <p>Defina como o agente deve se comunicar</p>
+      </div>
+      <div class="card">
+        <h3>🎭 Tonalidade de Voz</h3>
+        <div class="field-group">
+          <label>Como o agente deve falar com os leads?</label>
+          <textarea id="cfg-tonalidade" placeholder="Ex: Empático, claro e objetivo. Use linguagem simples, sem jargão jurídico. Seja especialmente acolhedor com idosos."></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📏 Regras de Comunicação</h3>
+        <div class="field-group">
+          <label>Instruções específicas de como conduzir a conversa</label>
+          <textarea id="cfg-instrucoes_comunicacao" placeholder="Ex: Faça uma pergunta por vez. Nunca prometa resultado. Máximo 10 trocas de mensagens."></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📱 Mensagem de Encerramento</h3>
+        <div class="field-group">
+          <label>Mensagem quando lead é QUALIFICADO</label>
+          <textarea id="cfg-msg_qualificado" placeholder="Ex: Ótimo! Vou encaminhar seu caso ao advogado. Em breve ele entrará em contato."></textarea>
+        </div>
+        <div class="field-group">
+          <label>Mensagem quando lead NÃO é qualificado</label>
+          <textarea id="cfg-msg_desqualificado" placeholder="Ex: Obrigado pelo contato! No momento não identificamos um caso que atendemos."></textarea>
+        </div>
+      </div>
+      <button class="btn-save" onclick="saveConfigs(['tonalidade','instrucoes_comunicacao','msg_qualificado','msg_desqualificado'])">💾 Salvar</button>
+      <span class="save-status" id="save-comunicacao"></span>
+    </div>
+
+    <!-- QUALIFICAÇÃO -->
+    <div class="page" id="page-qualificacao">
+      <div class="page-header">
+        <h1>✅ Qualificação</h1>
+        <p>Defina os critérios e o número de destino dos leads</p>
+      </div>
+      <div class="card">
+        <h3>📋 Critérios de Qualificação</h3>
+        <div class="field-group">
+          <label>Liste os critérios (um por linha ou separados por vírgula)</label>
+          <textarea id="cfg-criterios_qualificacao" placeholder="1. Possui vínculo com o INSS&#10;2. Tem benefício negado ou a requerer&#10;3. É possível identificar uma tese jurídica"></textarea>
+        </div>
+      </div>
+      <div class="card">
+        <h3>📲 WhatsApp de Destino</h3>
+        <div class="field-group">
+          <label>Número que recebe os relatórios dos leads qualificados</label>
+          <input type="text" id="cfg-numero_destino" placeholder="5511999999999 (DDI+DDD+número, sem espaços)" />
+        </div>
+      </div>
+      <button class="btn-save" onclick="saveConfigs(['criterios_qualificacao','numero_destino'])">💾 Salvar</button>
+      <span class="save-status" id="save-qualificacao"></span>
+    </div>
+
+    <!-- PDFs -->
+    <div class="page" id="page-pdfs">
+      <div class="page-header">
+        <h1>📄 Base de Conhecimento (PDFs)</h1>
+        <p>Documentos que o agente consulta durante as conversas</p>
+      </div>
+      <div class="card">
+        <h3>⬆️ Enviar novo PDF</h3>
+        <div class="field-group">
+          <label>Nome do documento</label>
+          <input type="text" id="pdf-nome" placeholder="Ex: Tabela de Benefícios INSS 2024" />
+        </div>
+        <div class="field-group">
+          <label>Categoria</label>
+          <select id="pdf-categoria">
+            <option>Legislação</option>
+            <option>Jurisprudência</option>
+            <option>Tabelas e Valores</option>
+            <option>Procedimentos INSS</option>
+            <option>Outros</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Arquivo</label>
+          <div class="upload-area" onclick="document.getElementById('pdf-file').click()">
+            <div style="font-size:36px">📁</div>
+            <p id="pdf-filename">Clique para selecionar um PDF</p>
+            <input type="file" id="pdf-file" accept=".pdf" onchange="updateFilename(this)" />
+          </div>
+        </div>
+        <div class="progress-bar" id="upload-progress">
+          <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+        </div>
+        <button class="upload-btn" id="btn-upload-pdf" onclick="uploadPDF()">⬆️ Enviar para o agente</button>
+        <span class="save-status" id="upload-status"></span>
+      </div>
+      <div class="card">
+        <h3>📚 Documentos na base</h3>
+        <div id="pdf-list"><p class="loading">Carregando...</p></div>
+      </div>
+    </div>
+
+    <!-- LEADS -->
+    <div class="page" id="page-leads">
+      <div class="page-header">
+        <h1>👥 Leads</h1>
+        <p>Histórico de todos os atendimentos</p>
+      </div>
+      <div class="card" style="overflow-x:auto">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">📋 Todos os atendimentos</h3>
+          <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadLeads()">🔄 Atualizar</button>
+        </div>
+        <div id="leads-table"><p class="loading">Carregando...</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // =====================
+  // CONFIGURAÇÃO SUPABASE
+  // =====================
+  const SUPABASE_URL = 'https://vyvdrbkcrvklcaombjqu.supabase.co';
+  const SUPABASE_KEY = 'sb_secret_mzXYcNieR1QWrP4nOaOiEA_MyHbWxYy';
+  const N8N_UPLOAD_WEBHOOK = 'https://sx-n8n.yuhqmc.easypanel.host/webhook/upload-pdf-sdr';
+
+  const { createClient } = supabase;
+  const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  // =====================
+  // AUTH
+  // =====================
+  async function login() {
+    const email = document.getElementById('login-email').value;
+    const pass  = document.getElementById('login-password').value;
+    const btn   = document.getElementById('btn-login');
+    const err   = document.getElementById('login-error');
+
+    btn.disabled = true;
+    btn.textContent = 'Entrando...';
+    err.textContent = '';
+
+    const { error } = await db.auth.signInWithPassword({ email, password: pass });
+
+    if (error) {
+      err.textContent = 'E-mail ou senha incorretos.';
+      btn.disabled = false;
+      btn.textContent = 'Entrar';
+    } else {
+      showDashboard();
+    }
+  }
+
+  async function logout() {
+    await db.auth.signOut();
+    document.getElementById('dashboard-page').style.display = 'none';
+    document.getElementById('login-page').style.display = 'flex';
+  }
+
+  document.getElementById('login-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+
+  // Verifica sessão ao carregar
+  window.addEventListener('load', async () => {
+    const { data: { session } } = await db.auth.getSession();
+    if (session) showDashboard();
+  });
+
+  async function showDashboard() {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('dashboard-page').style.display = 'block';
+    loadConfigs();
+    loadStats();
+    loadOverviewLeads();
+    loadPDFList();
+  }
+
+  // =====================
+  // NAVEGAÇÃO
+  // =====================
+  function showPage(name, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    el.classList.add('active');
+    if (name === 'leads') loadLeads();
+  }
+
+  // =====================
+  // CONFIGURAÇÕES
+  // =====================
+  async function loadConfigs() {
+    const { data } = await db.from('agente_config').select('chave, valor');
+    if (!data) return;
+    data.forEach(row => {
+      const el = document.getElementById('cfg-' + row.chave);
+      if (el) el.value = row.valor || '';
+    });
+  }
+
+  async function saveConfigs(keys) {
+    const statusId = keys.includes('prompt_sistema') ? 'save-agente'
+      : keys.includes('tonalidade') ? 'save-comunicacao'
+      : 'save-qualificacao';
+
+    const statusEl = document.getElementById(statusId);
+    statusEl.textContent = 'Salvando...';
+    statusEl.style.color = '#888';
+
+    for (const key of keys) {
+      const el = document.getElementById('cfg-' + key);
+      if (!el) continue;
+      await db.from('agente_config').upsert(
+        { chave: key, valor: el.value, atualizado_em: new Date().toISOString() },
+        { onConflict: 'chave' }
+      );
+    }
+
+    statusEl.textContent = '✅ Salvo!';
+    statusEl.style.color = '#16a34a';
+    setTimeout(() => statusEl.textContent = '', 3000);
+  }
+
+  // =====================
+  // STATS
+  // =====================
+  async function loadStats() {
+    const { data } = await db.from('leads').select('qualificado');
+    if (!data) return;
+    const total = data.length;
+    const qual  = data.filter(l => l.qualificado).length;
+    const taxa  = total > 0 ? Math.round((qual / total) * 100) + '%' : '0%';
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-qual').textContent = qual;
+    document.getElementById('stat-taxa').textContent = taxa;
+  }
+
+  async function loadOverviewLeads() {
+    const { data } = await db.from('leads').select('*').order('criado_em', { ascending: false }).limit(5);
+    const el = document.getElementById('overview-leads');
+    if (!data || data.length === 0) {
+      el.innerHTML = '<p class="empty-state">Nenhum lead ainda. O agente ainda não foi ativado ou não recebeu mensagens.</p>';
+      return;
+    }
+    el.innerHTML = renderLeadsTable(data);
+  }
+
+  // =====================
+  // LEADS
+  // =====================
+  async function loadLeads() {
+    const { data } = await db.from('leads').select('*').order('criado_em', { ascending: false });
+    const el = document.getElementById('leads-table');
+    if (!data || data.length === 0) {
+      el.innerHTML = '<p class="empty-state">Nenhum lead registrado ainda.</p>';
+      return;
+    }
+    el.innerHTML = renderLeadsTable(data);
+  }
+
+  function renderLeadsTable(data) {
+    return `<table>
+      <thead><tr>
+        <th>Data</th><th>Nome</th><th>Celular</th><th>Tese</th><th>Status</th>
+      </tr></thead>
+      <tbody>${data.map(l => `<tr>
+        <td>${l.criado_em ? new Date(l.criado_em).toLocaleString('pt-BR') : '—'}</td>
+        <td>${l.nome || l.numero_whatsapp || '—'}</td>
+        <td>${l.celular || '—'}</td>
+        <td style="max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.tese || l.resumo || '—'}</td>
+        <td><span class="badge ${l.qualificado ? 'badge-green' : 'badge-red'}">${l.qualificado ? '✅ Qualificado' : '❌ Não qualificado'}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  // =====================
+  // PDFs
+  // =====================
+  function updateFilename(input) {
+    const name = input.files[0]?.name || 'Clique para selecionar um PDF';
+    document.getElementById('pdf-filename').textContent = name;
+  }
+
+  async function uploadPDF() {
+    const nome = document.getElementById('pdf-nome').value.trim();
+    const categoria = document.getElementById('pdf-categoria').value;
+    const file = document.getElementById('pdf-file').files[0];
+    const btn = document.getElementById('btn-upload-pdf');
+    const status = document.getElementById('upload-status');
+
+    if (!nome || !file) {
+      alert('Preencha o nome e selecione um PDF.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Enviando...';
+    status.textContent = '';
+
+    // Upload para Supabase Storage
+    const path = `pdfs/${Date.now()}_${file.name}`;
+    const { error: storageErr } = await db.storage.from('documentos').upload(path, file);
+
+    if (storageErr) {
+      // Tenta via n8n webhook
+      const formData = new FormData();
+      formData.append('Nome do documento', nome);
+      formData.append('Categoria', categoria);
+      formData.append('Arquivo PDF', file);
+
+      try {
+        await fetch(N8N_UPLOAD_WEBHOOK, { method: 'POST', body: formData });
+        status.textContent = '✅ PDF enviado para processamento!';
+        status.style.color = '#16a34a';
+      } catch {
+        status.textContent = '❌ Erro ao enviar. Verifique se o workflow 2 está ativo.';
+        status.style.color = '#ef4444';
+      }
+    } else {
+      // Registra na tabela de documentos
+      await db.from('documentos_conhecimento').insert({
+        metadata: { nome, categoria, path, uploadedAt: new Date().toISOString() },
+        conteudo: `Documento: ${nome} | Categoria: ${categoria}`
+      });
+      status.textContent = '✅ PDF enviado!';
+      status.style.color = '#16a34a';
+      loadPDFList();
+    }
+
+    btn.disabled = false;
+    btn.textContent = '⬆️ Enviar para o agente';
+    setTimeout(() => status.textContent = '', 4000);
+  }
+
+  async function loadPDFList() {
+    const { data } = await db.from('documentos_conhecimento').select('metadata').limit(20);
+    const el = document.getElementById('pdf-list');
+    if (!data || data.length === 0) {
+      el.innerHTML = '<p class="empty-state">Nenhum PDF na base ainda. Envie o primeiro documento acima.</p>';
+      return;
+    }
+    el.innerHTML = '<div class="pdf-list">' + data.map(d => {
+      const meta = d.metadata || {};
+      return `<div class="pdf-item">
+        <span>📄 ${meta.nome || 'Documento'}</span>
+        <span class="pdf-badge">${meta.categoria || 'Geral'}</span>
+      </div>`;
+    }).join('') + '</div>';
+  }
+</script>
+</body>
+</html>
