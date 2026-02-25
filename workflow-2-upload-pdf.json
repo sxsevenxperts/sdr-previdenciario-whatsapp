@@ -1,0 +1,150 @@
+{
+  "name": "📄 Upload e Processamento de PDFs",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload de Base de Conhecimento (PDF)",
+        "formDescription": "Envie PDFs com legislação, jurisprudência ou informações previdenciárias. O agente irá consultá-los automaticamente durante as conversas.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Nome do documento",
+              "placeholder": "Ex: Tabela de Benefícios INSS 2024",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Categoria",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  { "option": "Legislação" },
+                  { "option": "Jurisprudência" },
+                  { "option": "Tabelas e Valores" },
+                  { "option": "Procedimentos INSS" },
+                  { "option": "Outros" }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Arquivo PDF",
+              "fieldType": "file",
+              "acceptFileTypes": ".pdf",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-form-pdf",
+      "name": "Formulário de Upload PDF",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [0, 300],
+      "webhookId": "upload-pdf-sdr",
+      "notes": "Acesse esta URL no navegador para fazer upload de PDFs para a base de conhecimento."
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrai metadados do formulário\nconst form = $input.first().json;\nconst binaryData = $input.first().binary;\n\nreturn [{\n  json: {\n    nome: form['Nome do documento'],\n    categoria: form['Categoria'],\n    arquivo: 'Arquivo PDF',\n    uploadedAt: new Date().toISOString()\n  },\n  binary: binaryData\n}];"
+      },
+      "id": "node-extrai-metadados",
+      "name": "Extrai metadados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 300]
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "options": {}
+      },
+      "id": "node-extrai-texto-pdf",
+      "name": "Extrai texto do PDF",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [440, 300],
+      "notes": "Converte o PDF em texto para processar."
+    },
+    {
+      "parameters": {
+        "chunkSize": 1000,
+        "chunkOverlap": 200,
+        "options": {}
+      },
+      "id": "node-divide-chunks",
+      "name": "Divide em pedaços (chunks)",
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [660, 300],
+      "notes": "Divide o texto em blocos de 1000 caracteres com 200 de sobreposição para melhor busca."
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "node-embeddings-openai",
+      "name": "Gera embeddings (OpenAI)",
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [880, 160],
+      "notes": "Converte o texto em vetores numéricos para busca semântica. Requer credencial OpenAI."
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": "documentos_conhecimento",
+        "options": {
+          "metadataColumns": [
+            { "column": "nome_documento", "value": "={{ $('Extrai metadados').first().json.nome }}" },
+            { "column": "categoria", "value": "={{ $('Extrai metadados').first().json.categoria }}" },
+            { "column": "upload_em", "value": "={{ $('Extrai metadados').first().json.uploadedAt }}" }
+          ]
+        }
+      },
+      "id": "node-salva-vetores",
+      "name": "Salva vetores no Supabase",
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1,
+      "position": [880, 380],
+      "notes": "Salva os chunks com embeddings na tabela documentos_conhecimento do Supabase."
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseText": "✅ PDF processado e adicionado à base de conhecimento! O agente já pode consultá-lo.",
+        "options": {}
+      },
+      "id": "node-resposta-upload",
+      "name": "Confirma upload",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1100, 300]
+    }
+  ],
+  "connections": {
+    "Formulário de Upload PDF": {
+      "main": [[{ "node": "Extrai metadados", "type": "main", "index": 0 }]]
+    },
+    "Extrai metadados": {
+      "main": [[{ "node": "Extrai texto do PDF", "type": "main", "index": 0 }]]
+    },
+    "Extrai texto do PDF": {
+      "main": [[{ "node": "Divide em pedaços (chunks)", "type": "main", "index": 0 }]]
+    },
+    "Divide em pedaços (chunks)": {
+      "main": [[{ "node": "Salva vetores no Supabase", "type": "main", "index": 0 }]]
+    },
+    "Gera embeddings (OpenAI)": {
+      "ai_embedding": [[{ "node": "Salva vetores no Supabase", "type": "ai_embedding", "index": 0 }]]
+    },
+    "Salva vetores no Supabase": {
+      "main": [[{ "node": "Confirma upload", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": ["pdf", "conhecimento", "rag", "sdr"],
+  "meta": { "description": "Formulário para upload de PDFs que serão usados como base de conhecimento pelo agente.", "version": "1.0.0" }
+}

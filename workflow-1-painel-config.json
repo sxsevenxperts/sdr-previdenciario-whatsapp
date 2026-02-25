@@ -1,0 +1,137 @@
+{
+  "name": "⚙️ Painel de Configuração do Agente",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Configuração do Agente SDR",
+        "formDescription": "Edite as instruções e configurações do agente. As mudanças valem imediatamente.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Número de destino (recebe leads qualificados)",
+              "placeholder": "5511999999999",
+              "fieldType": "text",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Objetivo do agente",
+              "placeholder": "Ex: Qualificar leads de Direito Previdenciário e encaminhar ao advogado.",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Prompt principal (instruções do agente)",
+              "placeholder": "Você é um assistente especializado em triagem de Direito Previdenciário...",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Tonalidade de voz",
+              "placeholder": "Ex: Empático, claro e objetivo. Use linguagem simples, sem jargão jurídico.",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Instruções de comunicação",
+              "placeholder": "Ex: Faça uma pergunta por vez. Nunca prometa resultado. Máximo 10 trocas.",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Critérios de qualificação",
+              "placeholder": "Ex: 1. Vínculo com INSS  2. Benefício identificável  3. Tese jurídica possível",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Mensagem para lead qualificado",
+              "placeholder": "Ex: Ótimo! Vou encaminhar seu caso ao advogado. Em breve ele entrará em contato.",
+              "fieldType": "textarea",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Mensagem para lead não qualificado",
+              "placeholder": "Ex: Obrigado pelo contato! No momento não identificamos um caso que atendemos. Boa sorte!",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "respondWithOptions": "redirect"
+        }
+      },
+      "id": "node-form-trigger",
+      "name": "Formulário de Configuração",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [0, 300],
+      "webhookId": "painel-config-sdr",
+      "notes": "Acesse a URL deste formulário no navegador para editar as configurações do agente."
+    },
+    {
+      "parameters": {
+        "jsCode": "const form = $input.first().json;\n\n// Mapeia campos do formulário para chaves do banco\nconst configs = [\n  { chave: 'numero_destino',           valor: form['Número de destino (recebe leads qualificados)'] },\n  { chave: 'objetivo',                 valor: form['Objetivo do agente'] },\n  { chave: 'prompt_sistema',           valor: form['Prompt principal (instruções do agente)'] },\n  { chave: 'tonalidade',               valor: form['Tonalidade de voz'] },\n  { chave: 'instrucoes_comunicacao',   valor: form['Instruções de comunicação'] },\n  { chave: 'criterios_qualificacao',   valor: form['Critérios de qualificação'] },\n  { chave: 'msg_qualificado',          valor: form['Mensagem para lead qualificado'] },\n  { chave: 'msg_desqualificado',       valor: form['Mensagem para lead não qualificado'] }\n];\n\nreturn configs.map(c => ({ json: c }));"
+      },
+      "id": "node-mapeia-campos",
+      "name": "Mapeia campos do formulário",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "tableId": "agente_config",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "chave", "fieldValue": "={{ $json.chave }}" },
+            { "fieldId": "valor", "fieldValue": "={{ $json.valor }}" },
+            { "fieldId": "atualizado_em", "fieldValue": "={{ new Date().toISOString() }}" }
+          ]
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "chave",
+              "keyValue": "={{ $json.chave }}"
+            }
+          ]
+        }
+      },
+      "id": "node-salva-supabase",
+      "name": "Salva no Supabase",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "notes": "Configure a credencial do Supabase. Upsert = cria ou atualiza."
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseText": "✅ Configurações salvas com sucesso! O agente já está usando as novas instruções.",
+        "options": {}
+      },
+      "id": "node-resposta-form",
+      "name": "Confirma salvamento",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 300]
+    }
+  ],
+  "connections": {
+    "Formulário de Configuração": {
+      "main": [[{ "node": "Mapeia campos do formulário", "type": "main", "index": 0 }]]
+    },
+    "Mapeia campos do formulário": {
+      "main": [[{ "node": "Salva no Supabase", "type": "main", "index": 0 }]]
+    },
+    "Salva no Supabase": {
+      "main": [[{ "node": "Confirma salvamento", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": ["configuracao", "admin", "sdr"],
+  "meta": { "description": "Formulário web para configurar o agente SDR sem editar código.", "version": "1.0.0" }
+}
