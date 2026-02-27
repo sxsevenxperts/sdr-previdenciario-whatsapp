@@ -56,6 +56,8 @@
     .btn-save { padding: 11px 28px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
     .btn-save:hover { background: #4338ca; }
     .btn-save:disabled { background: #a5b4fc; }
+    .btn-secondary { padding: 11px 20px; background: #fff; color: #4f46e5; border: 1.5px solid #4f46e5; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-secondary:hover { background: #eef2ff; }
     .save-status { display: inline-block; margin-left: 12px; font-size: 13px; color: #16a34a; }
     .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
     .badge-green { background: #dcfce7; color: #16a34a; }
@@ -157,6 +159,21 @@
     .tab-btn.active { background: #fff; color: #4f46e5; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
+
+    /* MODAL */
+    .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center; }
+    .modal-backdrop.open { display:flex; }
+    .modal-box { background:#fff; padding:32px; border-radius:16px; width:460px; max-width:92vw; box-shadow:0 16px 48px rgba(0,0,0,0.2); }
+    .modal-box h2 { font-size:18px; font-weight:700; margin-bottom:24px; color:#1a1a2e; }
+    .modal-actions { display:flex; gap:10px; margin-top:20px; }
+
+    /* ADMIN */
+    .badge-purple { background:#ede9fe; color:#7c3aed; }
+    .admin-only { display:none !important; }
+    .admin-only.visible { display:flex !important; }
+    .nav-section.admin-only.visible { display:block !important; }
+    .client-tag { font-size:10px; background:#f0fdf4; color:#16a34a; padding:2px 7px; border-radius:10px; font-weight:700; }
+    .client-tag.inactive { background:#fee2e2; color:#dc2626; }
   </style>
 </head>
 <body>
@@ -216,8 +233,16 @@
       <div class="nav-item" onclick="showPage('leads', this)">
         <span class="icon">👥</span> Leads
       </div>
+      <div class="nav-section admin-only" id="admin-nav-section">Super Admin</div>
+      <div class="nav-item admin-only" id="admin-nav-clientes" onclick="showPage('clientes', this)">
+        <span class="icon">🏢</span> Clientes
+      </div>
     </div>
     <div class="sidebar-bottom">
+      <div style="margin-bottom:12px;font-size:12px;color:rgba(255,255,255,0.5);">
+        <div id="sidebar-user-name" style="color:#fff;font-weight:600;font-size:13px;margin-bottom:2px;">—</div>
+        <div id="sidebar-user-role" style="font-size:11px;"></div>
+      </div>
       <button class="btn-logout" onclick="logout()">Sair</button>
     </div>
   </div>
@@ -273,7 +298,7 @@
           <div style="margin-top:20px;padding:16px;background:#f8fafc;border-radius:10px;font-size:13px;color:#555;">
             <div style="font-weight:700;margin-bottom:8px;color:#1a1a2e;">📋 Informações da Instância</div>
             <div style="display:flex;flex-direction:column;gap:6px;">
-              <div><strong>Instância:</strong> <code style="background:#e0e7ff;color:#4f46e5;padding:2px 6px;border-radius:4px;">TESTE</code></div>
+              <div><strong>Instância:</strong> <code id="wa-instance-display" style="background:#e0e7ff;color:#4f46e5;padding:2px 6px;border-radius:4px;">—</code></div>
               <div><strong>Servidor:</strong> <code style="background:#e0e7ff;color:#4f46e5;padding:2px 6px;border-radius:4px;font-size:11px;">evolutionapi-evolution-api.yuhqmc.easypanel.host</code></div>
             </div>
           </div>
@@ -377,8 +402,11 @@
         <div class="field-group"><label>Instruções detalhadas do agente</label>
           <textarea id="cfg-prompt_sistema" style="min-height:200px" placeholder="Você é um assistente de triagem jurídica especializado em Direito Previdenciário..."></textarea></div>
       </div>
-      <button class="btn-save" onclick="saveConfigs(['objetivo','prompt_sistema'])">💾 Salvar</button>
-      <span class="save-status" id="save-agente"></span>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+        <button class="btn-save" onclick="saveConfigs(['objetivo','prompt_sistema'])">💾 Salvar</button>
+        <button class="btn-secondary" onclick="restaurarPadrao()">🔄 Restaurar Padrão</button>
+        <span class="save-status" id="save-agente"></span>
+      </div>
     </div>
 
     <!-- COMUNICAÇÃO -->
@@ -462,6 +490,49 @@
       </div>
     </div>
 
+    <!-- CLIENTES (admin only) -->
+    <div class="page" id="page-clientes">
+      <div class="page-header">
+        <h1>🏢 Clientes</h1>
+        <p>Gerencie as contas dos seus clientes</p>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">📋 Contas cadastradas</h3>
+          <button class="btn-save" onclick="openCreateClientModal()">➕ Novo Cliente</button>
+        </div>
+        <div id="clients-table"><p class="loading">Carregando...</p></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL CRIAR CLIENTE -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)closeModal()">
+  <div class="modal-box">
+    <h2>➕ Criar Novo Cliente</h2>
+    <div class="field-group">
+      <label>Nome do cliente</label>
+      <input type="text" id="new-client-name" placeholder="Ex: Escritório Pereira" />
+    </div>
+    <div class="field-group">
+      <label>E-mail</label>
+      <input type="email" id="new-client-email" placeholder="cliente@email.com" />
+    </div>
+    <div class="field-group">
+      <label>Senha inicial</label>
+      <input type="password" id="new-client-password" placeholder="Mínimo 6 caracteres" />
+    </div>
+    <div class="field-group">
+      <label>Nome da instância WhatsApp <small style="color:#888;">(sem espaços, ex: EscritorioPereira)</small></label>
+      <input type="text" id="new-client-instance" placeholder="EscritorioPereira" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" id="btn-create-client" onclick="createClient()">✅ Criar conta</button>
+      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+    </div>
+    <div id="create-client-error" class="error-msg" style="margin-top:10px;text-align:left;"></div>
   </div>
 </div>
 
@@ -471,10 +542,11 @@
   // =====================
   const SUPABASE_URL = 'https://vyvdrbkcrvklcaombjqu.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY';
+  const MANAGE_CLIENTS_URL = `${SUPABASE_URL}/functions/v1/manage-clients`;
   const N8N_UPLOAD_WEBHOOK = 'https://sx-n8n.yuhqmc.easypanel.host/webhook/upload-pdf-sdr';
   const EVO_URL = 'https://evolutionapi-evolution-api.yuhqmc.easypanel.host';
   const EVO_KEY = '32AEB8FC2DE4-4F79-A823-E620A11C224F';
-  const EVO_INSTANCE = 'TESTE';
+  const EVO_INSTANCE_DEFAULT = 'TESTE'; // fallback se perfil não tiver instância
 
   const { createClient } = supabase;
   const db = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -484,6 +556,67 @@
   let chatRefreshInterval = null;
   let waStatusInterval = null;
   let qrCountdownInterval = null;
+  let currentProfile = null; // { id, role, display_name, evo_instance, active }
+
+  function getEvoInstance() {
+    return (currentProfile?.evo_instance) || EVO_INSTANCE_DEFAULT;
+  }
+
+  // =====================
+  // PROMPT PADRÃO
+  // =====================
+  const PROMPT_PADRAO = {
+    objetivo: 'Qualificar leads de Direito Previdenciário e encaminhar ao advogado responsável para avaliação do caso.',
+    prompt_sistema: [
+      'Você é um assistente especializado em triagem de casos de Direito Previdenciário.',
+      'Seu papel é conversar de forma humanizada, empática e objetiva com pessoas que buscam ajuda jurídica previdenciária, qualificá-las e, quando aplicável, encaminhar o caso para um advogado.',
+      '',
+      'Você NÃO é advogado e NÃO dá consultoria jurídica. Você apenas coleta informações para que o advogado responsável possa avaliar o caso.',
+      '',
+      'FLUXO DA CONVERSA:',
+      '',
+      'Etapa 1 — Recepção:',
+      'Cumprimente o lead pelo nome (se disponível):',
+      '"Olá! Sou o assistente jurídico do escritório. Vou fazer algumas perguntas rápidas para entender melhor a sua situação e verificar se podemos te ajudar. Pode ser?"',
+      '',
+      'Etapa 2 — Coleta de informações (faça UMA pergunta por vez):',
+      '1. "Qual é o seu nome completo?"',
+      '2. "Você contribuiu para o INSS em algum momento da sua vida, ou é dependente de alguém que contribuiu?"',
+      '3. "Qual é a sua situação atual? Por exemplo: benefício negado, cancelado, aposentadoria que ainda não pediu, pensão por morte, auxílio-doença, BPC/LOAS, ou outro?"',
+      '4. "Você já tentou dar entrada no benefício? Se sim, o que aconteceu?"',
+      '5. "Você tem documentos como carteira de trabalho, extrato do CNIS, carta de indeferimento do INSS ou outros?"',
+      '6. "Qual o seu número de celular com DDD para o advogado entrar em contato?"',
+      '',
+      'DESQUALIFICAÇÃO IMEDIATA (encerre com empatia se):',
+      '- Caso é trabalhista puro, sem vínculo com INSS',
+      '- Caso já está em andamento com outro advogado',
+      '- Pessoa não quer fornecer informações básicas',
+      '- Caso já foi julgado com trânsito em julgado sem possibilidade de revisão',
+      '',
+      'BUSCA NA WEB:',
+      'Se necessário para identificar a tese jurídica, use a ferramenta de busca.',
+      'Priorize fontes: gov.br, previdencia.gov.br, JusBrasil, STJ, TRF.',
+      '',
+      'FORMATO DE SAÍDA OBRIGATÓRIO:',
+      'Ao concluir a triagem, inclua NO FINAL da sua última mensagem o JSON abaixo:',
+      '',
+      'Para lead qualificado:',
+      '```json',
+      '{"qualificado":true,"nome":"Nome Completo","celular":"DDD+número","tese":"Tese jurídica identificada","resumo":"Resumo completo da conversa"}',
+      '```',
+      '',
+      'Para lead não qualificado:',
+      '```json',
+      '{"qualificado":false,"motivo":"Motivo da desqualificação"}',
+      '```'
+    ].join('\n'),
+    tonalidade: 'Empático, claro e objetivo. Use linguagem simples, sem jargão jurídico. Seja especialmente gentil com idosos ou pessoas em situação vulnerável. Se o lead fizer uma pergunta jurídica específica, responda de forma genérica e direcione: "Essa é uma excelente pergunta para o advogado aprofundar com você!"',
+    instrucoes_comunicacao: '- Faça uma pergunta por vez. Aguarde a resposta antes de continuar.\n- Nunca prometa resultado ou vitória no processo.\n- Nunca dê consultoria jurídica.\n- Limite a conversa ao máximo de 10 trocas de mensagens antes de concluir a triagem.\n- Se o lead demorar mais de 24h para responder, envie um lembrete gentil uma única vez.\n- Se o lead enviar um arquivo (foto, PDF), confirme o recebimento e registre no caso.',
+    criterios_qualificacao: '1. Vínculo INSS — Contribuiu ao INSS ou é dependente de quem contribuiu\n2. Benefício identificável — Existe um benefício previdenciário aplicável ao caso\n3. Indeferimento ou pendência — Benefício foi negado, cancelado ou ainda não foi requerido\n4. Tese jurídica — É possível identificar uma tese/fundamento legal para o caso\n5. Documentação mínima — Possui ao menos algum documento ou sabe como obtê-lo',
+    msg_qualificado: 'Ótimo! Com base no que você me contou, acredito que o nosso advogado pode te ajudar. Vou encaminhar as informações do seu caso para ele agora. Em breve ele entrará em contato com você. Alguma dúvida ou informação adicional que queira que eu repasse?',
+    msg_desqualificado: 'Obrigado por entrar em contato! Infelizmente, com base nas informações que você compartilhou, não identificamos uma situação que se encaixe nos casos que atendemos no momento. Caso sua situação mude ou surja algum documento novo, fique à vontade para nos contatar novamente. Desejamos tudo de bom para você!',
+    numero_destino: ''
+  };
 
   // =====================
   // AUTH
@@ -521,6 +654,27 @@
   async function showDashboard() {
     document.getElementById('login-page').style.display = 'none';
     document.getElementById('dashboard-page').style.display = 'block';
+
+    // Carrega perfil do usuário logado
+    const { data: { user } } = await db.auth.getUser();
+    if (user) {
+      const { data: profile } = await db.from('profiles').select('*').eq('id', user.id).single();
+      currentProfile = profile;
+
+      // Se admin: exibe menu de clientes
+      if (profile?.role === 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('visible'));
+      }
+
+      // Atualiza nome/instância na sidebar
+      const instEl = document.getElementById('wa-instance-display');
+      if (instEl) instEl.textContent = getEvoInstance();
+      const nameEl = document.getElementById('sidebar-user-name');
+      if (nameEl) nameEl.textContent = profile?.display_name || user.email;
+      const roleEl = document.getElementById('sidebar-user-role');
+      if (roleEl) roleEl.textContent = profile?.role === 'admin' ? '🔑 Super Admin' : '👤 Cliente';
+    }
+
     loadConfigs(); loadStats(); loadOverviewLeads(); loadPDFList();
     checkWAStatus();
     waStatusInterval = setInterval(checkWAStatus, 15000);
@@ -535,6 +689,7 @@
     document.getElementById('page-' + name).classList.add('active');
     el.classList.add('active');
     if (name === 'leads') loadLeads();
+    if (name === 'clientes') loadClients();
     if (name === 'batepapo') {
       loadConversations();
       clearInterval(chatRefreshInterval);
@@ -553,7 +708,7 @@
     const dot = document.getElementById('nav-wa-dot');
     const btnDesc = document.getElementById('btn-desconectar');
     try {
-      const res = await fetch(`${EVO_URL}/instance/connectionState/${EVO_INSTANCE}`, {
+      const res = await fetch(`${EVO_URL}/instance/connectionState/${getEvoInstance()}`, {
         headers: { 'apikey': EVO_KEY }
       });
       const data = await res.json();
@@ -584,7 +739,7 @@
     const timer = document.getElementById('qr-timer');
     btn.disabled = true; btn.innerHTML = '<span>⏳</span> Gerando...';
     try {
-      const res = await fetch(`${EVO_URL}/instance/connect/${EVO_INSTANCE}`, {
+      const res = await fetch(`${EVO_URL}/instance/connect/${getEvoInstance()}`, {
         headers: { 'apikey': EVO_KEY }
       });
       const data = await res.json();
@@ -636,7 +791,7 @@
   async function disconnectWA() {
     if (!confirm('Deseja desconectar o WhatsApp? O agente para de responder.')) return;
     try {
-      await fetch(`${EVO_URL}/instance/logout/${EVO_INSTANCE}`, {
+      await fetch(`${EVO_URL}/instance/logout/${getEvoInstance()}`, {
         method: 'DELETE', headers: { 'apikey': EVO_KEY }
       });
       setTimeout(checkWAStatus, 1000);
@@ -739,7 +894,7 @@
     const btn = document.getElementById('btn-send');
     btn.disabled = true; input.value = ''; input.style.height = 'auto';
     try {
-      await fetch(`${EVO_URL}/message/sendText/${EVO_INSTANCE}`, {
+      await fetch(`${EVO_URL}/message/sendText/${getEvoInstance()}`, {
         method: 'POST',
         headers: { 'apikey': EVO_KEY, 'Content-Type': 'application/json' },
         body: JSON.stringify({ number: selectedConv, text: msg })
@@ -793,11 +948,25 @@
   // CONFIGURAÇÕES
   // =====================
   async function loadConfigs() {
+    // Aplica defaults primeiro (garante campos preenchidos na primeira vez)
+    Object.entries(PROMPT_PADRAO).forEach(([chave, valor]) => {
+      const el = document.getElementById('cfg-' + chave);
+      if (el) el.value = valor;
+    });
+    // Sobrescreve com valores salvos no Supabase
     const { data } = await db.from('agente_config').select('chave, valor');
     if (!data) return;
     data.forEach(row => {
       const el = document.getElementById('cfg-' + row.chave);
-      if (el) el.value = row.valor || '';
+      if (el && row.valor) el.value = row.valor;
+    });
+  }
+
+  function restaurarPadrao() {
+    if (!confirm('Restaurar todos os prompts para o padrão? Os valores atuais serão substituídos (somente na tela — salve para confirmar).')) return;
+    Object.entries(PROMPT_PADRAO).forEach(([chave, valor]) => {
+      const el = document.getElementById('cfg-' + chave);
+      if (el) el.value = valor;
     });
   }
 
@@ -806,12 +975,13 @@
       : keys.includes('tonalidade') ? 'save-comunicacao' : 'save-qualificacao';
     const statusEl = document.getElementById(statusId);
     statusEl.textContent = 'Salvando...'; statusEl.style.color = '#888';
+    const { data: { user } } = await db.auth.getUser();
     for (const key of keys) {
       const el = document.getElementById('cfg-' + key);
       if (!el) continue;
       await db.from('agente_config').upsert(
-        { chave: key, valor: el.value, atualizado_em: new Date().toISOString() },
-        { onConflict: 'chave' }
+        { chave: key, valor: el.value, user_id: user.id, atualizado_em: new Date().toISOString() },
+        { onConflict: 'user_id,chave' }
       );
     }
     statusEl.textContent = '✅ Salvo!'; statusEl.style.color = '#16a34a';
@@ -903,6 +1073,93 @@
     el.innerHTML = '<div class="pdf-list">' + Object.values(unique).map(meta =>
       `<div class="pdf-item"><span>📄 ${meta.nome || 'Documento'}</span><span class="pdf-badge">${meta.categoria || 'Geral'}</span></div>`
     ).join('') + '</div>';
+  }
+
+  // =====================
+  // ADMIN — CLIENTES (via Edge Function segura)
+  // =====================
+  async function adminFetch(method, body) {
+    const { data: { session } } = await db.auth.getSession();
+    const res = await fetch(MANAGE_CLIENTS_URL, {
+      method,
+      headers: {
+        'Authorization': `Bearer ${session?.access_token}`,
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    return res.json();
+  }
+
+  async function loadClients() {
+    if (currentProfile?.role !== 'admin') return;
+    const el = document.getElementById('clients-table');
+    el.innerHTML = '<p class="loading">Carregando...</p>';
+    const profiles = await adminFetch('GET');
+    if (!Array.isArray(profiles)) {
+      el.innerHTML = '<p class="error-msg">Erro ao carregar clientes: ' + (profiles?.error || '') + '</p>'; return;
+    }
+    if (!profiles.length) {
+      el.innerHTML = '<p class="empty-state">Nenhum cliente cadastrado ainda.</p>'; return;
+    }
+    el.innerHTML = `<table>
+      <thead><tr><th>Nome</th><th>Tipo</th><th>Instância WA</th><th>Status</th><th>Criado</th><th>Ações</th></tr></thead>
+      <tbody>${profiles.map(p => `<tr>
+        <td style="font-weight:600">${escapeHtml(p.display_name || '—')}</td>
+        <td><span class="badge ${p.role === 'admin' ? 'badge-purple' : 'badge-blue'}">${p.role === 'admin' ? '🔑 Admin' : '👤 Cliente'}</span></td>
+        <td><code style="background:#f0f2f5;padding:2px 7px;border-radius:4px;font-size:12px;">${escapeHtml(p.evo_instance || '—')}</code></td>
+        <td><span class="badge ${p.active ? 'badge-green' : 'badge-red'}">${p.active ? '✅ Ativo' : '❌ Inativo'}</span></td>
+        <td style="color:#888;font-size:12px;">${p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : '—'}</td>
+        <td>
+          ${p.role !== 'admin' ? `<button onclick="toggleClient('${p.id}', ${p.active})" style="padding:5px 12px;font-size:12px;" class="btn-secondary">${p.active ? 'Desativar' : 'Ativar'}</button>` : '<span style="color:#bbb;font-size:12px;">—</span>'}
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  function openCreateClientModal() {
+    ['new-client-name','new-client-email','new-client-password','new-client-instance'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    document.getElementById('create-client-error').textContent = '';
+    document.getElementById('btn-create-client').disabled = false;
+    document.getElementById('btn-create-client').textContent = '✅ Criar conta';
+    document.getElementById('modal-backdrop').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-backdrop').classList.remove('open');
+  }
+
+  async function createClient() {
+    const name     = document.getElementById('new-client-name').value.trim();
+    const email    = document.getElementById('new-client-email').value.trim();
+    const password = document.getElementById('new-client-password').value;
+    const instance = document.getElementById('new-client-instance').value.trim().replace(/\s+/g, '');
+    const errEl    = document.getElementById('create-client-error');
+    const btn      = document.getElementById('btn-create-client');
+    errEl.textContent = '';
+    if (!name || !email || !password || !instance) {
+      errEl.textContent = 'Preencha todos os campos.'; return;
+    }
+    if (password.length < 6) {
+      errEl.textContent = 'Senha deve ter no mínimo 6 caracteres.'; return;
+    }
+    btn.disabled = true; btn.textContent = 'Criando...';
+    const result = await adminFetch('POST', { name, email, password, evo_instance: instance });
+    if (result?.error) {
+      errEl.textContent = 'Erro: ' + result.error;
+      btn.disabled = false; btn.textContent = '✅ Criar conta';
+      return;
+    }
+    closeModal();
+    loadClients();
+  }
+
+  async function toggleClient(userId, currentActive) {
+    await adminFetch('PATCH', { user_id: userId, active: !currentActive });
+    loadClients();
   }
 </script>
 </body>
