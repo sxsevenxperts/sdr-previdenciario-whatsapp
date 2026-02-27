@@ -114,7 +114,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const dadosConfig = $('Monta system prompt com config').first().json;\nconst sessaoRow = $input.first().json;\n\nlet historico = [];\ntry {\n  // Supabase retorna o campo historico como string JSON\n  historico = JSON.parse(sessaoRow.historico || '[]');\n} catch(e) { historico = []; }\n\nhistorico.push({\n  role: 'user',\n  content: dadosConfig.temArquivo ? '[Usuário enviou um arquivo]' : dadosConfig.mensagem\n});\n\nconst historicoTexto = historico\n  .map(h => `${h.role === 'user' ? 'Lead' : 'Agente'}: ${h.content}`)\n  .join('\\n');\n\nreturn [{ json: { ...dadosConfig, historico, historicoTexto } }];"
+        "jsCode": "const dadosConfig = $('Monta system prompt com config').first().json;\nconst sessaoRow = $input.first().json;\n\n// Se o agente estiver pausado para esta conversa (cliente assumiu o controle), ignora\nif (sessaoRow.agente_pausado === true) {\n  return [];\n}\n\nlet historico = [];\ntry {\n  historico = JSON.parse(sessaoRow.historico || '[]');\n} catch(e) { historico = []; }\n\nhistorico.push({\n  role: 'user',\n  content: dadosConfig.temArquivo ? '[Usuário enviou um arquivo]' : dadosConfig.mensagem\n});\n\nconst historicoTexto = historico\n  .map(h => `${h.role === 'user' ? 'Lead' : 'Agente'}: ${h.content}`)\n  .join('\\n');\n\nreturn [{ json: { ...dadosConfig, historico, historicoTexto } }];"
       },
       "id": "node-monta-historico",
       "name": "Monta histórico da conversa",

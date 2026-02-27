@@ -174,7 +174,62 @@
     .nav-section.admin-only.visible { display:block !important; }
     .client-tag { font-size:10px; background:#f0fdf4; color:#16a34a; padding:2px 7px; border-radius:10px; font-weight:700; }
     .client-tag.inactive { background:#fee2e2; color:#dc2626; }
+
+    /* FATURAMENTO */
+    .billing-hero { background: linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%); color:#fff; border-radius:16px; padding:32px 36px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; }
+    .billing-hero h2 { font-size:22px; font-weight:800; margin-bottom:4px; }
+    .billing-hero p { opacity:.8; font-size:14px; }
+    .billing-hero .price { font-size:42px; font-weight:900; letter-spacing:-1px; }
+    .billing-hero .price sup { font-size:18px; font-weight:600; vertical-align:super; }
+    .billing-hero .price sub { font-size:14px; font-weight:400; opacity:.75; }
+    .billing-status-badge { display:inline-flex; align-items:center; gap:6px; padding:6px 16px; border-radius:30px; font-size:13px; font-weight:700; margin-top:12px; }
+    .billing-status-badge.trial { background:rgba(255,255,255,0.2); color:#fff; }
+    .billing-status-badge.ativa { background:#dcfce7; color:#16a34a; }
+    .billing-status-badge.inadimplente { background:#fee2e2; color:#dc2626; }
+    .billing-status-badge.cancelada { background:#f3f4f6; color:#6b7280; }
+    .billing-info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
+    .billing-info-card { background:#fff; border-radius:12px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .billing-info-card .label { font-size:11px; font-weight:700; text-transform:uppercase; color:#888; letter-spacing:.5px; }
+    .billing-info-card .value { font-size:20px; font-weight:700; margin-top:4px; color:#1a1a2e; }
+    .billing-info-card .sub { font-size:12px; color:#666; margin-top:2px; }
+    .history-row-pago { color:#16a34a; font-weight:700; }
+    .history-row-pendente { color:#ca8a04; font-weight:700; }
+    .history-row-atrasado { color:#dc2626; font-weight:700; }
+    .btn-danger { padding:7px 16px; background:rgba(239,68,68,.1); color:#dc2626; border:1.5px solid rgba(239,68,68,.3); border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+    .btn-success { padding:7px 16px; background:rgba(22,163,74,.1); color:#16a34a; border:1.5px solid rgba(22,163,74,.3); border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+    .billing-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+    /* FLOW DESIGNER */
+    .flow-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    .flow-toolbar input { flex:1; min-width:200px; padding:9px 14px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:14px; }
+    .flow-toolbar input:focus { outline:none; border-color:#4f46e5; }
+    .flow-layout { display:grid; grid-template-columns:200px 1fr; gap:0; height:calc(100vh - 220px); min-height:500px; background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); overflow:hidden; }
+    .flow-palette { border-right:1px solid #f1f5f9; padding:16px 12px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; background:#fafafa; }
+    .flow-palette h4 { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:.8px; margin-bottom:4px; }
+    .palette-node { padding:10px 12px; background:#fff; border:1.5px solid #e5e7eb; border-radius:8px; cursor:grab; font-size:13px; font-weight:600; text-align:center; transition:all .2s; user-select:none; }
+    .palette-node:hover { border-color:#4f46e5; background:#eef2ff; color:#4f46e5; }
+    .palette-node:active { cursor:grabbing; }
+    .flow-canvas-wrap { position:relative; overflow:hidden; background:#f8fafc; }
+    #drawflow { width:100%; height:100%; }
+    .drawflow { background-color:#f8fafc !important; background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px) !important; background-size: 24px 24px !important; }
+    .drawflow .drawflow-node { background:#fff; border:2px solid #e5e7eb; border-radius:10px; min-width:140px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+    .drawflow .drawflow-node.selected { border-color:#4f46e5; box-shadow:0 0 0 3px rgba(79,70,229,.2); }
+    .drawflow .drawflow-node .title-box { background:#4f46e5; color:#fff; padding:8px 12px; border-radius:8px 8px 0 0; font-size:12px; font-weight:700; }
+    .drawflow .drawflow-node .box { padding:12px; font-size:12px; color:#444; }
+    .drawflow .drawflow-node.node-inicio .title-box { background:#16a34a; }
+    .drawflow .drawflow-node.node-fim .title-box { background:#dc2626; }
+    .drawflow .drawflow-node.node-qualificado .title-box { background:#16a34a; }
+    .drawflow .drawflow-node.node-desqualificado .title-box { background:#dc2626; }
+    .drawflow .drawflow-node.node-condicao .title-box { background:#ca8a04; }
+    .drawflow .drawflow-node.node-pergunta .title-box { background:#7c3aed; }
+    .drawflow-delete { background:#ef4444 !important; }
+    .flow-saved-list { display:flex; flex-direction:column; gap:8px; }
+    .flow-saved-item { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#f8fafc; border-radius:8px; font-size:13px; cursor:pointer; border:1.5px solid transparent; transition:all .2s; }
+    .flow-saved-item:hover { border-color:#4f46e5; background:#eef2ff; }
+    .flow-empty-canvas { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#aaa; gap:8px; pointer-events:none; }
+    .flow-empty-canvas .icon { font-size:48px; }
   </style>
+  <link rel="stylesheet" href="https://unpkg.com/drawflow/dist/drawflow.min.css" />
 </head>
 <body>
 
@@ -232,6 +287,14 @@
       <div class="nav-section">Resultados</div>
       <div class="nav-item" onclick="showPage('leads', this)">
         <span class="icon">👥</span> Leads
+      </div>
+      <div class="nav-section">Ferramentas</div>
+      <div class="nav-item" onclick="showPage('fluxos', this)">
+        <span class="icon">🔀</span> Designer de Fluxos
+      </div>
+      <div class="nav-section">Conta</div>
+      <div class="nav-item" onclick="showPage('faturamento', this)">
+        <span class="icon">💳</span> Faturamento
       </div>
       <div class="nav-section admin-only" id="admin-nav-section">Super Admin</div>
       <div class="nav-item admin-only" id="admin-nav-clientes" onclick="showPage('clientes', this)">
@@ -374,12 +437,16 @@
               </div>
               <div class="chat-header-actions">
                 <span id="chat-status-badge" class="badge badge-yellow" style="font-size:12px;"></span>
-                <button class="btn-secondary" style="padding:7px 14px;font-size:12px;" onclick="clearSession()">🗑 Reiniciar conversa</button>
+                <button id="btn-toggle-agente" class="btn-secondary" style="padding:7px 14px;font-size:12px;" onclick="toggleAgente()">⏸ Pausar Agente</button>
+                <button class="btn-secondary" style="padding:7px 14px;font-size:12px;" onclick="clearSession()">🗑 Reiniciar</button>
               </div>
+            </div>
+            <div id="agente-pausado-banner" style="display:none;background:#fef9c3;border-bottom:1px solid #fef08a;padding:8px 20px;font-size:13px;font-weight:600;color:#92400e;">
+              ⏸ Agente pausado para esta conversa — você está no controle. <button onclick="toggleAgente()" style="margin-left:12px;padding:4px 12px;background:#ca8a04;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">▶ Reativar Agente</button>
             </div>
             <div class="messages-area" id="messages-area"></div>
             <div class="chat-input-area">
-              <textarea class="chat-input" id="chat-input" placeholder="Digite uma mensagem para enviar como agente..." rows="1"
+              <textarea class="chat-input" id="chat-input" placeholder="Digite uma mensagem para enviar direto ao WhatsApp..." rows="1"
                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendManualMessage();}"
                 oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
               <button class="btn-send" id="btn-send" onclick="sendManualMessage()" title="Enviar">➤</button>
@@ -490,6 +557,93 @@
       </div>
     </div>
 
+    <!-- FATURAMENTO -->
+    <div class="page" id="page-faturamento">
+      <div class="page-header"><h1>💳 Faturamento</h1><p>Gerencie sua assinatura e histórico de pagamentos</p></div>
+
+      <!-- Hero da assinatura (cliente e admin vêem info do próprio plano) -->
+      <div class="billing-hero" id="billing-hero">
+        <div>
+          <h2>SDR Agente Único</h2>
+          <p>Atendimento automático 24/7 via WhatsApp com IA</p>
+          <div id="billing-status-badge" class="billing-status-badge trial">⏳ Período de teste</div>
+        </div>
+        <div style="text-align:right">
+          <div class="price"><sup>R$</sup>397<sub>/mês</sub></div>
+          <div style="opacity:.75;font-size:13px;margin-top:4px" id="billing-next-date">Próxima cobrança: —</div>
+        </div>
+      </div>
+
+      <div class="billing-info-grid">
+        <div class="billing-info-card">
+          <div class="label">Plano</div>
+          <div class="value">Agente Único</div>
+          <div class="sub">1 número WhatsApp</div>
+        </div>
+        <div class="billing-info-card">
+          <div class="label">Status</div>
+          <div class="value" id="billing-status-text">—</div>
+          <div class="sub" id="billing-cycle-text">Mensal</div>
+        </div>
+        <div class="billing-info-card">
+          <div class="label">Vencimento</div>
+          <div class="value" id="billing-due-day">—</div>
+          <div class="sub">todo mês</div>
+        </div>
+      </div>
+
+      <!-- Histórico de cobranças (cliente) -->
+      <div class="card" id="billing-history-card">
+        <h3>🧾 Histórico de Cobranças</h3>
+        <div id="billing-history-table"><p class="loading">Carregando...</p></div>
+      </div>
+
+      <!-- Admin: gerenciar assinaturas de todos os clientes -->
+      <div class="card admin-only" id="billing-admin-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">🏢 Assinaturas dos Clientes</h3>
+          <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadAdminBilling()">🔄 Atualizar</button>
+        </div>
+        <div id="admin-billing-table"><p class="loading">Carregando...</p></div>
+      </div>
+    </div>
+
+    <!-- DESIGNER DE FLUXOS -->
+    <div class="page" id="page-fluxos">
+      <div class="page-header"><h1>🔀 Designer de Fluxos</h1><p>Crie e salve fluxos visuais de conversa para o seu agente</p></div>
+
+      <div class="flow-toolbar">
+        <input type="text" id="flow-name-input" placeholder="Nome do fluxo..." />
+        <button class="btn-save" onclick="saveFlow()">💾 Salvar</button>
+        <button class="btn-secondary" onclick="newFlow()">➕ Novo</button>
+        <button class="btn-secondary" onclick="clearCanvas()">🗑️ Limpar tela</button>
+        <button class="btn-secondary" onclick="exportFlow()">📤 Exportar JSON</button>
+      </div>
+
+      <div class="flow-layout">
+        <!-- Paleta de nós -->
+        <div class="flow-palette">
+          <h4>Nós disponíveis</h4>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'inicio')">🟢 Início</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'mensagem')">💬 Mensagem Bot</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'pergunta')">❓ Pergunta</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'condicao')">🔀 Condição</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'qualificado')">✅ Qualificado</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'desqualificado')">❌ Desqualificado</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'fim')">🔴 Fim</div>
+
+          <h4 style="margin-top:16px">Fluxos salvos</h4>
+          <div id="saved-flows-list"><p style="font-size:12px;color:#aaa;text-align:center;padding:8px;">Nenhum fluxo salvo</p></div>
+        </div>
+
+        <!-- Canvas Drawflow -->
+        <div class="flow-canvas-wrap" id="flow-canvas-wrap"
+             ondrop="drop(event)" ondragover="allowDrop(event)">
+          <div id="drawflow"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- CLIENTES (admin only) -->
     <div class="page" id="page-clientes">
       <div class="page-header">
@@ -502,6 +656,13 @@
           <button class="btn-save" onclick="openCreateClientModal()">➕ Novo Cliente</button>
         </div>
         <div id="clients-table"><p class="loading">Carregando...</p></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">🤖 Uso de Tokens GPT (este mês)</h3>
+          <button class="btn-secondary" style="padding:7px 14px;font-size:13px" onclick="loadTokenUsageAdmin()">🔄 Atualizar</button>
+        </div>
+        <div id="token-usage-admin-table"><p class="loading">Carregando...</p></div>
       </div>
     </div>
 
@@ -689,7 +850,17 @@
     document.getElementById('page-' + name).classList.add('active');
     el.classList.add('active');
     if (name === 'leads') loadLeads();
-    if (name === 'clientes') loadClients();
+    if (name === 'clientes') { loadClients(); loadTokenUsageAdmin(); }
+    if (name === 'faturamento') {
+      loadBilling();
+      if (currentProfile?.role === 'admin') {
+        document.getElementById('billing-admin-card').classList.add('visible');
+        loadAdminBilling();
+      }
+    }
+    if (name === 'fluxos') {
+      setTimeout(() => { initDrawflow(); loadSavedFlows(); }, 100);
+    }
     if (name === 'batepapo') {
       loadConversations();
       clearInterval(chatRefreshInterval);
@@ -827,9 +998,10 @@
       const num = c.numero_whatsapp || '—';
       const initials = num.replace(/\D/g,'').slice(-4).slice(0,2) || '??';
       const isActive = selectedConv === c.numero_whatsapp;
+      const pausedTag = c.agente_pausado ? ' <span style="font-size:10px;background:#fef9c3;color:#92400e;padding:1px 5px;border-radius:4px;">⏸</span>' : '';
       return `<div class="conv-item ${isActive ? 'active' : ''}" onclick="selectConv('${c.numero_whatsapp}')">
         <div class="conv-name">
-          <span>${formatPhone(num)}</span>
+          <span>${formatPhone(num)}${pausedTag}</span>
           <span class="conv-time">${time}</span>
         </div>
         <div class="conv-preview">${preview}</div>
@@ -858,8 +1030,37 @@
     document.getElementById('chat-last-seen').textContent = conv.atualizado_em
       ? 'Última atividade: ' + new Date(conv.atualizado_em).toLocaleString('pt-BR')
       : 'Sessão ativa';
+    // Atualiza banner e botão de pausa
+    updateAgentePausadoUI(conv.agente_pausado);
     renderMessages(conv);
     renderConvList(allConversations);
+  }
+
+  function updateAgentePausadoUI(pausado) {
+    const banner = document.getElementById('agente-pausado-banner');
+    const btn    = document.getElementById('btn-toggle-agente');
+    if (pausado) {
+      banner.style.display = 'block';
+      btn.textContent = '▶ Reativar Agente';
+      btn.style.background = '#dcfce7'; btn.style.color = '#16a34a'; btn.style.borderColor = '#bbf7d0';
+    } else {
+      banner.style.display = 'none';
+      btn.textContent = '⏸ Pausar Agente';
+      btn.style.background = ''; btn.style.color = ''; btn.style.borderColor = '';
+    }
+  }
+
+  async function toggleAgente() {
+    if (!selectedConv) return;
+    const conv = allConversations.find(c => c.numero_whatsapp === selectedConv);
+    if (!conv) return;
+    const novoPausa = !conv.agente_pausado;
+    await db.from('sessoes')
+      .update({ agente_pausado: novoPausa, pausado_em: novoPausa ? new Date().toISOString() : null })
+      .eq('numero_whatsapp', selectedConv)
+      .eq('user_id', currentProfile?.id);
+    conv.agente_pausado = novoPausa;
+    updateAgentePausadoUI(novoPausa);
   }
 
   function renderMessages(conv) {
@@ -1164,6 +1365,281 @@
     await adminFetch('PATCH', { user_id: userId, active: !currentActive });
     loadClients();
   }
+
+  // =====================
+  // FATURAMENTO
+  // =====================
+  const MANAGE_BILLING_URL = `${SUPABASE_URL}/functions/v1/manage-billing`;
+
+  async function billingFetch(method, body) {
+    const { data: { session } } = await db.auth.getSession();
+    const res = await fetch(MANAGE_BILLING_URL, {
+      method,
+      headers: {
+        'Authorization': `Bearer ${session?.access_token}`,
+        'apikey': SUPABASE_KEY,
+        'Content-Type': 'application/json'
+      },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    return res.json();
+  }
+
+  const STATUS_LABELS = { trial:'⏳ Período de teste', ativa:'✅ Ativa', inadimplente:'🔴 Inadimplente', cancelada:'⚫ Cancelada' };
+  const STATUS_CLASSES = { trial:'trial', ativa:'ativa', inadimplente:'inadimplente', cancelada:'cancelada' };
+
+  async function loadBilling() {
+    // Dados do próprio cliente (RLS retorna só o seu)
+    const { data: assin } = await db.from('assinaturas').select('*').single();
+    if (assin) {
+      const badgeEl = document.getElementById('billing-status-badge');
+      badgeEl.textContent = STATUS_LABELS[assin.status] || assin.status;
+      badgeEl.className = `billing-status-badge ${STATUS_CLASSES[assin.status] || ''}`;
+      document.getElementById('billing-status-text').textContent = STATUS_LABELS[assin.status] || assin.status;
+      document.getElementById('billing-due-day').textContent = `Dia ${assin.dia_vencimento || 1}`;
+      document.getElementById('billing-cycle-text').textContent = assin.ciclo === 'mensal' ? 'Cobrança mensal' : assin.ciclo;
+      document.getElementById('billing-next-date').textContent = assin.proxima_cobranca
+        ? `Próxima cobrança: ${new Date(assin.proxima_cobranca + 'T00:00:00').toLocaleDateString('pt-BR')}`
+        : 'Próxima cobrança: —';
+    }
+    // Histórico de cobranças
+    const { data: hist } = await db.from('historico_cobrancas').select('*').order('criado_em', { ascending: false }).limit(24);
+    const histEl = document.getElementById('billing-history-table');
+    if (!hist || !hist.length) {
+      histEl.innerHTML = '<p class="empty-state">Nenhum registro de cobrança ainda.</p>'; return;
+    }
+    histEl.innerHTML = `<table>
+      <thead><tr><th>Mês Referência</th><th>Valor</th><th>Status</th><th>Vencimento</th><th>Pago em</th><th>Observação</th></tr></thead>
+      <tbody>${hist.map(h => `<tr>
+        <td style="font-weight:600">${h.mes_referencia || '—'}</td>
+        <td>R$ ${Number(h.valor).toFixed(2).replace('.',',')}</td>
+        <td class="history-row-${h.status}">${h.status === 'pago' ? '✅ Pago' : h.status === 'pendente' ? '⏳ Pendente' : h.status === 'atrasado' ? '🔴 Atrasado' : h.status}</td>
+        <td>${h.vencimento ? new Date(h.vencimento+'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
+        <td>${h.pago_em ? new Date(h.pago_em).toLocaleDateString('pt-BR') : '—'}</td>
+        <td style="color:#888;font-size:12px">${h.observacao || '—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  async function loadAdminBilling() {
+    if (currentProfile?.role !== 'admin') return;
+    const el = document.getElementById('admin-billing-table');
+    el.innerHTML = '<p class="loading">Carregando...</p>';
+    const data = await billingFetch('GET');
+    if (!Array.isArray(data)) {
+      el.innerHTML = '<p class="error-msg">Erro ao carregar.</p>'; return;
+    }
+    if (!data.length) {
+      el.innerHTML = '<p class="empty-state">Nenhuma assinatura encontrada.</p>'; return;
+    }
+    const meAtual = new Date().toISOString().slice(0,7);
+    el.innerHTML = `<table>
+      <thead><tr><th>Cliente</th><th>Instância WA</th><th>Status</th><th>Próx. Cobrança</th><th>Valor</th><th>Ações</th></tr></thead>
+      <tbody>${data.map(a => `<tr>
+        <td style="font-weight:600">${escapeHtml(a.profiles?.display_name || '—')}</td>
+        <td><code style="background:#f0f2f5;padding:2px 7px;border-radius:4px;font-size:12px;">${escapeHtml(a.profiles?.evo_instance || '—')}</code></td>
+        <td><span class="badge ${a.status === 'ativa' ? 'badge-green' : a.status === 'inadimplente' ? 'badge-red' : a.status === 'trial' ? 'badge-yellow' : 'badge-blue'}">${STATUS_LABELS[a.status] || a.status}</span></td>
+        <td style="font-size:13px">${a.proxima_cobranca ? new Date(a.proxima_cobranca+'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
+        <td style="font-weight:700">R$ ${Number(a.valor || 397).toFixed(2).replace('.',',')}</td>
+        <td>
+          <div class="billing-actions">
+            ${a.status !== 'ativa' ? `<button class="btn-success" onclick="setBillingStatus('${a.user_id}','ativa')">✅ Ativar</button>` : ''}
+            ${a.status !== 'inadimplente' ? `<button class="btn-danger" onclick="setBillingStatus('${a.user_id}','inadimplente')">🔴 Inadimplente</button>` : ''}
+            <button class="btn-secondary" onclick="registerPayment('${a.user_id}','${meAtual}')" style="font-size:12px">💰 Registrar Pgto</button>
+          </div>
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  async function setBillingStatus(userId, status) {
+    await billingFetch('PATCH', { user_id: userId, status });
+    loadAdminBilling();
+  }
+
+  async function registerPayment(userId, mes) {
+    const m = prompt('Mês de referência (ex: 2025-02):', mes);
+    if (!m) return;
+    await billingFetch('POST', { user_id: userId, status: 'pago', mes_referencia: m });
+    alert('Pagamento registrado!');
+    loadAdminBilling();
+  }
+
+  // =====================
+  // DESIGNER DE FLUXOS
+  // =====================
+  let editor = null;
+  let currentFlowId = null;
+  let dragNodeType = null;
+
+  const NODE_TEMPLATES = {
+    inicio:          { title:'🟢 Início',          inputs:0, outputs:1, html:'<div class="box">Ponto de entrada do fluxo</div>', cls:'node-inicio' },
+    mensagem:        { title:'💬 Mensagem Bot',     inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Texto da mensagem..."></textarea></div>', cls:'' },
+    pergunta:        { title:'❓ Pergunta',          inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Pergunta para o lead..."></textarea></div>', cls:'node-pergunta' },
+    condicao:        { title:'🔀 Condição',          inputs:1, outputs:2, html:'<div class="box"><input style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;" placeholder="Se contém..." /><div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-top:6px;"><span>Saída 1: Sim</span><span>Saída 2: Não</span></div></div>', cls:'node-condicao' },
+    qualificado:     { title:'✅ Lead Qualificado', inputs:1, outputs:0, html:'<div class="box" style="color:#16a34a">Registra lead como qualificado e notifica advogado</div>', cls:'node-qualificado' },
+    desqualificado:  { title:'❌ Desqualificado',   inputs:1, outputs:0, html:'<div class="box" style="color:#dc2626">Registra lead como desqualificado</div>', cls:'node-desqualificado' },
+    fim:             { title:'🔴 Fim',              inputs:1, outputs:0, html:'<div class="box">Encerra a conversa</div>', cls:'node-fim' },
+  };
+
+  function initDrawflow() {
+    if (editor) return;
+    const container = document.getElementById('drawflow');
+    editor = new Drawflow(container);
+    editor.reroute = true;
+    editor.editor_mode = 'edit';
+    editor.start();
+    // Registra os tipos de nó
+    Object.entries(NODE_TEMPLATES).forEach(([type, cfg]) => {
+      editor.registerNode(type, { html: `<div class="title-box">${cfg.title}</div>${cfg.html}`, inputs: cfg.inputs, outputs: cfg.outputs });
+    });
+  }
+
+  function drag(event, type) {
+    dragNodeType = type;
+    event.dataTransfer.setData('text', type);
+  }
+
+  function allowDrop(event) { event.preventDefault(); }
+
+  function drop(event) {
+    event.preventDefault();
+    const type = dragNodeType || event.dataTransfer.getData('text');
+    if (!type || !NODE_TEMPLATES[type]) return;
+    const cfg = NODE_TEMPLATES[type];
+    const wrap = document.getElementById('flow-canvas-wrap');
+    const rect = wrap.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    editor.addNode(
+      type, cfg.inputs, cfg.outputs,
+      x, y,
+      cfg.cls,
+      {},
+      `<div class="title-box">${cfg.title}</div>${cfg.html}`
+    );
+    dragNodeType = null;
+  }
+
+  function newFlow() {
+    if (!editor) initDrawflow();
+    if (!confirm('Criar novo fluxo? As alterações não salvas serão perdidas.')) return;
+    editor.clearModuleSelected();
+    editor.import({ drawflow: { Home: { data: {} } } });
+    document.getElementById('flow-name-input').value = '';
+    currentFlowId = null;
+  }
+
+  function clearCanvas() {
+    if (!editor) return;
+    if (!confirm('Limpar todos os nós do canvas?')) return;
+    editor.clearModuleSelected();
+    editor.import({ drawflow: { Home: { data: {} } } });
+  }
+
+  async function saveFlow() {
+    if (!editor) { alert('Nenhum fluxo para salvar.'); return; }
+    const name = document.getElementById('flow-name-input').value.trim();
+    if (!name) { alert('Digite um nome para o fluxo.'); return; }
+    const { data: { user } } = await db.auth.getUser();
+    const flowData = editor.export();
+    if (currentFlowId) {
+      await db.from('fluxos').update({ nome: name, dados: flowData, atualizado_em: new Date().toISOString() }).eq('id', currentFlowId);
+    } else {
+      const { data } = await db.from('fluxos').insert({ nome: name, dados: flowData, user_id: user.id }).select().single();
+      if (data) currentFlowId = data.id;
+    }
+    alert('Fluxo salvo!');
+    loadSavedFlows();
+  }
+
+  async function loadSavedFlows() {
+    const { data } = await db.from('fluxos').select('id,nome,atualizado_em').order('atualizado_em', { ascending: false }).limit(20);
+    const el = document.getElementById('saved-flows-list');
+    if (!data || !data.length) {
+      el.innerHTML = '<p style="font-size:12px;color:#aaa;text-align:center;padding:8px;">Nenhum fluxo salvo</p>'; return;
+    }
+    el.innerHTML = data.map(f => `
+      <div class="flow-saved-item" onclick="loadFlow('${f.id}','${escapeHtml(f.nome)}')">
+        <span>📋 ${escapeHtml(f.nome)}</span>
+        <button onclick="event.stopPropagation();deleteFlow('${f.id}')" style="background:none;border:none;color:#dc2626;cursor:pointer;font-size:14px;">🗑️</button>
+      </div>`).join('');
+  }
+
+  async function loadFlow(id, name) {
+    const { data } = await db.from('fluxos').select('*').eq('id', id).single();
+    if (!data) return;
+    if (!editor) initDrawflow();
+    editor.import(data.dados);
+    document.getElementById('flow-name-input').value = data.nome;
+    currentFlowId = id;
+  }
+
+  async function deleteFlow(id) {
+    if (!confirm('Excluir este fluxo?')) return;
+    await db.from('fluxos').delete().eq('id', id);
+    if (currentFlowId === id) { currentFlowId = null; document.getElementById('flow-name-input').value = ''; }
+    loadSavedFlows();
+  }
+
+  function exportFlow() {
+    if (!editor) return;
+    const data = JSON.stringify(editor.export(), null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url;
+    a.download = (document.getElementById('flow-name-input').value || 'fluxo') + '.json';
+    a.click(); URL.revokeObjectURL(url);
+  }
+
+  // =====================
+  // USO DE TOKENS (admin)
+  // =====================
+  async function loadTokenUsageAdmin() {
+    if (currentProfile?.role !== 'admin') return;
+    const el = document.getElementById('token-usage-admin-table');
+    if (!el) return;
+    el.innerHTML = '<p class="loading">Carregando...</p>';
+
+    // Busca via service role (usa manage-billing como proxy ou direto com service role)
+    // Como não temos RLS para admin na token_usage, usamos a abordagem de RPC ou
+    // consultamos via manage-billing estendido. Por ora, mostramos apenas os dados
+    // do próprio usuário como demonstração (integração completa requer RPC)
+    const inicio = new Date(); inicio.setDate(1); inicio.setHours(0,0,0,0);
+    const { data } = await db
+      .from('token_usage')
+      .select('modelo,tokens_input,tokens_output,tokens_total,criado_em')
+      .gte('criado_em', inicio.toISOString())
+      .order('criado_em', { ascending: false });
+
+    if (!data || !data.length) {
+      el.innerHTML = '<p class="empty-state">Nenhum uso de tokens registrado este mês.</p>'; return;
+    }
+
+    const totalInput = data.reduce((s,r) => s + (r.tokens_input||0), 0);
+    const totalOutput = data.reduce((s,r) => s + (r.tokens_output||0), 0);
+    const totalAll = data.reduce((s,r) => s + (r.tokens_total||0), 0);
+    const custo = (totalAll / 1000000 * 5).toFixed(4); // ~$5/1M tokens gpt-4o
+
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
+        <div class="billing-info-card"><div class="label">Tokens Input</div><div class="value">${totalInput.toLocaleString('pt-BR')}</div></div>
+        <div class="billing-info-card"><div class="label">Tokens Output</div><div class="value">${totalOutput.toLocaleString('pt-BR')}</div></div>
+        <div class="billing-info-card"><div class="label">Total Tokens</div><div class="value">${totalAll.toLocaleString('pt-BR')}</div></div>
+        <div class="billing-info-card"><div class="label">Custo Est. (USD)</div><div class="value" style="font-size:16px">$${custo}</div><div class="sub">GPT-4o ~$5/1M tkn</div></div>
+      </div>
+      <table>
+        <thead><tr><th>Data</th><th>Modelo</th><th>Input</th><th>Output</th><th>Total</th></tr></thead>
+        <tbody>${data.slice(0,50).map(r => `<tr>
+          <td style="font-size:12px;color:#888">${new Date(r.criado_em).toLocaleString('pt-BR')}</td>
+          <td><code style="background:#f0f2f5;padding:2px 7px;border-radius:4px;font-size:11px">${r.modelo}</code></td>
+          <td>${(r.tokens_input||0).toLocaleString('pt-BR')}</td>
+          <td>${(r.tokens_output||0).toLocaleString('pt-BR')}</td>
+          <td style="font-weight:700">${(r.tokens_total||0).toLocaleString('pt-BR')}</td>
+        </tr>`).join('')}</tbody>
+      </table>`;
+  }
 </script>
+<script src="https://unpkg.com/drawflow/dist/drawflow.min.js"></script>
 </body>
 </html>
