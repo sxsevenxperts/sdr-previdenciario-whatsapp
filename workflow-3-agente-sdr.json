@@ -17,7 +17,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json;\n\n// Ignora mensagens enviadas pelo próprio bot\nif (body.data?.key?.fromMe === true) {\n  return [];\n}\n\n// Ignora mensagens de grupos\nconst remoteJid = body.data?.key?.remoteJid || '';\nif (remoteJid.includes('@g.us')) {\n  return [];\n}\n\nconst numero = remoteJid.replace('@s.whatsapp.net', '');\nconst mensagem = body.data?.message?.conversation\n  || body.data?.message?.extendedTextMessage?.text\n  || '';\nconst nomeContato = body.data?.pushName || 'Lead';\nconst tipoMensagem = body.data?.messageType || 'conversation';\nconst temArquivo = ['imageMessage', 'documentMessage', 'audioMessage'].includes(tipoMensagem);\n\nif (!mensagem && !temArquivo) return [];\n\nreturn [{ json: { numero, mensagem, nomeContato, tipoMensagem, temArquivo, timestamp: new Date().toISOString() } }];"
+        "jsCode": "const body = $input.first().json;\n\n// Ignora mensagens enviadas pelo próprio bot\nif (body.data?.key?.fromMe === true) {\n  return [];\n}\n\n// Ignora mensagens de grupos\nconst remoteJid = body.data?.key?.remoteJid || '';\nif (remoteJid.includes('@g.us')) {\n  return [];\n}\n\nconst numero = remoteJid.replace('@s.whatsapp.net', '');\nconst mensagem = body.data?.message?.conversation\n  || body.data?.message?.extendedTextMessage?.text\n  || '';\nconst nomeContato = body.data?.pushName || 'Lead';\nconst tipoMensagem = body.data?.messageType || 'conversation';\nconst temArquivo = ['imageMessage', 'documentMessage', 'audioMessage'].includes(tipoMensagem);\n\n// Extrai o instanceName para identificar o cliente (multi-tenancy)\nconst instanceName = body.instance || body.instanceName || body.data?.instance || 'TESTE';\n\nif (!mensagem && !temArquivo) return [];\n\nreturn [{ json: { numero, mensagem, nomeContato, tipoMensagem, temArquivo, instanceName, timestamp: new Date().toISOString() } }];"
       },
       "id": "node-normaliza",
       "name": "Normaliza e filtra mensagem",
@@ -28,26 +28,62 @@
     {
       "parameters": {
         "operation": "select",
+        "tableId": "profiles",
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "evo_instance",
+              "keyValue": "={{ $('Normaliza e filtra mensagem').first().json.instanceName }}"
+            },
+            {
+              "keyName": "active",
+              "keyValue": "true"
+            }
+          ]
+        },
+        "options": { "limit": 1 }
+      },
+      "id": "node-resolve-cliente",
+      "name": "Resolve cliente pelo instanceName",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [440, 400],
+      "notes": "Busca o profile do cliente pelo instanceName da Evolution API. Isola dados por tenant (multi-tenancy)."
+    },
+    {
+      "parameters": {
+        "operation": "select",
         "tableId": "agente_config",
-        "filterType": "string",
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "user_id",
+              "keyValue": "={{ $('Resolve cliente pelo instanceName').first().json.id }}"
+            }
+          ]
+        },
         "options": {}
       },
       "id": "node-carrega-config",
       "name": "Carrega configurações do Supabase",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [440, 400],
-      "notes": "Busca todas as configurações salvas pelo Painel de Configuração."
+      "position": [660, 400],
+      "notes": "Busca configurações do cliente específico (isolado por user_id)."
     },
     {
       "parameters": {
-        "jsCode": "// Converte array de {chave, valor} em objeto\nconst rows = $input.all();\nconst config = {};\nrows.forEach(row => {\n  config[row.json.chave] = row.json.valor;\n});\n\nconst dadosMensagem = $('Normaliza e filtra mensagem').first().json;\n\n// Monta o system prompt completo com todas as configurações\nconst systemPrompt = `${config.prompt_sistema || ''}\n\nOBJETIVO: ${config.objetivo || ''}\n\nTONALIDADE: ${config.tonalidade || ''}\n\nINSTRUÇÕES DE COMUNICAÇÃO: ${config.instrucoes_comunicacao || ''}\n\nCRITÉRIOS DE QUALIFICAÇÃO (precisa atender ao menos 3 dos seguintes):\n${config.criterios_qualificacao || ''}\n\nQUANDO O LEAD FOR QUALIFICADO:\n- Responda com: ${config.msg_qualificado || 'Vou encaminhar seu caso ao advogado.'}\n- Inclua no final da mensagem um bloco JSON assim:\n\\`\\`\\`json\n{\"qualificado\":true,\"nome\":\"Nome completo\",\"celular\":\"DDD+número\",\"tese\":\"Tese jurídica identificada\",\"resumo\":\"Resumo completo da conversa\"}\n\\`\\`\\`\n\nQUANDO O LEAD NÃO FOR QUALIFICADO:\n- Responda com: ${config.msg_desqualificado || 'Agradecemos o contato!'}\n- Inclua no final:\n\\`\\`\\`json\n{\"qualificado\":false,\"motivo\":\"Motivo da desqualificação\"}\n\\`\\`\\`\n\nREGRAS IMPORTANTES:\n- Faça uma pergunta por vez\n- Nunca prometa resultado ou vitória\n- Nunca dê consultoria jurídica\n- Se não souber algo, consulte a base de conhecimento antes de responder`;\n\nreturn [{ json: { ...dadosMensagem, config, systemPrompt } }];"
+        "jsCode": "// Converte array de {chave, valor} em objeto\nconst rows = $input.all();\nconst config = {};\nrows.forEach(row => {\n  config[row.json.chave] = row.json.valor;\n});\n\nconst dadosMensagem = $('Normaliza e filtra mensagem').first().json;\nconst cliente = $('Resolve cliente pelo instanceName').first().json;\nconst userId = cliente?.id;\nconst evoInstance = cliente?.evo_instance || dadosMensagem.instanceName;\n\n// Monta o system prompt completo com todas as configurações do cliente\nconst systemPrompt = `${config.prompt_sistema || ''}\n\nOBJETIVO: ${config.objetivo || ''}\n\nTONALIDADE: ${config.tonalidade || ''}\n\nINSTRUÇÕES DE COMUNICAÇÃO: ${config.instrucoes_comunicacao || ''}\n\nCRITÉRIOS DE QUALIFICAÇÃO (precisa atender ao menos 3 dos seguintes):\n${config.criterios_qualificacao || ''}\n\nQUANDO O LEAD FOR QUALIFICADO:\n- Responda com: ${config.msg_qualificado || 'Vou encaminhar seu caso ao advogado.'}\n- Inclua no final da mensagem um bloco JSON assim:\n\\`\\`\\`json\n{\"qualificado\":true,\"nome\":\"Nome completo\",\"celular\":\"DDD+número\",\"tese\":\"Tese jurídica identificada\",\"resumo\":\"Resumo completo da conversa\"}\n\\`\\`\\`\n\nQUANDO O LEAD NÃO FOR QUALIFICADO:\n- Responda com: ${config.msg_desqualificado || 'Agradecemos o contato!'}\n- Inclua no final:\n\\`\\`\\`json\n{\"qualificado\":false,\"motivo\":\"Motivo da desqualificação\"}\n\\`\\`\\`\n\nREGRAS IMPORTANTES:\n- Faça uma pergunta por vez\n- Nunca prometa resultado ou vitória\n- Nunca dê consultoria jurídica\n- Se não souber algo, consulte a base de conhecimento antes de responder`;\n\nreturn [{ json: { ...dadosMensagem, userId, evoInstance, config, systemPrompt } }];"
       },
       "id": "node-monta-config",
       "name": "Monta system prompt com config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [660, 400]
+      "position": [880, 400]
     },
     {
       "parameters": {
@@ -60,6 +96,10 @@
             {
               "keyName": "numero_whatsapp",
               "keyValue": "={{ $('Normaliza e filtra mensagem').first().json.numero }}"
+            },
+            {
+              "keyName": "user_id",
+              "keyValue": "={{ $('Monta system prompt com config').first().json.userId }}"
             }
           ]
         },
@@ -69,8 +109,8 @@
       "name": "Supabase — Busca histórico da sessão",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [880, 400],
-      "notes": "Busca o histórico de conversa do lead na tabela sessoes."
+      "position": [1100, 400],
+      "notes": "Busca o histórico de conversa do lead, isolado por user_id do cliente."
     },
     {
       "parameters": {
@@ -80,7 +120,7 @@
       "name": "Monta histórico da conversa",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1100, 400]
+      "position": [1320, 400]
     },
     {
       "parameters": {
@@ -96,7 +136,7 @@
       "name": "Agente SDR — IA",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "position": [1320, 400],
+      "position": [1540, 400],
       "notes": "Configure a credencial OpenAI. As tools (Tavily e Supabase Vector Store) são conectadas abaixo."
     },
     {
@@ -114,23 +154,25 @@
       "name": "Tool: Busca na Web (Tavily)",
       "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
       "typeVersion": 1.1,
-      "position": [1200, 620],
-      "notes": "Chama a API do Tavily via HTTP. Compatível com todas as versões do n8n."
+      "position": [1420, 620],
+      "notes": "Chave Tavily incluída diretamente no JSON body. Compatível com todas as versões do n8n."
     },
     {
       "parameters": {
         "mode": "retrieve-as-tool",
         "toolName": "base_conhecimento_pdf",
-        "toolDescription": "Consulta a base de conhecimento interna com PDFs de legislação, jurisprudência e tabelas previdenciárias. Use quando precisar de informações específicas dos documentos carregados.",
+        "toolDescription": "Consulta a base de conhecimento interna com PDFs de legislação, jurisprudência e tabelas previdenciárias. Use quando precisar de informações específicas dos documentos carregados pelo cliente.",
         "tableName": "documentos_conhecimento",
-        "options": {}
+        "options": {
+          "queryFilter": "={{ { user_id: $('Monta system prompt com config').first().json.userId } }}"
+        }
       },
       "id": "node-tool-vectorstore",
       "name": "Tool: Base de Conhecimento PDF",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
       "typeVersion": 1,
-      "position": [1440, 620],
-      "notes": "Conecta ao Supabase Vector Store com os PDFs processados pelo Workflow 2."
+      "position": [1660, 620],
+      "notes": "Filtra documentos por user_id do cliente — cada cliente acessa apenas sua própria base de PDFs."
     },
     {
       "parameters": {
@@ -141,7 +183,7 @@
       "name": "Embeddings para busca",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1.2,
-      "position": [1440, 780],
+      "position": [1660, 780],
       "notes": "Necessário para a busca semântica nos PDFs."
     },
     {
@@ -155,23 +197,23 @@
       "name": "LLM — GPT-4o",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
-      "position": [1200, 780],
+      "position": [1420, 780],
       "notes": "Configure a credencial OpenAI. Temperatura 0.3 para respostas mais consistentes."
     },
     {
       "parameters": {
-        "jsCode": "const respostaAgente = $input.first().json.output || '';\nconst dadosMsg = $('Normaliza e filtra mensagem').first().json;\nconst config = $('Monta system prompt com config').first().json.config;\n\nlet dadosQualificacao = null;\nlet qualificado = null;\n\n// Extrai JSON da resposta\ntry {\n  const match = respostaAgente.match(/```json([\\s\\S]*?)```/);\n  if (match) {\n    dadosQualificacao = JSON.parse(match[1].trim());\n    qualificado = dadosQualificacao.qualificado === true;\n  }\n} catch(e) {}\n\n// Remove o JSON do texto que vai ao lead\nconst textoParaLead = respostaAgente.replace(/```json[\\s\\S]*?```/g, '').trim();\n\n// Monta relatório formatado\nlet relatorio = null;\nif (qualificado && dadosQualificacao) {\n  const agora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\n  relatorio = `🟢 *LEAD QUALIFICADO — PREVIDENCIÁRIO*\\n\\n`\n    + `👤 *Nome:* ${dadosQualificacao.nome || 'Não informado'}\\n`\n    + `📱 *Celular:* ${dadosQualificacao.celular || dadosMsg.numero}\\n`\n    + `⚖️ *Tese:* ${dadosQualificacao.tese || 'Não identificada'}\\n`\n    + `📋 *Resumo:* ${dadosQualificacao.resumo || 'Ver histórico'}\\n`\n    + `🕐 *Atendimento:* ${agora}`;\n}\n\nreturn [{\n  json: {\n    numero: dadosMsg.numero,\n    textoParaLead,\n    qualificado,\n    dadosQualificacao,\n    relatorio,\n    numeroDestino: config?.numero_destino\n  }\n}];"
+        "jsCode": "const respostaAgente = $input.first().json.output || '';\nconst dadosMsg = $('Normaliza e filtra mensagem').first().json;\nconst configData = $('Monta system prompt com config').first().json;\nconst config = configData.config;\nconst userId = configData.userId;\nconst evoInstance = configData.evoInstance;\n\nlet dadosQualificacao = null;\nlet qualificado = null;\n\n// Extrai JSON da resposta\ntry {\n  const match = respostaAgente.match(/```json([\\s\\S]*?)```/);\n  if (match) {\n    dadosQualificacao = JSON.parse(match[1].trim());\n    qualificado = dadosQualificacao.qualificado === true;\n  }\n} catch(e) {}\n\n// Remove o JSON do texto que vai ao lead\nconst textoParaLead = respostaAgente.replace(/```json[\\s\\S]*?```/g, '').trim();\n\n// Monta relatório formatado\nlet relatorio = null;\nif (qualificado && dadosQualificacao) {\n  const agora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\n  relatorio = `🟢 *LEAD QUALIFICADO — PREVIDENCIÁRIO*\\n\\n`\n    + `👤 *Nome:* ${dadosQualificacao.nome || 'Não informado'}\\n`\n    + `📱 *Celular:* ${dadosQualificacao.celular || dadosMsg.numero}\\n`\n    + `⚖️ *Tese:* ${dadosQualificacao.tese || 'Não identificada'}\\n`\n    + `📋 *Resumo:* ${dadosQualificacao.resumo || 'Ver histórico'}\\n`\n    + `🕐 *Atendimento:* ${agora}`;\n}\n\nreturn [{\n  json: {\n    numero: dadosMsg.numero,\n    textoParaLead,\n    qualificado,\n    dadosQualificacao,\n    relatorio,\n    numeroDestino: config?.numero_destino,\n    userId,\n    evoInstance\n  }\n}];"
       },
       "id": "node-processa-resposta",
       "name": "Processa resposta e qualificação",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1540, 400]
+      "position": [1760, 400]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/TESTE",
+        "url": "=https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/{{ $json.evoInstance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [{ "name": "apikey", "value": "32AEB8FC2DE4-4F79-A823-E620A11C224F" }]
@@ -185,7 +227,7 @@
       "name": "Envia resposta ao lead",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1760, 260]
+      "position": [1980, 260]
     },
     {
       "parameters": {
@@ -204,12 +246,12 @@
       "name": "Lead qualificado?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1760, 440]
+      "position": [1980, 440]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/TESTE",
+        "url": "=https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/{{ $json.evoInstance }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [{ "name": "apikey", "value": "32AEB8FC2DE4-4F79-A823-E620A11C224F" }]
@@ -223,8 +265,8 @@
       "name": "Envia relatório ao advogado",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1980, 360],
-      "notes": "Envia para o número configurado no Painel de Configuração (numero_destino)."
+      "position": [2200, 360],
+      "notes": "Envia para o número configurado no Painel de Configuração (numero_destino) via instância do cliente."
     },
     {
       "parameters": {
@@ -239,7 +281,8 @@
             { "fieldId": "tese", "fieldValue": "={{ $json.dadosQualificacao?.tese || '' }}" },
             { "fieldId": "resumo", "fieldValue": "={{ $json.dadosQualificacao?.resumo || $json.dadosQualificacao?.motivo || '' }}" },
             { "fieldId": "qualificado", "fieldValue": "={{ $json.qualificado }}" },
-            { "fieldId": "motivo_desqualificacao", "fieldValue": "={{ $json.dadosQualificacao?.motivo || '' }}" }
+            { "fieldId": "motivo_desqualificacao", "fieldValue": "={{ $json.dadosQualificacao?.motivo || '' }}" },
+            { "fieldId": "user_id", "fieldValue": "={{ $json.userId }}" }
           ]
         }
       },
@@ -247,18 +290,18 @@
       "name": "Salva lead no Supabase",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1980, 540],
-      "notes": "Registra todos os leads (qualificados e não qualificados) na tabela leads."
+      "position": [2200, 540],
+      "notes": "Registra todos os leads com user_id do cliente para isolamento de dados."
     },
     {
       "parameters": {
-        "jsCode": "const historico = $('Monta histórico da conversa').first().json.historico;\nconst respostaAgente = $('Agente SDR — IA').first().json.output || '';\nconst numero = $('Normaliza e filtra mensagem').first().json.numero;\n\nhistorico.push({ role: 'assistant', content: respostaAgente });\nconst historicoTrimmed = historico.slice(-20);\n\nreturn [{ json: { numero_whatsapp: numero, historico: JSON.stringify(historicoTrimmed), atualizado_em: new Date().toISOString() } }];"
+        "jsCode": "const historico = $('Monta histórico da conversa').first().json.historico;\nconst respostaAgente = $('Agente SDR — IA').first().json.output || '';\nconst numero = $('Normaliza e filtra mensagem').first().json.numero;\nconst userId = $('Monta system prompt com config').first().json.userId;\n\nhistorico.push({ role: 'assistant', content: respostaAgente });\nconst historicoTrimmed = historico.slice(-20);\n\nreturn [{ json: { numero_whatsapp: numero, user_id: userId, historico: JSON.stringify(historicoTrimmed), atualizado_em: new Date().toISOString() } }];"
       },
       "id": "node-prepara-redis",
       "name": "Prepara sessão para salvar",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1980, 700]
+      "position": [2200, 700]
     },
     {
       "parameters": {
@@ -268,20 +311,24 @@
         "fieldsUi": {
           "fieldValues": [
             { "fieldId": "numero_whatsapp", "fieldValue": "={{ $json.numero_whatsapp }}" },
+            { "fieldId": "user_id", "fieldValue": "={{ $json.user_id }}" },
             { "fieldId": "historico", "fieldValue": "={{ $json.historico }}" },
             { "fieldId": "atualizado_em", "fieldValue": "={{ $json.atualizado_em }}" }
           ]
         },
         "filters": {
-          "conditions": [{ "keyName": "numero_whatsapp", "keyValue": "={{ $json.numero_whatsapp }}" }]
+          "conditions": [
+            { "keyName": "numero_whatsapp", "keyValue": "={{ $json.numero_whatsapp }}" },
+            { "keyName": "user_id", "keyValue": "={{ $json.user_id }}" }
+          ]
         }
       },
       "id": "node-redis-set",
       "name": "Supabase — Salva sessão",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [2200, 700],
-      "notes": "Upsert: cria ou atualiza o histórico da sessão na tabela sessoes."
+      "position": [2420, 700],
+      "notes": "Upsert por (numero_whatsapp + user_id) — cada cliente tem sua própria sessão com cada lead."
     },
     {
       "parameters": {
@@ -293,7 +340,7 @@
       "name": "Responde 200 OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [2200, 400]
+      "position": [2420, 400]
     }
   ],
   "connections": {
@@ -301,9 +348,10 @@
       "main": [[{ "node": "Normaliza e filtra mensagem", "type": "main", "index": 0 }]]
     },
     "Normaliza e filtra mensagem": {
-      "main": [[
-        { "node": "Carrega configurações do Supabase", "type": "main", "index": 0 }
-      ]]
+      "main": [[{ "node": "Resolve cliente pelo instanceName", "type": "main", "index": 0 }]]
+    },
+    "Resolve cliente pelo instanceName": {
+      "main": [[{ "node": "Carrega configurações do Supabase", "type": "main", "index": 0 }]]
     },
     "Carrega configurações do Supabase": {
       "main": [[{ "node": "Monta system prompt com config", "type": "main", "index": 0 }]]
@@ -364,6 +412,6 @@
     }
   },
   "settings": { "executionOrder": "v1" },
-  "tags": ["whatsapp", "sdr", "ia", "previdenciario"],
-  "meta": { "description": "Workflow principal do agente SDR. Lê configs do Supabase, usa IA com busca web e PDFs, qualifica leads e envia relatório.", "version": "3.0.0" }
+  "tags": ["whatsapp", "sdr", "ia", "previdenciario", "multitenancy"],
+  "meta": { "description": "Workflow principal do agente SDR. Multi-tenant: resolve user_id pelo instanceName da Evolution API, filtra configs/PDFs/sessões/leads por cliente. Cada cliente tem uso exclusivo de seus dados.", "version": "4.0.0" }
 }

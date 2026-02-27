@@ -3,51 +3,21 @@
   "nodes": [
     {
       "parameters": {
-        "formTitle": "Upload de Base de Conhecimento (PDF)",
-        "formDescription": "Envie PDFs com legislação, jurisprudência ou informações previdenciárias. O agente irá consultá-los automaticamente durante as conversas.",
-        "formFields": {
-          "values": [
-            {
-              "fieldLabel": "Nome do documento",
-              "placeholder": "Ex: Tabela de Benefícios INSS 2024",
-              "fieldType": "text",
-              "requiredField": true
-            },
-            {
-              "fieldLabel": "Categoria",
-              "fieldType": "dropdown",
-              "fieldOptions": {
-                "values": [
-                  { "option": "Legislação" },
-                  { "option": "Jurisprudência" },
-                  { "option": "Tabelas e Valores" },
-                  { "option": "Procedimentos INSS" },
-                  { "option": "Outros" }
-                ]
-              },
-              "requiredField": true
-            },
-            {
-              "fieldLabel": "Arquivo PDF",
-              "fieldType": "file",
-              "acceptFileTypes": ".pdf",
-              "requiredField": true
-            }
-          ]
-        },
+        "httpMethod": "POST",
+        "path": "upload-pdf-sdr",
         "options": {}
       },
-      "id": "node-form-pdf",
-      "name": "Formulário de Upload PDF",
-      "type": "n8n-nodes-base.formTrigger",
-      "typeVersion": 2.2,
+      "id": "node-webhook-upload",
+      "name": "Webhook — Upload PDF",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
       "position": [0, 300],
       "webhookId": "upload-pdf-sdr",
-      "notes": "Acesse esta URL no navegador para fazer upload de PDFs para a base de conhecimento."
+      "notes": "Recebe o PDF via POST multipart/form-data enviado pelo Painel do Cliente. Inclui user_id para isolamento de dados."
     },
     {
       "parameters": {
-        "jsCode": "const form = $input.first().json;\nconst binaryData = $input.first().binary;\n\nreturn [{\n  json: {\n    nome: form['Nome do documento'],\n    categoria: form['Categoria'],\n    uploadedAt: new Date().toISOString()\n  },\n  binary: binaryData\n}];"
+        "jsCode": "const form = $input.first().json;\nconst binaryData = $input.first().binary;\n\n// Extrai user_id enviado pelo software para multi-tenancy\nconst userId = form['user_id'] || form.user_id || '';\n\nreturn [{\n  json: {\n    nome: form['Nome do documento'] || form.nome || 'Documento',\n    categoria: form['Categoria'] || form.categoria || 'Outros',\n    userId,\n    uploadedAt: new Date().toISOString()\n  },\n  binary: binaryData\n}];"
       },
       "id": "node-extrai-metadados",
       "name": "Extrai metadados",
@@ -74,7 +44,8 @@
             "metadataValues": [
               { "name": "nome", "value": "={{ $('Extrai metadados').first().json.nome }}" },
               { "name": "categoria", "value": "={{ $('Extrai metadados').first().json.categoria }}" },
-              { "name": "uploadedAt", "value": "={{ $('Extrai metadados').first().json.uploadedAt }}" }
+              { "name": "uploadedAt", "value": "={{ $('Extrai metadados').first().json.uploadedAt }}" },
+              { "name": "user_id", "value": "={{ $('Extrai metadados').first().json.userId }}" }
             ]
           }
         }
@@ -84,7 +55,7 @@
       "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
       "typeVersion": 1,
       "position": [660, 380],
-      "notes": "Converte o PDF em Document para o vector store. O Text Splitter conecta como subnó abaixo."
+      "notes": "Converte o PDF em Document para o vector store. Inclui user_id no metadata para filtragem por cliente."
     },
     {
       "parameters": {
@@ -122,31 +93,23 @@
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
       "typeVersion": 1,
       "position": [880, 300],
-      "notes": "Salva os chunks com embeddings na tabela documentos_conhecimento."
+      "notes": "Salva os chunks com embeddings. O metadata inclui user_id para isolamento por cliente."
     },
     {
       "parameters": {
-        "assignments": {
-          "assignments": [
-            {
-              "id": "status",
-              "name": "status",
-              "value": "PDF processado e salvo na base de conhecimento com sucesso!",
-              "type": "string"
-            }
-          ]
-        },
+        "respondWith": "json",
+        "responseBody": "={\"status\":\"ok\",\"message\":\"PDF processado e salvo na base de conhecimento com sucesso!\"}",
         "options": {}
       },
       "id": "node-confirma-upload",
       "name": "Confirma upload",
-      "type": "n8n-nodes-base.set",
-      "typeVersion": 3.4,
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
       "position": [1100, 300]
     }
   ],
   "connections": {
-    "Formulário de Upload PDF": {
+    "Webhook — Upload PDF": {
       "main": [[{ "node": "Extrai metadados", "type": "main", "index": 0 }]]
     },
     "Extrai metadados": {
@@ -169,6 +132,6 @@
     }
   },
   "settings": { "executionOrder": "v1" },
-  "tags": ["pdf", "conhecimento", "rag", "sdr"],
-  "meta": { "description": "Formulário para upload de PDFs. Usa Default Data Loader + Text Splitter + Embeddings para salvar no Supabase Vector Store.", "version": "2.0.0" }
+  "tags": ["pdf", "conhecimento", "rag", "sdr", "multitenancy"],
+  "meta": { "description": "Webhook para upload de PDFs enviados pelo Painel do Cliente. Inclui user_id no metadata para isolamento da base de conhecimento por cliente (multi-tenancy).", "version": "3.0.0" }
 }
