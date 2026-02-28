@@ -594,29 +594,33 @@
     <div class="page" id="page-faturamento">
       <div class="page-header"><h1>💳 Faturamento</h1><p>Gerencie sua assinatura e histórico de pagamentos</p></div>
 
-      <!-- Hero da assinatura (cliente e admin vêem info do próprio plano) -->
+      <!-- Hero da assinatura -->
       <div class="billing-hero" id="billing-hero">
         <div>
-          <h2>SDR Agente Único</h2>
-          <p>Atendimento automático 24/7 via WhatsApp com IA</p>
+          <h2>⚖️ SDR Previdenciário — Plano Mensal</h2>
+          <p>Agente IA 24/7 + <strong>5 milhões de tokens inclusos</strong> (~135 atendimentos/mês)</p>
           <div id="billing-status-badge" class="billing-status-badge trial">⏳ Período de teste</div>
+          <div style="margin-top:12px;font-size:13px;opacity:.8;">
+            ✅ &nbsp;IA WhatsApp 24/7 &nbsp;|&nbsp; ✅ &nbsp;5M tokens/mês &nbsp;|&nbsp; ✅ &nbsp;Suporte incluso
+          </div>
         </div>
         <div style="text-align:right">
-          <div class="price"><sup>R$</sup>397<sub>/mês</sub></div>
+          <div class="price"><sup>R$</sup>497<sub>/mês</sub></div>
           <div style="opacity:.75;font-size:13px;margin-top:4px" id="billing-next-date">Próxima cobrança: —</div>
+          <div style="margin-top:8px;font-size:12px;opacity:.65;">Precisa de mais? Compre tokens extras abaixo</div>
         </div>
       </div>
 
       <div class="billing-info-grid">
         <div class="billing-info-card">
           <div class="label">Plano</div>
-          <div class="value">Agente Único</div>
-          <div class="sub">1 número WhatsApp</div>
+          <div class="value">Mensal</div>
+          <div class="sub">5M tokens inclusos/mês</div>
         </div>
         <div class="billing-info-card">
           <div class="label">Status</div>
           <div class="value" id="billing-status-text">—</div>
-          <div class="sub" id="billing-cycle-text">Mensal</div>
+          <div class="sub" id="billing-cycle-text">Cobrança mensal</div>
         </div>
         <div class="billing-info-card">
           <div class="label">Vencimento</div>
@@ -644,64 +648,67 @@
         </div>
       </div>
 
-      <!-- COMPRAR CRÉDITOS -->
-      <div class="pricing-section-title">🛒 Comprar Pacote de Créditos</div>
+      <!-- COMPRAR TOKENS EXTRAS -->
+      <div class="pricing-section-title">⚡ Comprar Tokens Extras</div>
+      <p style="font-size:13px;color:#888;margin-bottom:16px;margin-top:-8px;">
+        Seu plano já inclui <strong>5M tokens/mês</strong>. Precisa atender mais leads? Adicione tokens extras a qualquer momento.
+      </p>
       <div class="pricing-grid">
-        <!-- Starter -->
+        <!-- Mini -->
         <div class="pricing-card">
-          <div class="pkg-name">🌱 Starter</div>
-          <div class="pkg-leads">~270 leads/mês</div>
-          <div class="pkg-price"><sup>$</sup>33<sub>/mês</sub></div>
-          <div class="pkg-tokens">10 milhões de tokens</div>
+          <div class="pkg-name">➕ Mini</div>
+          <div class="pkg-leads">+135 leads extras</div>
+          <div class="pkg-price"><sup>R$</sup>97</div>
+          <div class="pkg-tokens">+5 milhões de tokens</div>
           <ul class="pkg-features">
-            <li>270 atendimentos</li>
-            <li>IA ativa 24/7</li>
-            <li>Relatórios completos</li>
+            <li>+135 atendimentos</li>
+            <li>Soma ao saldo atual</li>
+            <li>Sem prazo de validade</li>
           </ul>
-          <button class="btn-buy" onclick="showBuyModal('starter')">Comprar</button>
+          <button class="btn-buy" onclick="showBuyModal('mini')">Adicionar</button>
         </div>
-        <!-- Pro -->
+        <!-- Médio -->
         <div class="pricing-card popular">
           <div class="pop-badge">⭐ Mais Popular</div>
-          <div class="pkg-name">🚀 Pro</div>
-          <div class="pkg-leads">~500 leads/mês</div>
-          <div class="pkg-price"><sup>$</sup>68<sub>/mês</sub></div>
-          <div class="pkg-tokens">18,5 milhões de tokens</div>
+          <div class="pkg-name">➕➕ Médio</div>
+          <div class="pkg-leads">+270 leads extras</div>
+          <div class="pkg-price"><sup>R$</sup>177</div>
+          <div class="pkg-tokens">+10 milhões de tokens</div>
           <ul class="pkg-features">
-            <li>500 atendimentos</li>
-            <li>IA ativa 24/7</li>
-            <li>Relatórios completos</li>
+            <li>+270 atendimentos</li>
+            <li>Soma ao saldo atual</li>
+            <li>Sem prazo de validade</li>
+            <li>Melhor custo/benefício</li>
+          </ul>
+          <button class="btn-buy" onclick="showBuyModal('medio')">Adicionar</button>
+        </div>
+        <!-- Grande -->
+        <div class="pricing-card">
+          <div class="pkg-name">🚀 Grande</div>
+          <div class="pkg-leads">+540 leads extras</div>
+          <div class="pkg-price"><sup>R$</sup>297</div>
+          <div class="pkg-tokens">+20 milhões de tokens</div>
+          <ul class="pkg-features">
+            <li>+540 atendimentos</li>
+            <li>Soma ao saldo atual</li>
+            <li>Sem prazo de validade</li>
             <li>Suporte prioritário</li>
           </ul>
-          <button class="btn-buy" onclick="showBuyModal('pro')">Comprar</button>
+          <button class="btn-buy" onclick="showBuyModal('grande')">Adicionar</button>
         </div>
-        <!-- Business -->
+        <!-- Ilimitado -->
         <div class="pricing-card">
-          <div class="pkg-name">💼 Business</div>
-          <div class="pkg-leads">~1.000 leads/mês</div>
-          <div class="pkg-price"><sup>$</sup>137<sub>/mês</sub></div>
-          <div class="pkg-tokens">37 milhões de tokens</div>
+          <div class="pkg-name">💼 Max</div>
+          <div class="pkg-leads">+1.350 leads extras</div>
+          <div class="pkg-price"><sup>R$</sup>597</div>
+          <div class="pkg-tokens">+50 milhões de tokens</div>
           <ul class="pkg-features">
-            <li>1.000 atendimentos</li>
-            <li>IA ativa 24/7</li>
-            <li>Relatórios completos</li>
-            <li>Suporte prioritário</li>
-          </ul>
-          <button class="btn-buy" onclick="showBuyModal('business')">Comprar</button>
-        </div>
-        <!-- Enterprise -->
-        <div class="pricing-card">
-          <div class="pkg-name">🏢 Enterprise</div>
-          <div class="pkg-leads">~2.000 leads/mês</div>
-          <div class="pkg-price"><sup>$</sup>258<sub>/mês</sub></div>
-          <div class="pkg-tokens">74 milhões de tokens</div>
-          <ul class="pkg-features">
-            <li>2.000 atendimentos</li>
-            <li>IA ativa 24/7</li>
-            <li>Relatórios completos</li>
+            <li>+1.350 atendimentos</li>
+            <li>Soma ao saldo atual</li>
+            <li>Sem prazo de validade</li>
             <li>Suporte dedicado</li>
           </ul>
-          <button class="btn-buy" onclick="showBuyModal('enterprise')">Comprar</button>
+          <button class="btn-buy" onclick="showBuyModal('max')">Adicionar</button>
         </div>
       </div>
 
@@ -813,9 +820,14 @@
         <div>📊 Relatórios completos</div>
       </div>
     </div>
-    <p style="font-size:13px;color:#888;text-align:center;margin-bottom:8px;">
-      Após confirmar, o administrador receberá seu pedido e adicionará os créditos à sua conta em até 24h.
-    </p>
+    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+      <div style="font-weight:700;font-size:13px;color:#16a34a;margin-bottom:6px;">📲 Como pagar</div>
+      <div style="font-size:12px;color:#374151;line-height:1.7;">
+        1. Clique em <strong>Confirmar Pedido</strong> abaixo<br>
+        2. Aguarde o contato do administrador com a chave PIX<br>
+        3. Após confirmação do pagamento, os tokens serão adicionados em até 2h
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn-save" id="btn-confirm-buy" onclick="confirmBuy()">✅ Confirmar Pedido</button>
       <button class="btn-secondary" onclick="closeBuyModal()">Cancelar</button>
@@ -1568,11 +1580,16 @@
   // =====================
   const TOKENS_POR_LEAD = 37037; // média real: 10M tokens = 270 pessoas
 
+  // Plano base inclui 5M tokens/mês (R$ 497/mês)
+  const TOKENS_PLANO_BASE = 5000000; // inclusos na assinatura mensal
+  const PRECO_PLANO_BASE_BRL = 497;
+
+  // Pacotes de tokens EXTRAS (soma ao saldo)
   const PACOTES_CREDITOS = {
-    starter:    { nome: '🌱 Starter',    leads: 270,   tokens: 10000000,  preco: 33  },
-    pro:        { nome: '🚀 Pro',        leads: 500,   tokens: 18500000,  preco: 68  },
-    business:   { nome: '💼 Business',   leads: 1000,  tokens: 37000000,  preco: 137 },
-    enterprise: { nome: '🏢 Enterprise', leads: 2000,  tokens: 74000000,  preco: 258 },
+    mini:   { nome: '➕ Mini',    leads: 135,   tokens: 5000000,   preco_brl: 97,  moeda: 'BRL' },
+    medio:  { nome: '➕➕ Médio', leads: 270,   tokens: 10000000,  preco_brl: 177, moeda: 'BRL' },
+    grande: { nome: '🚀 Grande',  leads: 540,   tokens: 20000000,  preco_brl: 297, moeda: 'BRL' },
+    max:    { nome: '💼 Max',     leads: 1350,  tokens: 50000000,  preco_brl: 597, moeda: 'BRL' },
   };
 
   let buyPacoteAtual = null;
@@ -1609,7 +1626,7 @@
         <td style="font-size:12px;color:#888">${new Date(p.criado_em).toLocaleDateString('pt-BR')}</td>
         <td style="font-weight:600">${PACOTES_CREDITOS[p.pacote]?.nome || p.pacote}</td>
         <td>${(p.tokens/1000000).toFixed(1)}M tokens</td>
-        <td style="font-weight:700;color:#4f46e5">$${p.preco_usd}</td>
+        <td style="font-weight:700;color:#4f46e5">${p.preco_brl ? 'R$ '+p.preco_brl : p.preco_usd ? '$'+p.preco_usd : '—'}</td>
         <td><span class="pedidos-badge ${p.status}">${p.status === 'pendente' ? '⏳ Pendente' : p.status === 'aprovado' ? '✅ Aprovado' : '❌ Recusado'}</span></td>
       </tr>`).join('')}</tbody>
     </table>`;
@@ -1619,11 +1636,14 @@
     const pkg = PACOTES_CREDITOS[pacoteId];
     if (!pkg) return;
     buyPacoteAtual = pacoteId;
-    document.getElementById('buy-modal-title').textContent = `🛒 Comprar ${pkg.nome}`;
+    const precoFmt = pkg.moeda === 'BRL'
+      ? `R$ ${pkg.preco_brl}`
+      : `$${pkg.preco_usd}`;
+    document.getElementById('buy-modal-title').textContent = `⚡ Adicionar ${pkg.nome}`;
     document.getElementById('buy-pkg-name').textContent = pkg.nome;
-    document.getElementById('buy-pkg-price').textContent = `$${pkg.preco}`;
-    document.getElementById('buy-pkg-leads').textContent = `👥 ~${pkg.leads.toLocaleString('pt-BR')} leads`;
-    document.getElementById('buy-pkg-tokens').textContent = `🔢 ${(pkg.tokens/1000000).toFixed(1)}M tokens`;
+    document.getElementById('buy-pkg-price').textContent = precoFmt;
+    document.getElementById('buy-pkg-leads').textContent = `👥 +${pkg.leads.toLocaleString('pt-BR')} atendimentos`;
+    document.getElementById('buy-pkg-tokens').textContent = `🔢 +${(pkg.tokens/1000000).toFixed(0)}M tokens`;
     document.getElementById('buy-modal-error').textContent = '';
     document.getElementById('btn-confirm-buy').disabled = false;
     document.getElementById('btn-confirm-buy').textContent = '✅ Confirmar Pedido';
@@ -1644,14 +1664,18 @@
     const { data: { user } } = await db.auth.getUser();
     const { error } = await db.from('pedidos_creditos').insert({
       user_id: user.id, pacote: buyPacoteAtual,
-      tokens: pkg.tokens, preco_usd: pkg.preco, status: 'pendente'
+      tokens: pkg.tokens,
+      preco_usd: pkg.preco_usd || null,
+      preco_brl: pkg.preco_brl || null,
+      status: 'pendente'
     });
     if (error) {
       errEl.textContent = 'Erro ao enviar pedido. Tente novamente.';
       btn.disabled = false; btn.textContent = '✅ Confirmar Pedido'; return;
     }
     closeBuyModal();
-    alert(`✅ Pedido do pacote ${pkg.nome} enviado!\n\nO administrador será notificado e adicionará os créditos em até 24h.`);
+    const precoFmt = pkg.preco_brl ? `R$ ${pkg.preco_brl}` : `$${pkg.preco_usd}`;
+    alert(`✅ Pedido enviado!\n\nPacote: ${pkg.nome}\nValor: ${precoFmt}\n\nEm breve o administrador entrará em contato com os dados para pagamento via PIX.\nApós confirmação, os tokens serão creditados em até 2h.`);
     loadCredits();
   }
 
@@ -1713,7 +1737,7 @@
         <td style="font-weight:600">${escapeHtml(p.profiles?.display_name || '—')}</td>
         <td>${PACOTES_CREDITOS[p.pacote]?.nome || p.pacote}</td>
         <td>${(p.tokens/1000000).toFixed(1)}M tokens</td>
-        <td style="font-weight:700;color:#4f46e5">$${p.preco_usd}</td>
+        <td style="font-weight:700;color:#4f46e5">${p.preco_brl ? 'R$ '+p.preco_brl : p.preco_usd ? '$'+p.preco_usd : '—'}</td>
         <td><span class="pedidos-badge ${p.status}">${p.status === 'pendente' ? '⏳ Pendente' : p.status === 'aprovado' ? '✅ Aprovado' : '❌ Recusado'}</span></td>
         <td>
           ${p.status === 'pendente' ? `
@@ -1805,7 +1829,7 @@
         <td><code style="background:#f0f2f5;padding:2px 7px;border-radius:4px;font-size:12px;">${escapeHtml(a.profiles?.evo_instance || '—')}</code></td>
         <td><span class="badge ${a.status === 'ativa' ? 'badge-green' : a.status === 'inadimplente' ? 'badge-red' : a.status === 'trial' ? 'badge-yellow' : 'badge-blue'}">${STATUS_LABELS[a.status] || a.status}</span></td>
         <td style="font-size:13px">${a.proxima_cobranca ? new Date(a.proxima_cobranca+'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
-        <td style="font-weight:700">R$ ${Number(a.valor || 397).toFixed(2).replace('.',',')}</td>
+        <td style="font-weight:700">R$ ${Number(a.valor || 497).toFixed(2).replace('.',',')}</td>
         <td>
           <div class="billing-actions">
             ${a.status !== 'ativa' ? `<button class="btn-success" onclick="setBillingStatus('${a.user_id}','ativa')">✅ Ativar</button>` : ''}
