@@ -232,6 +232,36 @@
     .pedidos-badge.aprovado { background: #dcfce7; color: #16a34a; }
     .pedidos-badge.recusado { background: #fee2e2; color: #dc2626; }
 
+    /* POPUP TOKENS BAIXOS */
+    .token-alert-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(3px); animation:fadeIn .25s ease; }
+    .token-alert-backdrop.open { display:flex; }
+    @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+    .token-alert-box { background:#fff; border-radius:20px; width:460px; max-width:94vw; box-shadow:0 24px 64px rgba(0,0,0,0.22); overflow:hidden; animation:slideUp .3s ease; }
+    @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .token-alert-header { background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%); padding:28px 28px 20px; text-align:center; position:relative; }
+    .token-alert-header.warning { background:linear-gradient(135deg,#ea580c 0%,#c2410c 100%); }
+    .token-alert-icon { font-size:48px; display:block; margin-bottom:10px; animation:shake .5s ease .3s both; }
+    @keyframes shake { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-8deg)} 40%{transform:rotate(8deg)} 60%{transform:rotate(-5deg)} 80%{transform:rotate(5deg)} }
+    .token-alert-header h2 { color:#fff; font-size:20px; font-weight:800; margin-bottom:4px; }
+    .token-alert-header p { color:rgba(255,255,255,0.85); font-size:13px; }
+    .token-alert-saldo { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.2); border-radius:30px; padding:6px 16px; margin-top:10px; color:#fff; font-size:13px; font-weight:700; }
+    .token-alert-body { padding:24px 28px; }
+    .token-alert-pkg { background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 100%); border:2px solid #4f46e5; border-radius:14px; padding:20px 22px; margin-bottom:20px; position:relative; }
+    .token-alert-pkg .pop-label { position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#4f46e5; color:#fff; font-size:11px; font-weight:800; padding:4px 16px; border-radius:20px; white-space:nowrap; letter-spacing:.3px; }
+    .token-alert-pkg-row { display:flex; justify-content:space-between; align-items:center; }
+    .token-alert-pkg-name { font-size:18px; font-weight:800; color:#1a1a2e; }
+    .token-alert-pkg-price { font-size:28px; font-weight:900; color:#4f46e5; letter-spacing:-1px; }
+    .token-alert-pkg-price sup { font-size:14px; font-weight:700; vertical-align:super; }
+    .token-alert-pkg-features { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .token-alert-pkg-features span { background:#fff; border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:#4f46e5; border:1px solid #c7d2fe; }
+    .token-alert-urgency { display:flex; align-items:center; gap:8px; background:#fef9c3; border:1px solid #fde68a; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:#78350f; font-weight:600; }
+    .btn-token-alert-buy { width:100%; padding:15px; background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%); color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:800; cursor:pointer; letter-spacing:.3px; transition:all .2s; box-shadow:0 4px 16px rgba(79,70,229,.4); }
+    .btn-token-alert-buy:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(79,70,229,.5); }
+    .btn-token-alert-later { width:100%; padding:10px; background:transparent; color:#aaa; border:none; cursor:pointer; font-size:13px; margin-top:8px; transition:color .2s; }
+    .btn-token-alert-later:hover { color:#666; }
+    .token-progress-bar { height:8px; background:#fee2e2; border-radius:8px; margin:12px 0 4px; overflow:hidden; }
+    .token-progress-fill { height:100%; border-radius:8px; transition:width .5s ease; }
+
     /* FLOW DESIGNER */
     .flow-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
     .flow-toolbar input { flex:1; min-width:200px; padding:9px 14px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:14px; }
@@ -804,6 +834,68 @@
   </div>
 </div>
 
+<!-- POPUP ALERTA TOKENS BAIXOS -->
+<div class="token-alert-backdrop" id="token-alert-popup">
+  <div class="token-alert-box">
+    <div class="token-alert-header" id="token-alert-header">
+      <span class="token-alert-icon" id="token-alert-icon">⚠️</span>
+      <h2 id="token-alert-title">Seus tokens estão acabando!</h2>
+      <p id="token-alert-subtitle">O agente pode parar de atender novos leads em breve.</p>
+      <div class="token-alert-saldo">
+        <span>🔢</span>
+        <span id="token-alert-saldo-txt">—</span>
+        <span>tokens restantes</span>
+      </div>
+    </div>
+    <div class="token-alert-body">
+      <!-- Barra de progresso do saldo -->
+      <div style="font-size:12px;color:#888;margin-bottom:4px;display:flex;justify-content:space-between;">
+        <span>Saldo atual</span>
+        <span id="token-alert-pct-txt">—</span>
+      </div>
+      <div class="token-progress-bar">
+        <div class="token-progress-fill" id="token-alert-progress" style="width:0%;background:#ef4444;"></div>
+      </div>
+      <div style="font-size:11px;color:#aaa;text-align:right;margin-bottom:16px;">
+        de 5.000.000 tokens do plano base
+      </div>
+
+      <!-- Urgência -->
+      <div class="token-alert-urgency" id="token-alert-urgency">
+        ⏳ <span id="token-alert-urgency-txt">Recarregue agora para não perder atendimentos!</span>
+      </div>
+
+      <!-- Pacote recomendado -->
+      <div class="token-alert-pkg">
+        <div class="pop-label">⭐ RECOMENDADO PARA VOCÊ</div>
+        <div class="token-alert-pkg-row">
+          <div>
+            <div class="token-alert-pkg-name">➕➕ Médio</div>
+            <div style="font-size:12px;color:#666;margin-top:2px;">+270 atendimentos extras</div>
+          </div>
+          <div style="text-align:right;">
+            <div class="token-alert-pkg-price"><sup>R$</sup>177</div>
+            <div style="font-size:11px;color:#888;">pagamento via PIX</div>
+          </div>
+        </div>
+        <div class="token-alert-pkg-features">
+          <span>+10M tokens</span>
+          <span>+270 leads</span>
+          <span>Sem prazo de validade</span>
+          <span>Crédito em até 2h</span>
+        </div>
+      </div>
+
+      <button class="btn-token-alert-buy" onclick="buyFromAlert()">
+        ⚡ Quero adicionar tokens agora
+      </button>
+      <button class="btn-token-alert-later" onclick="dismissTokenAlert()">
+        Lembrar mais tarde
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- MODAL COMPRAR CRÉDITOS -->
 <div class="modal-backdrop" id="modal-buy-credits" onclick="if(event.target===this)closeBuyModal()">
   <div class="modal-box">
@@ -1029,6 +1121,7 @@
     }
 
     loadConfigs(); loadStats(); loadOverviewLeads(); loadPDFList();
+    loadCredits(); // verifica saldo e dispara alerta se necessário
     checkWAStatus();
     waStatusInterval = setInterval(checkWAStatus, 15000);
   }
@@ -1609,6 +1702,8 @@
     if (saldoEl) saldoEl.textContent = saldo.toLocaleString('pt-BR');
     if (leadsEl) leadsEl.textContent = leads.toLocaleString('pt-BR');
     if (usadoEl) usadoEl.textContent = leadsUsados.toLocaleString('pt-BR');
+    // Verifica se deve mostrar alerta de tokens baixos
+    checkTokenAlert(saldo);
     // Carrega pedidos do cliente
     loadMeusPedidos(user.id);
   }
@@ -1631,6 +1726,75 @@
       </tr>`).join('')}</tbody>
     </table>`;
   }
+
+  // =====================
+  // POPUP ALERTA TOKENS BAIXOS
+  // =====================
+  const TOKENS_ALERTA_BAIXO    = 2000000; // < 2M → alerta laranja (~54 leads)
+  const TOKENS_ALERTA_CRITICO  = 500000;  // < 500k → alerta vermelho (~13 leads)
+  const TOKENS_BASE_PLANO      = 5000000; // referência do plano base
+
+  function checkTokenAlert(saldo) {
+    // Só mostra 1x por sessão e só para clientes
+    if (currentProfile?.role === 'admin') return;
+    if (sessionStorage.getItem('token_alert_dismissed')) return;
+    if (saldo >= TOKENS_ALERTA_BAIXO) return;
+
+    const popup   = document.getElementById('token-alert-popup');
+    const header  = document.getElementById('token-alert-header');
+    const icon    = document.getElementById('token-alert-icon');
+    const title   = document.getElementById('token-alert-title');
+    const sub     = document.getElementById('token-alert-subtitle');
+    const saldoTx = document.getElementById('token-alert-saldo-txt');
+    const progress= document.getElementById('token-alert-progress');
+    const pctTxt  = document.getElementById('token-alert-pct-txt');
+    const urgTxt  = document.getElementById('token-alert-urgency-txt');
+
+    const leads   = Math.floor(saldo / TOKENS_POR_LEAD);
+    const pct     = Math.max(2, Math.round((saldo / TOKENS_BASE_PLANO) * 100));
+
+    saldoTx.textContent = saldo.toLocaleString('pt-BR');
+    pctTxt.textContent  = `${pct}% restante`;
+    progress.style.width = `${pct}%`;
+
+    if (saldo <= TOKENS_ALERTA_CRITICO) {
+      // CRÍTICO — vermelho
+      header.className    = 'token-alert-header';
+      icon.textContent    = '🚨';
+      title.textContent   = 'Tokens esgotados! Agente parado!';
+      sub.textContent     = 'O agente não está mais conseguindo atender novos leads.';
+      progress.style.background = '#dc2626';
+      urgTxt.textContent  = `Restam apenas ${leads} atendimento${leads !== 1 ? 's' : ''}. Recarregue AGORA!`;
+    } else {
+      // BAIXO — laranja
+      header.className    = 'token-alert-header warning';
+      icon.textContent    = '⚠️';
+      title.textContent   = 'Seus tokens estão acabando!';
+      sub.textContent     = `Restam apenas ~${leads} atendimentos. Recarregue para não perder leads.`;
+      progress.style.background = '#ea580c';
+      urgTxt.textContent  = `Com ~${leads} tokens restantes, você pode perder novos leads em breve!`;
+    }
+
+    // Mostra com delay de 1.5s para não ser intrusivo no login
+    setTimeout(() => popup.classList.add('open'), 1500);
+  }
+
+  function dismissTokenAlert() {
+    document.getElementById('token-alert-popup').classList.remove('open');
+    sessionStorage.setItem('token_alert_dismissed', '1');
+  }
+
+  function buyFromAlert() {
+    dismissTokenAlert();
+    // Navega para faturamento e abre modal do Médio diretamente
+    showPage('faturamento', document.querySelector('.nav-item[onclick*="faturamento"]'));
+    setTimeout(() => showBuyModal('medio'), 400);
+  }
+
+  // Fecha ao clicar fora
+  document.getElementById('token-alert-popup').addEventListener('click', function(e) {
+    if (e.target === this) dismissTokenAlert();
+  });
 
   function showBuyModal(pacoteId) {
     const pkg = PACOTES_CREDITOS[pacoteId];
