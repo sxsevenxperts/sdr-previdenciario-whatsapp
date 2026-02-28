@@ -199,6 +199,39 @@
     .btn-success { padding:7px 16px; background:rgba(22,163,74,.1); color:#16a34a; border:1.5px solid rgba(22,163,74,.3); border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
     .billing-actions { display:flex; gap:8px; flex-wrap:wrap; }
 
+    /* CRÉDITOS / TOKENS */
+    .credits-balance { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: #fff; border-radius: 16px; padding: 24px 28px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    .credits-balance h3 { font-size: 13px; font-weight: 600; opacity: 0.7; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+    .credits-balance .tokens-value { font-size: 36px; font-weight: 800; letter-spacing: -1px; }
+    .credits-balance .tokens-sub { font-size: 12px; opacity: 0.6; margin-top: 2px; }
+    .credits-balance .tokens-box { background: rgba(255,255,255,0.12); padding: 14px 20px; border-radius: 12px; text-align: center; min-width: 120px; }
+    .credits-balance .tokens-box .leads-num { font-size: 28px; font-weight: 800; }
+    .credits-balance .tokens-box .leads-label { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+    .pricing-section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+    .pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .pricing-card { background: #fff; border-radius: 14px; padding: 24px 20px; box-shadow: 0 2px 8px rgba(0,0,0,.07); border: 2px solid #e5e7eb; position: relative; transition: all .2s; }
+    .pricing-card:hover { border-color: #4f46e5; box-shadow: 0 6px 24px rgba(79,70,229,.15); transform: translateY(-2px); }
+    .pricing-card.popular { border-color: #4f46e5; box-shadow: 0 4px 24px rgba(79,70,229,.2); }
+    .pricing-card .pop-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #4f46e5; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 14px; border-radius: 20px; white-space: nowrap; }
+    .pricing-card .pkg-name { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 2px; }
+    .pricing-card .pkg-leads { font-size: 12px; color: #888; margin-bottom: 14px; }
+    .pricing-card .pkg-price { font-size: 34px; font-weight: 800; color: #4f46e5; letter-spacing: -1px; line-height: 1; }
+    .pricing-card .pkg-price sup { font-size: 16px; font-weight: 600; vertical-align: super; }
+    .pricing-card .pkg-price sub { font-size: 13px; font-weight: 400; color: #888; }
+    .pricing-card .pkg-tokens { font-size: 12px; color: #888; margin: 8px 0 14px; }
+    .pkg-features { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+    .pkg-features li { font-size: 12px; color: #555; display: flex; align-items: center; gap: 6px; }
+    .pkg-features li::before { content: '✓'; color: #16a34a; font-weight: 700; flex-shrink: 0; }
+    .pricing-card .btn-buy { width: 100%; padding: 11px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
+    .pricing-card .btn-buy:hover { background: #4338ca; }
+    .buy-modal-pkg-info { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1.5px solid #e5e7eb; }
+    .buy-modal-pkg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .buy-modal-pkg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: #555; margin-top: 12px; }
+    .pedidos-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .pedidos-badge.pendente { background: #fef9c3; color: #ca8a04; }
+    .pedidos-badge.aprovado { background: #dcfce7; color: #16a34a; }
+    .pedidos-badge.recusado { background: #fee2e2; color: #dc2626; }
+
     /* FLOW DESIGNER */
     .flow-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
     .flow-toolbar input { flex:1; min-width:200px; padding:9px 14px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:14px; }
@@ -592,10 +625,105 @@
         </div>
       </div>
 
+      <!-- SALDO DE CRÉDITOS -->
+      <div class="credits-balance" id="credits-balance-card">
+        <div>
+          <h3>💰 Saldo de Tokens</h3>
+          <div class="tokens-value" id="saldo-tokens-display">—</div>
+          <div class="tokens-sub">tokens disponíveis para atendimento</div>
+        </div>
+        <div style="display:flex;gap:12px;">
+          <div class="tokens-box">
+            <div class="leads-num" id="saldo-leads-display">—</div>
+            <div class="leads-label">leads restantes</div>
+          </div>
+          <div class="tokens-box" style="background:rgba(34,197,94,0.2);">
+            <div class="leads-num" id="saldo-usado-display">—</div>
+            <div class="leads-label">usados este mês</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPRAR CRÉDITOS -->
+      <div class="pricing-section-title">🛒 Comprar Pacote de Créditos</div>
+      <div class="pricing-grid">
+        <!-- Starter -->
+        <div class="pricing-card">
+          <div class="pkg-name">🌱 Starter</div>
+          <div class="pkg-leads">~270 leads/mês</div>
+          <div class="pkg-price"><sup>$</sup>33<sub>/mês</sub></div>
+          <div class="pkg-tokens">10 milhões de tokens</div>
+          <ul class="pkg-features">
+            <li>270 atendimentos</li>
+            <li>IA ativa 24/7</li>
+            <li>Relatórios completos</li>
+          </ul>
+          <button class="btn-buy" onclick="showBuyModal('starter')">Comprar</button>
+        </div>
+        <!-- Pro -->
+        <div class="pricing-card popular">
+          <div class="pop-badge">⭐ Mais Popular</div>
+          <div class="pkg-name">🚀 Pro</div>
+          <div class="pkg-leads">~500 leads/mês</div>
+          <div class="pkg-price"><sup>$</sup>68<sub>/mês</sub></div>
+          <div class="pkg-tokens">18,5 milhões de tokens</div>
+          <ul class="pkg-features">
+            <li>500 atendimentos</li>
+            <li>IA ativa 24/7</li>
+            <li>Relatórios completos</li>
+            <li>Suporte prioritário</li>
+          </ul>
+          <button class="btn-buy" onclick="showBuyModal('pro')">Comprar</button>
+        </div>
+        <!-- Business -->
+        <div class="pricing-card">
+          <div class="pkg-name">💼 Business</div>
+          <div class="pkg-leads">~1.000 leads/mês</div>
+          <div class="pkg-price"><sup>$</sup>137<sub>/mês</sub></div>
+          <div class="pkg-tokens">37 milhões de tokens</div>
+          <ul class="pkg-features">
+            <li>1.000 atendimentos</li>
+            <li>IA ativa 24/7</li>
+            <li>Relatórios completos</li>
+            <li>Suporte prioritário</li>
+          </ul>
+          <button class="btn-buy" onclick="showBuyModal('business')">Comprar</button>
+        </div>
+        <!-- Enterprise -->
+        <div class="pricing-card">
+          <div class="pkg-name">🏢 Enterprise</div>
+          <div class="pkg-leads">~2.000 leads/mês</div>
+          <div class="pkg-price"><sup>$</sup>258<sub>/mês</sub></div>
+          <div class="pkg-tokens">74 milhões de tokens</div>
+          <ul class="pkg-features">
+            <li>2.000 atendimentos</li>
+            <li>IA ativa 24/7</li>
+            <li>Relatórios completos</li>
+            <li>Suporte dedicado</li>
+          </ul>
+          <button class="btn-buy" onclick="showBuyModal('enterprise')">Comprar</button>
+        </div>
+      </div>
+
+      <!-- Pedidos pendentes do cliente -->
+      <div class="card" id="pedidos-cliente-card" style="margin-bottom:20px;">
+        <h3>📦 Meus Pedidos</h3>
+        <div id="pedidos-cliente-table"><p class="loading">Carregando...</p></div>
+      </div>
+
       <!-- Histórico de cobranças (cliente) -->
       <div class="card" id="billing-history-card">
         <h3>🧾 Histórico de Cobranças</h3>
         <div id="billing-history-table"><p class="loading">Carregando...</p></div>
+      </div>
+
+      <!-- Admin: pedidos de créditos -->
+      <div class="card admin-only" id="admin-pedidos-card" style="margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">📦 Pedidos de Créditos</h3>
+          <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadAdminPedidos()">🔄 Atualizar</button>
+        </div>
+        <div id="admin-pedidos-table"><p class="loading">Carregando...</p></div>
       </div>
 
       <!-- Admin: gerenciar assinaturas de todos os clientes -->
@@ -666,6 +794,58 @@
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- MODAL COMPRAR CRÉDITOS -->
+<div class="modal-backdrop" id="modal-buy-credits" onclick="if(event.target===this)closeBuyModal()">
+  <div class="modal-box">
+    <h2 id="buy-modal-title">🛒 Comprar Créditos</h2>
+    <div class="buy-modal-pkg-info">
+      <div class="buy-modal-pkg-row">
+        <span id="buy-pkg-name" style="font-weight:700;font-size:16px;"></span>
+        <span id="buy-pkg-price" style="font-size:22px;font-weight:800;color:#4f46e5;"></span>
+      </div>
+      <div class="buy-modal-pkg-grid">
+        <div id="buy-pkg-leads"></div>
+        <div id="buy-pkg-tokens"></div>
+        <div>🤖 IA ativa 24/7</div>
+        <div>📊 Relatórios completos</div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:#888;text-align:center;margin-bottom:8px;">
+      Após confirmar, o administrador receberá seu pedido e adicionará os créditos à sua conta em até 24h.
+    </p>
+    <div class="modal-actions">
+      <button class="btn-save" id="btn-confirm-buy" onclick="confirmBuy()">✅ Confirmar Pedido</button>
+      <button class="btn-secondary" onclick="closeBuyModal()">Cancelar</button>
+    </div>
+    <div id="buy-modal-error" class="error-msg" style="margin-top:10px;"></div>
+  </div>
+</div>
+
+<!-- MODAL ADICIONAR CRÉDITOS (admin) -->
+<div class="modal-backdrop" id="modal-add-credits" onclick="if(event.target===this)closeAddCreditsModal()">
+  <div class="modal-box">
+    <h2>💰 Adicionar Créditos ao Cliente</h2>
+    <div class="field-group">
+      <label>Cliente</label>
+      <div id="add-credits-client-name" style="font-weight:700;font-size:15px;padding:8px 0;"></div>
+    </div>
+    <div class="field-group">
+      <label>Tokens a adicionar</label>
+      <input type="number" id="add-credits-tokens" placeholder="Ex: 10000000" min="1000000" step="1000000" />
+      <div style="font-size:12px;color:#888;margin-top:4px;">Referência: 10M tokens ≈ 270 leads</div>
+    </div>
+    <div class="field-group">
+      <label>Observação (opcional)</label>
+      <input type="text" id="add-credits-obs" placeholder="Ex: Pacote Pro — $68" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" id="btn-confirm-add-credits" onclick="confirmAddCredits()">✅ Adicionar Créditos</button>
+      <button class="btn-secondary" onclick="closeAddCreditsModal()">Cancelar</button>
+    </div>
+    <div id="add-credits-error" class="error-msg" style="margin-top:10px;"></div>
   </div>
 </div>
 
@@ -853,9 +1033,12 @@
     if (name === 'clientes') { loadClients(); loadTokenUsageAdmin(); }
     if (name === 'faturamento') {
       loadBilling();
+      loadCredits();
       if (currentProfile?.role === 'admin') {
         document.getElementById('billing-admin-card').classList.add('visible');
+        document.getElementById('admin-pedidos-card').classList.add('visible');
         loadAdminBilling();
+        loadAdminPedidos();
       }
     }
     if (name === 'fluxos') {
@@ -1307,19 +1490,33 @@
     if (!profiles.length) {
       el.innerHTML = '<p class="empty-state">Nenhum cliente cadastrado ainda.</p>'; return;
     }
+    // Carrega saldos de tokens
+    const { data: saldos } = await db.from('tokens_creditos').select('user_id, saldo_tokens');
+    const saldoMap = {};
+    (saldos || []).forEach(s => { saldoMap[s.user_id] = s.saldo_tokens; });
+
     el.innerHTML = `<table>
-      <thead><tr><th>Nome</th><th>Tipo</th><th>Instância WA</th><th>Status</th><th>Criado</th><th>Ações</th></tr></thead>
-      <tbody>${profiles.map(p => `<tr>
-        <td style="font-weight:600">${escapeHtml(p.display_name || '—')}</td>
-        <td><span class="badge ${p.role === 'admin' ? 'badge-purple' : 'badge-blue'}">${p.role === 'admin' ? '🔑 Admin' : '👤 Cliente'}</span></td>
-        <td><code style="background:#f0f2f5;padding:2px 7px;border-radius:4px;font-size:12px;">${escapeHtml(p.evo_instance || '—')}</code></td>
-        <td><span class="badge ${p.active ? 'badge-green' : 'badge-red'}">${p.active ? '✅ Ativo' : '❌ Inativo'}</span></td>
-        <td style="color:#888;font-size:12px;">${p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : '—'}</td>
-        <td>
-          ${p.role !== 'admin' ? `<button onclick="toggleClient('${p.id}', ${p.active})" style="padding:5px 12px;font-size:12px;" class="btn-secondary">${p.active ? 'Desativar' : 'Ativar'}</button>` : '<span style="color:#bbb;font-size:12px;">—</span>'}
-        </td>
-      </tr>`).join('')}</tbody>
-    </table>`;
+      <thead><tr><th>Nome</th><th>Tipo</th><th>Instância WA</th><th>Status</th><th>Tokens</th><th>Leads rest.</th><th>Ações</th></tr></thead>
+      <tbody>${profiles.map(p => {
+        const saldo = saldoMap[p.id] || 0;
+        const leads = Math.floor(saldo / TOKENS_POR_LEAD);
+        const cor = saldo === 0 ? '#dc2626' : saldo < 3000000 ? '#ca8a04' : '#16a34a';
+        return `<tr>
+          <td style="font-weight:600">${escapeHtml(p.display_name || '—')}</td>
+          <td><span class="badge ${p.role==='admin'?'badge-purple':'badge-blue'}">${p.role==='admin'?'🔑 Admin':'👤 Cliente'}</span></td>
+          <td><code style="background:#f0f2f5;padding:2px 7px;border-radius:4px;font-size:12px;">${escapeHtml(p.evo_instance||'—')}</code></td>
+          <td><span class="badge ${p.active?'badge-green':'badge-red'}">${p.active?'✅ Ativo':'❌ Inativo'}</span></td>
+          <td style="font-weight:700;color:${cor};font-size:13px;">${(saldo/1000000).toFixed(1)}M</td>
+          <td style="font-size:13px;color:#555;">${leads.toLocaleString('pt-BR')}</td>
+          <td style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${p.role !== 'admin' ? `
+              <button onclick="toggleClient('${p.id}',${p.active})" style="padding:5px 10px;font-size:12px;" class="btn-secondary">${p.active?'Desativar':'Ativar'}</button>
+              <button onclick="openAddCreditsModal('${p.id}','${escapeHtml(p.display_name||'')}')" style="padding:5px 10px;font-size:12px;" class="btn-success">💰 Créditos</button>
+            ` : '<span style="color:#bbb;font-size:12px;">—</span>'}
+          </td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`
   }
 
   function openCreateClientModal() {
@@ -1364,6 +1561,174 @@
   async function toggleClient(userId, currentActive) {
     await adminFetch('PATCH', { user_id: userId, active: !currentActive });
     loadClients();
+  }
+
+  // =====================
+  // CRÉDITOS / TOKENS
+  // =====================
+  const TOKENS_POR_LEAD = 37037; // média real: 10M tokens = 270 pessoas
+
+  const PACOTES_CREDITOS = {
+    starter:    { nome: '🌱 Starter',    leads: 270,   tokens: 10000000,  preco: 33  },
+    pro:        { nome: '🚀 Pro',        leads: 500,   tokens: 18500000,  preco: 68  },
+    business:   { nome: '💼 Business',   leads: 1000,  tokens: 37000000,  preco: 137 },
+    enterprise: { nome: '🏢 Enterprise', leads: 2000,  tokens: 74000000,  preco: 258 },
+  };
+
+  let buyPacoteAtual = null;
+  let addCreditsUserId = null;
+
+  async function loadCredits() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+    const { data } = await db.from('tokens_creditos').select('*').eq('user_id', user.id).single();
+    const saldo = data?.saldo_tokens || 0;
+    const usadoMes = data?.tokens_usados_mes || 0;
+    const leads = Math.floor(saldo / TOKENS_POR_LEAD);
+    const leadsUsados = Math.floor(usadoMes / TOKENS_POR_LEAD);
+    const saldoEl = document.getElementById('saldo-tokens-display');
+    const leadsEl = document.getElementById('saldo-leads-display');
+    const usadoEl = document.getElementById('saldo-usado-display');
+    if (saldoEl) saldoEl.textContent = saldo.toLocaleString('pt-BR');
+    if (leadsEl) leadsEl.textContent = leads.toLocaleString('pt-BR');
+    if (usadoEl) usadoEl.textContent = leadsUsados.toLocaleString('pt-BR');
+    // Carrega pedidos do cliente
+    loadMeusPedidos(user.id);
+  }
+
+  async function loadMeusPedidos(userId) {
+    const el = document.getElementById('pedidos-cliente-table');
+    if (!el) return;
+    const { data } = await db.from('pedidos_creditos').select('*').eq('user_id', userId).order('criado_em', { ascending: false }).limit(10);
+    if (!data || !data.length) {
+      el.innerHTML = '<p class="empty-state" style="padding:20px;">Nenhum pedido realizado ainda.</p>'; return;
+    }
+    el.innerHTML = `<table>
+      <thead><tr><th>Data</th><th>Pacote</th><th>Tokens</th><th>Valor</th><th>Status</th></tr></thead>
+      <tbody>${data.map(p => `<tr>
+        <td style="font-size:12px;color:#888">${new Date(p.criado_em).toLocaleDateString('pt-BR')}</td>
+        <td style="font-weight:600">${PACOTES_CREDITOS[p.pacote]?.nome || p.pacote}</td>
+        <td>${(p.tokens/1000000).toFixed(1)}M tokens</td>
+        <td style="font-weight:700;color:#4f46e5">$${p.preco_usd}</td>
+        <td><span class="pedidos-badge ${p.status}">${p.status === 'pendente' ? '⏳ Pendente' : p.status === 'aprovado' ? '✅ Aprovado' : '❌ Recusado'}</span></td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  function showBuyModal(pacoteId) {
+    const pkg = PACOTES_CREDITOS[pacoteId];
+    if (!pkg) return;
+    buyPacoteAtual = pacoteId;
+    document.getElementById('buy-modal-title').textContent = `🛒 Comprar ${pkg.nome}`;
+    document.getElementById('buy-pkg-name').textContent = pkg.nome;
+    document.getElementById('buy-pkg-price').textContent = `$${pkg.preco}`;
+    document.getElementById('buy-pkg-leads').textContent = `👥 ~${pkg.leads.toLocaleString('pt-BR')} leads`;
+    document.getElementById('buy-pkg-tokens').textContent = `🔢 ${(pkg.tokens/1000000).toFixed(1)}M tokens`;
+    document.getElementById('buy-modal-error').textContent = '';
+    document.getElementById('btn-confirm-buy').disabled = false;
+    document.getElementById('btn-confirm-buy').textContent = '✅ Confirmar Pedido';
+    document.getElementById('modal-buy-credits').classList.add('open');
+  }
+
+  function closeBuyModal() {
+    document.getElementById('modal-buy-credits').classList.remove('open');
+    buyPacoteAtual = null;
+  }
+
+  async function confirmBuy() {
+    if (!buyPacoteAtual) return;
+    const pkg = PACOTES_CREDITOS[buyPacoteAtual];
+    const btn = document.getElementById('btn-confirm-buy');
+    const errEl = document.getElementById('buy-modal-error');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+    const { data: { user } } = await db.auth.getUser();
+    const { error } = await db.from('pedidos_creditos').insert({
+      user_id: user.id, pacote: buyPacoteAtual,
+      tokens: pkg.tokens, preco_usd: pkg.preco, status: 'pendente'
+    });
+    if (error) {
+      errEl.textContent = 'Erro ao enviar pedido. Tente novamente.';
+      btn.disabled = false; btn.textContent = '✅ Confirmar Pedido'; return;
+    }
+    closeBuyModal();
+    alert(`✅ Pedido do pacote ${pkg.nome} enviado!\n\nO administrador será notificado e adicionará os créditos em até 24h.`);
+    loadCredits();
+  }
+
+  // Admin: abrir modal de adicionar créditos
+  function openAddCreditsModal(userId, clientName) {
+    addCreditsUserId = userId;
+    document.getElementById('add-credits-client-name').textContent = clientName;
+    document.getElementById('add-credits-tokens').value = '10000000';
+    document.getElementById('add-credits-obs').value = '';
+    document.getElementById('add-credits-error').textContent = '';
+    document.getElementById('btn-confirm-add-credits').disabled = false;
+    document.getElementById('btn-confirm-add-credits').textContent = '✅ Adicionar Créditos';
+    document.getElementById('modal-add-credits').classList.add('open');
+  }
+
+  function closeAddCreditsModal() {
+    document.getElementById('modal-add-credits').classList.remove('open');
+    addCreditsUserId = null;
+  }
+
+  async function confirmAddCredits() {
+    if (!addCreditsUserId) return;
+    const tokens = parseInt(document.getElementById('add-credits-tokens').value);
+    const obs = document.getElementById('add-credits-obs').value;
+    const btn = document.getElementById('btn-confirm-add-credits');
+    const errEl = document.getElementById('add-credits-error');
+    if (!tokens || tokens < 1000000) { errEl.textContent = 'Mínimo 1.000.000 tokens.'; return; }
+    btn.disabled = true; btn.textContent = 'Adicionando...';
+    // Upsert créditos: soma ao saldo atual
+    const { data: atual } = await db.from('tokens_creditos').select('saldo_tokens').eq('user_id', addCreditsUserId).single();
+    const novoSaldo = (atual?.saldo_tokens || 0) + tokens;
+    const { error } = await db.from('tokens_creditos').upsert({
+      user_id: addCreditsUserId, saldo_tokens: novoSaldo,
+      atualizado_em: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+    if (error) { errEl.textContent = 'Erro: ' + error.message; btn.disabled = false; btn.textContent = '✅ Adicionar Créditos'; return; }
+    // Registra no histórico e aprova pedido pendente
+    if (obs) {
+      await db.from('pedidos_creditos')
+        .update({ status: 'aprovado', obs_admin: obs })
+        .eq('user_id', addCreditsUserId).eq('status', 'pendente');
+    }
+    closeAddCreditsModal();
+    alert(`✅ ${(tokens/1000000).toFixed(1)}M tokens adicionados com sucesso!\nNovo saldo: ${novoSaldo.toLocaleString('pt-BR')} tokens`);
+    loadAdminPedidos();
+  }
+
+  async function loadAdminPedidos() {
+    const el = document.getElementById('admin-pedidos-table');
+    if (!el) return;
+    const { data } = await db.from('pedidos_creditos')
+      .select('*, profiles(display_name, evo_instance)')
+      .order('criado_em', { ascending: false }).limit(50);
+    if (!data || !data.length) { el.innerHTML = '<p class="empty-state">Nenhum pedido ainda.</p>'; return; }
+    el.innerHTML = `<table>
+      <thead><tr><th>Data</th><th>Cliente</th><th>Pacote</th><th>Tokens</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody>${data.map(p => `<tr>
+        <td style="font-size:12px;color:#888">${new Date(p.criado_em).toLocaleDateString('pt-BR')}</td>
+        <td style="font-weight:600">${escapeHtml(p.profiles?.display_name || '—')}</td>
+        <td>${PACOTES_CREDITOS[p.pacote]?.nome || p.pacote}</td>
+        <td>${(p.tokens/1000000).toFixed(1)}M tokens</td>
+        <td style="font-weight:700;color:#4f46e5">$${p.preco_usd}</td>
+        <td><span class="pedidos-badge ${p.status}">${p.status === 'pendente' ? '⏳ Pendente' : p.status === 'aprovado' ? '✅ Aprovado' : '❌ Recusado'}</span></td>
+        <td>
+          ${p.status === 'pendente' ? `
+            <button class="btn-success" style="font-size:12px;padding:5px 12px;" onclick="openAddCreditsModal('${p.user_id}','${escapeHtml(p.profiles?.display_name || '')}')">✅ Aprovar</button>
+            <button class="btn-danger" style="font-size:12px;padding:5px 12px;margin-left:4px;" onclick="recusarPedido('${p.id}')">❌ Recusar</button>
+          ` : '—'}
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  }
+
+  async function recusarPedido(pedidoId) {
+    if (!confirm('Recusar este pedido?')) return;
+    await db.from('pedidos_creditos').update({ status: 'recusado' }).eq('id', pedidoId);
+    loadAdminPedidos();
   }
 
   // =====================
