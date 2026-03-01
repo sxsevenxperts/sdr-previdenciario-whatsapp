@@ -60,8 +60,10 @@ xpert-ia/
 │   └── functions/
 │       ├── manage-clients/
 │       │   └── index.ts        # Edge Function (CRUD de clientes — admin only)
-│       └── process-pdf/
-│           └── index.ts        # Edge Function (upload PDF → embeddings pgvector)
+│       ├── process-pdf/
+│       │   └── index.ts        # Edge Function (upload PDF → embeddings pgvector)
+│       └── evo-proxy/
+│           └── index.ts        # Edge Function (proxy seguro Evolution API)
 ├── workflow-agente-sdr.json    # ← O ÚNICO WORKFLOW NECESSÁRIO
 ├── .env.example                # Variáveis de ambiente necessárias
 └── README.md
@@ -167,17 +169,21 @@ Supabase Dashboard → Database → Extensions → vector → Enable
 # Com Supabase CLI instalado:
 supabase functions deploy manage-clients --project-ref SEU_PROJECT_ID
 supabase functions deploy process-pdf --project-ref SEU_PROJECT_ID
+supabase functions deploy evo-proxy --project-ref SEU_PROJECT_ID
 ```
 
 Ou via Supabase Dashboard → Edge Functions → New Function:
 - Cole `supabase/functions/manage-clients/index.ts` → função `manage-clients`
 - Cole `supabase/functions/process-pdf/index.ts` → função `process-pdf`
+- Cole `supabase/functions/evo-proxy/index.ts` → função `evo-proxy`
 
-Configure os Secrets da Edge Function no Supabase Dashboard → Edge Functions → Secrets:
+Configure os Secrets das Edge Functions no Supabase Dashboard → Edge Functions → Secrets:
 ```
 SUPABASE_URL=https://SEU_PROJECT_ID.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=<service_role_key>
 OPENAI_API_KEY=sk-proj-...
+EVOLUTION_API_URL=https://sua-evo-api.com
+EVOLUTION_API_KEY=SUA_CHAVE_GLOBAL
 ```
 
 ### 3. n8n — importar o workflow

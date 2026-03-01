@@ -320,3 +320,24 @@ BEGIN
   ORDER BY tc.atualizado_em DESC;
 END;
 $$;
+
+-- ============================================================
+-- RPC: incrementa saldo de tokens de um cliente (admin only)
+-- Usada pela Edge Function manage-clients ao adicionar tokens
+-- ============================================================
+CREATE OR REPLACE FUNCTION incrementar_tokens(uid UUID, qtd BIGINT)
+RETURNS VOID
+LANGUAGE plpgsql SECURITY DEFINER AS $$
+BEGIN
+  -- Verifica se quem chama é admin
+  IF NOT EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin') THEN
+    RAISE EXCEPTION 'Acesso negado';
+  END IF;
+
+  UPDATE tokens_creditos
+  SET saldo_tokens   = saldo_tokens + qtd,
+      total_comprado = total_comprado + qtd,
+      atualizado_em  = NOW()
+  WHERE user_id = uid;
+END;
+$$;
