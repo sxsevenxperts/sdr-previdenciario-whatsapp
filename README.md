@@ -52,18 +52,16 @@ Admin / cliente acompanham tudo no painel XPERT.IA:
 ```
 xpert-ia/
 ├── software/
-│   ├── index.html          # Painel completo (SPA)
-│   └── Dockerfile          # Build para EasyPanel
+│   ├── index.html              # Painel completo (SPA)
+│   └── Dockerfile              # Build para EasyPanel
 ├── supabase/
 │   ├── migrations/
 │   │   └── 20260227170556_add_multi_tenancy.sql  # Schema completo
 │   └── functions/
 │       └── manage-clients/
-│           └── index.ts    # Edge Function (CRUD de clientes)
-├── workflow-1-painel-config.json   # n8n: configuração do agente
-├── workflow-2-upload-pdf.json      # n8n: upload e indexação de PDFs
-├── workflow-3-agente-sdr.json      # n8n: agente principal (multi-tenant)
-├── .env.example                    # Variáveis de ambiente necessárias
+│           └── index.ts        # Edge Function (CRUD de clientes)
+├── workflow-agente-sdr.json    # ← O ÚNICO WORKFLOW NECESSÁRIO
+├── .env.example                # Variáveis de ambiente necessárias
 └── README.md
 ```
 
@@ -170,14 +168,12 @@ supabase functions deploy manage-clients --project-ref SEU_PROJECT_ID
 
 Ou via Supabase Dashboard → Edge Functions → New Function → cole o conteúdo de `supabase/functions/manage-clients/index.ts`
 
-### 3. n8n — importar workflows
+### 3. n8n — importar o workflow
 
-Importe nesta ordem:
-1. `workflow-1-painel-config.json`
-2. `workflow-2-upload-pdf.json`
-3. `workflow-3-agente-sdr.json`
+Importe o único arquivo necessário:
+- `workflow-agente-sdr.json`
 
-Configure as credenciais em cada workflow:
+Configure as credenciais:
 | Credencial | Onde criar no n8n |
 |---|---|
 | Supabase | Credentials → Supabase API → URL + Service Role Key |
@@ -206,15 +202,14 @@ const EVOLUTION_API_KEY = 'SUA_CHAVE';
 
 ---
 
-## Os 3 workflows n8n
+## O único workflow n8n necessário
 
-| Arquivo | Nome | Função |
-|---|---|---|
-| `workflow-1-painel-config.json` | ⚙️ Painel de Config | Webhook que o painel usa para ler/salvar configs |
-| `workflow-2-upload-pdf.json` | 📄 Upload de PDFs | Processa PDFs → gera embeddings → salva no pgvector |
-| `workflow-3-agente-sdr.json` | 🤖 Agente SDR WhatsApp | Workflow principal multi-tenant |
+**`workflow-agente-sdr.json`** — importe este arquivo no n8n e configure as credenciais. Só isso.
 
-### workflow-3: nós principais
+> Configs do agente são feitas pelo painel (salvas direto no Supabase).
+> Upload de PDFs é feito pelo painel (salvo direto no Supabase pgvector via Edge Function).
+
+### Nós do workflow
 
 ```
 Webhook Evolution API
