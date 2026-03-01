@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SDR Previdenciário — Painel</title>
+  <title>XPERT.IA — Painel</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -87,6 +87,22 @@
     .upload-area:hover { border-color: #4f46e5; background: #f5f3ff; }
     .upload-area input[type=file] { display: none; }
     .upload-area p { color: #666; font-size: 14px; margin-top: 8px; }
+
+    /* TOGGLE SWITCH */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
+    .toggle-row .toggle-info { flex: 1; }
+    .toggle-row .toggle-label { font-size: 15px; font-weight: 600; color: #1a1a2e; }
+    .toggle-row .toggle-desc { font-size: 13px; color: #888; margin-top: 2px; }
+    .toggle-switch { position: relative; width: 50px; height: 28px; flex-shrink: 0; margin-left: 16px; }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #d1d5db; border-radius: 28px; transition: 0.3s; }
+    .toggle-slider:before { content: ''; position: absolute; width: 22px; height: 22px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .toggle-switch input:checked + .toggle-slider { background: #4f46e5; }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(22px); }
+    .audio-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 12px; background: #f3e8ff; color: #7c3aed; font-weight: 600; margin-left: 6px; vertical-align: middle; }
+
+    /* MSG AUDIO ICONS */
+    .msg-audio-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #7c3aed; background: #f3e8ff; padding: 2px 8px; border-radius: 10px; margin-bottom: 4px; font-weight: 600; }
 
     /* WHATSAPP PAGE */
     .wa-status-bar { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 10px; margin-bottom: 20px; font-weight: 600; font-size: 15px; }
@@ -299,7 +315,7 @@
 <!-- LOGIN -->
 <div id="login-page">
   <div class="login-box">
-    <h1>⚖️ SDR Previdenciário</h1>
+    <h1>🤖 XPERT.IA</h1>
     <p>Painel de administração do agente IA</p>
     <div class="form-group">
       <label>E-mail</label>
@@ -318,7 +334,7 @@
 <div id="dashboard-page">
   <div class="sidebar">
     <div class="logo">
-      <h2>⚖️ SDR Previdenciário</h2>
+      <h2>🤖 XPERT.IA</h2>
       <p>Painel de Administração</p>
     </div>
     <div style="padding: 8px 0; flex: 1;">
@@ -379,7 +395,7 @@
     <div class="page active" id="page-overview">
       <div class="page-header">
         <h1>Visão Geral</h1>
-        <p>Resumo do desempenho do agente SDR</p>
+        <p>Resumo do desempenho do agente XPERT.IA</p>
       </div>
       <div class="stats-grid">
         <div class="stat-card">
@@ -425,7 +441,7 @@
             <div style="font-weight:700;margin-bottom:8px;color:#1a1a2e;">📋 Informações da Instância</div>
             <div style="display:flex;flex-direction:column;gap:6px;">
               <div><strong>Instância:</strong> <code id="wa-instance-display" style="background:#e0e7ff;color:#4f46e5;padding:2px 6px;border-radius:4px;">—</code></div>
-              <div><strong>Servidor:</strong> <code style="background:#e0e7ff;color:#4f46e5;padding:2px 6px;border-radius:4px;font-size:11px;">evolutionapi-evolution-api.yuhqmc.easypanel.host</code></div>
+              <div><strong>Servidor:</strong> <code style="background:#e0e7ff;color:#4f46e5;padding:2px 6px;border-radius:4px;font-size:11px;">Proxy Seguro (evo-proxy)</code></div>
             </div>
           </div>
         </div>
@@ -452,7 +468,7 @@
           <div class="qr-step"><div class="qr-step-num">2</div><div>No seu celular, abra o <strong>WhatsApp</strong> e vá em <strong>Configurações → Dispositivos conectados</strong></div></div>
           <div class="qr-step"><div class="qr-step-num">3</div><div>Toque em <strong>"Conectar um dispositivo"</strong> e aponte a câmera para o QR Code</div></div>
           <div class="qr-step"><div class="qr-step-num">4</div><div>Aguarde a confirmação — o status acima ficará <strong style="color:#16a34a;">🟢 Conectado</strong></div></div>
-          <div class="qr-step"><div class="qr-step-num">5</div><div>O agente SDR começará a responder mensagens automaticamente pelo número conectado</div></div>
+          <div class="qr-step"><div class="qr-step-num">5</div><div>O agente XPERT.IA começará a responder mensagens automaticamente pelo número conectado</div></div>
         </div>
       </div>
     </div>
@@ -559,7 +575,23 @@
         <div class="field-group"><label>Mensagem quando lead NÃO é qualificado</label>
           <textarea id="cfg-msg_desqualificado" placeholder="Ex: Obrigado pelo contato! No momento não identificamos um caso que atendemos."></textarea></div>
       </div>
-      <button class="btn-save" onclick="saveConfigs(['tonalidade','instrucoes_comunicacao','msg_qualificado','msg_desqualificado'])">💾 Salvar</button>
+      <div class="card">
+        <h3>🔊 Resposta em Áudio</h3>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <div class="toggle-label">Responder em áudio no WhatsApp</div>
+            <div class="toggle-desc">Quando ativado, o agente envia a resposta como mensagem de voz. Áudios recebidos são sempre transcritos independentemente desta opção.</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="cfg-responder_em_audio" checked />
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div style="margin-top:8px;padding:10px 14px;background:#f0fdf4;border-radius:8px;font-size:12px;color:#166534;">
+          💡 <strong>Custo:</strong> ~R$0,003 por mensagem de áudio enviada (OpenAI TTS). Transcrição de áudio recebido: ~R$0,003 por áudio de 30s (Whisper).
+        </div>
+      </div>
+      <button class="btn-save" onclick="saveConfigs(['tonalidade','instrucoes_comunicacao','msg_qualificado','msg_desqualificado','responder_em_audio'])">💾 Salvar</button>
       <span class="save-status" id="save-comunicacao"></span>
     </div>
 
@@ -627,11 +659,11 @@
       <!-- Hero da assinatura -->
       <div class="billing-hero" id="billing-hero">
         <div>
-          <h2>⚖️ SDR Previdenciário — Plano Mensal</h2>
-          <p>Agente IA 24/7 + <strong>5 milhões de tokens inclusos</strong> (~135 atendimentos/mês)</p>
+          <h2>🤖 XPERT.IA — Plano Mensal</h2>
+          <p>O único agente IA que <strong>ouve áudios, pesquisa na web e recebe arquivos</strong> no WhatsApp</p>
           <div id="billing-status-badge" class="billing-status-badge trial">⏳ Período de teste</div>
           <div style="margin-top:12px;font-size:13px;opacity:.8;">
-            ✅ &nbsp;IA WhatsApp 24/7 &nbsp;|&nbsp; ✅ &nbsp;5M tokens/mês &nbsp;|&nbsp; ✅ &nbsp;Suporte incluso
+            ✅ &nbsp;IA WhatsApp 24/7 &nbsp;|&nbsp; ✅ &nbsp;5M tokens/mês &nbsp;|&nbsp; 🔊 &nbsp;Áudio &nbsp;|&nbsp; 🌐 &nbsp;Pesquisa Web &nbsp;|&nbsp; 📎 &nbsp;Arquivos
           </div>
         </div>
         <div style="text-align:right">
@@ -989,9 +1021,27 @@
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY';
   const MANAGE_CLIENTS_URL = `${SUPABASE_URL}/functions/v1/manage-clients`;
   const N8N_UPLOAD_WEBHOOK = 'https://sx-n8n.yuhqmc.easypanel.host/webhook/upload-pdf-sdr';
-  const EVO_URL = 'https://evolutionapi-evolution-api.yuhqmc.easypanel.host';
-  const EVO_KEY = '32AEB8FC2DE4-4F79-A823-E620A11C224F';
-  const EVO_INSTANCE_DEFAULT = 'TESTE'; // fallback se perfil não tiver instância
+  // Evolution API — chamadas via Edge Function proxy (chave segura no servidor)
+  const EVO_PROXY_URL = `${SUPABASE_URL}/functions/v1/evo-proxy`;
+
+  // Helper: chama Evolution API via proxy autenticado (nunca expõe a chave)
+  async function evoProxy(action, body = null) {
+    const session = (await db.auth.getSession()).data.session;
+    if (!session) throw new Error('Sessão expirada. Faça login novamente.');
+    const opts = {
+      method: body ? 'POST' : 'GET',
+      headers: {
+        'Authorization': `Bearer ${session.access_token}`,
+        'apikey': SUPABASE_KEY,
+        ...(body ? { 'Content-Type': 'application/json' } : {})
+      },
+      ...(body ? { body: JSON.stringify(body) } : {})
+    };
+    const res = await fetch(`${EVO_PROXY_URL}?action=${action}`, opts);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Erro ${res.status}`);
+    return data;
+  }
 
   const { createClient } = supabase;
   const db = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -1003,9 +1053,7 @@
   let qrCountdownInterval = null;
   let currentProfile = null; // { id, role, display_name, evo_instance, active }
 
-  function getEvoInstance() {
-    return (currentProfile?.evo_instance) || EVO_INSTANCE_DEFAULT;
-  }
+  // getEvoInstance removido — o proxy evo-proxy resolve a instância automaticamente pelo JWT
 
   // =====================
   // PROMPT PADRÃO
@@ -1113,7 +1161,7 @@
 
       // Atualiza nome/instância na sidebar
       const instEl = document.getElementById('wa-instance-display');
-      if (instEl) instEl.textContent = getEvoInstance();
+      if (instEl) instEl.textContent = currentProfile?.evo_instance || 'Não configurada';
       const nameEl = document.getElementById('sidebar-user-name');
       if (nameEl) nameEl.textContent = profile?.display_name || user.email;
       const roleEl = document.getElementById('sidebar-user-role');
@@ -1167,10 +1215,7 @@
     const dot = document.getElementById('nav-wa-dot');
     const btnDesc = document.getElementById('btn-desconectar');
     try {
-      const res = await fetch(`${EVO_URL}/instance/connectionState/${getEvoInstance()}`, {
-        headers: { 'apikey': EVO_KEY }
-      });
-      const data = await res.json();
+      const data = await evoProxy('status');
       const state = data?.instance?.state || data?.state || 'close';
       if (state === 'open') {
         bar.className = 'wa-status-bar connected';
@@ -1198,10 +1243,7 @@
     const timer = document.getElementById('qr-timer');
     btn.disabled = true; btn.innerHTML = '<span>⏳</span> Gerando...';
     try {
-      const res = await fetch(`${EVO_URL}/instance/connect/${getEvoInstance()}`, {
-        headers: { 'apikey': EVO_KEY }
-      });
-      const data = await res.json();
+      const data = await evoProxy('connect');
       const base64 = data?.base64 || data?.qrcode?.base64 || data?.code;
       if (base64) {
         placeholder.style.display = 'none';
@@ -1250,9 +1292,7 @@
   async function disconnectWA() {
     if (!confirm('Deseja desconectar o WhatsApp? O agente para de responder.')) return;
     try {
-      await fetch(`${EVO_URL}/instance/logout/${getEvoInstance()}`, {
-        method: 'DELETE', headers: { 'apikey': EVO_KEY }
-      });
+      await evoProxy('logout');
       setTimeout(checkWAStatus, 1000);
     } catch(e) { alert('Erro ao desconectar: ' + e.message); }
   }
@@ -1360,8 +1400,12 @@
     }
     el.innerHTML = hist.map(msg => {
       const isUser = msg.role === 'user';
+      const isAudio = msg.type === 'audio';
+      const audioTag = isAudio
+        ? `<div class="msg-audio-tag">${isUser ? '🎤 Áudio transcrito' : '🔊 Resposta em áudio'}</div>`
+        : '';
       return `<div class="msg-row ${isUser ? 'user' : 'assistant'}">
-        <div class="msg-bubble">${escapeHtml(msg.content || '')}</div>
+        <div class="msg-bubble">${audioTag}${escapeHtml(msg.content || '')}</div>
       </div>`;
     }).join('');
     el.scrollTop = el.scrollHeight;
@@ -1383,11 +1427,7 @@
     const btn = document.getElementById('btn-send');
     btn.disabled = true; input.value = ''; input.style.height = 'auto';
     try {
-      await fetch(`${EVO_URL}/message/sendText/${getEvoInstance()}`, {
-        method: 'POST',
-        headers: { 'apikey': EVO_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ number: selectedConv, text: msg })
-      });
+      await evoProxy('send-text', { number: selectedConv, text: msg });
       // Atualiza histórico local
       await loadConversations();
     } catch(e) {
@@ -1399,7 +1439,7 @@
   async function clearSession() {
     if (!selectedConv) return;
     if (!confirm(`Reiniciar a conversa com ${formatPhone(selectedConv)}? O histórico será apagado.`)) return;
-    await db.from('sessoes').delete().eq('numero_whatsapp', selectedConv);
+    await db.from('sessoes').delete().eq('numero_whatsapp', selectedConv).eq('user_id', currentProfile.id);
     selectedConv = null;
     document.getElementById('chat-placeholder').style.display = 'flex';
     document.getElementById('chat-active').style.display = 'none';
@@ -1447,7 +1487,12 @@
     if (!data) return;
     data.forEach(row => {
       const el = document.getElementById('cfg-' + row.chave);
-      if (el && row.valor) el.value = row.valor;
+      if (!el) return;
+      if (el.type === 'checkbox') {
+        el.checked = row.valor === 'true' || row.valor === true;
+      } else if (row.valor) {
+        el.value = row.valor;
+      }
     });
   }
 
@@ -1468,8 +1513,9 @@
     for (const key of keys) {
       const el = document.getElementById('cfg-' + key);
       if (!el) continue;
+      const valor = el.type === 'checkbox' ? String(el.checked) : el.value;
       await db.from('agente_config').upsert(
-        { chave: key, valor: el.value, user_id: user.id, atualizado_em: new Date().toISOString() },
+        { chave: key, valor, user_id: user.id, atualizado_em: new Date().toISOString() },
         { onConflict: 'user_id,chave' }
       );
     }
@@ -2154,42 +2200,39 @@
     if (!el) return;
     el.innerHTML = '<p class="loading">Carregando...</p>';
 
-    // Busca via service role (usa manage-billing como proxy ou direto com service role)
-    // Como não temos RLS para admin na token_usage, usamos a abordagem de RPC ou
-    // consultamos via manage-billing estendido. Por ora, mostramos apenas os dados
-    // do próprio usuário como demonstração (integração completa requer RPC)
-    const inicio = new Date(); inicio.setDate(1); inicio.setHours(0,0,0,0);
-    const { data } = await db
-      .from('token_usage')
-      .select('modelo,tokens_input,tokens_output,tokens_total,criado_em')
-      .gte('criado_em', inicio.toISOString())
-      .order('criado_em', { ascending: false });
+    // Usa RPC admin_get_all_tokens para ver saldo de TODOS os clientes
+    const { data, error } = await db.rpc('admin_get_all_tokens');
 
+    if (error) {
+      el.innerHTML = '<p class="empty-state">Erro ao carregar: ' + error.message + '</p>'; return;
+    }
     if (!data || !data.length) {
-      el.innerHTML = '<p class="empty-state">Nenhum uso de tokens registrado este mês.</p>'; return;
+      el.innerHTML = '<p class="empty-state">Nenhum cliente com dados de tokens.</p>'; return;
     }
 
-    const totalInput = data.reduce((s,r) => s + (r.tokens_input||0), 0);
-    const totalOutput = data.reduce((s,r) => s + (r.tokens_output||0), 0);
-    const totalAll = data.reduce((s,r) => s + (r.tokens_total||0), 0);
-    const custo = (totalAll / 1000000 * 5).toFixed(4); // ~$5/1M tokens gpt-4o
+    const totalSaldo = data.reduce((s,r) => s + (r.saldo_tokens||0), 0);
+    const totalUsado = data.reduce((s,r) => s + (r.tokens_usados_mes||0), 0);
+    const totalComprado = data.reduce((s,r) => s + (r.total_comprado||0), 0);
 
     el.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px">
-        <div class="billing-info-card"><div class="label">Tokens Input</div><div class="value">${totalInput.toLocaleString('pt-BR')}</div></div>
-        <div class="billing-info-card"><div class="label">Tokens Output</div><div class="value">${totalOutput.toLocaleString('pt-BR')}</div></div>
-        <div class="billing-info-card"><div class="label">Total Tokens</div><div class="value">${totalAll.toLocaleString('pt-BR')}</div></div>
-        <div class="billing-info-card"><div class="label">Custo Est. (USD)</div><div class="value" style="font-size:16px">$${custo}</div><div class="sub">GPT-4o ~$5/1M tkn</div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px">
+        <div class="billing-info-card"><div class="label">Saldo Total (todos)</div><div class="value">${totalSaldo.toLocaleString('pt-BR')}</div></div>
+        <div class="billing-info-card"><div class="label">Usados no Mês (todos)</div><div class="value">${totalUsado.toLocaleString('pt-BR')}</div></div>
+        <div class="billing-info-card"><div class="label">Total Comprado (todos)</div><div class="value">${totalComprado.toLocaleString('pt-BR')}</div></div>
       </div>
       <table>
-        <thead><tr><th>Data</th><th>Modelo</th><th>Input</th><th>Output</th><th>Total</th></tr></thead>
-        <tbody>${data.slice(0,50).map(r => `<tr>
-          <td style="font-size:12px;color:#888">${new Date(r.criado_em).toLocaleString('pt-BR')}</td>
-          <td><code style="background:#f0f2f5;padding:2px 7px;border-radius:4px;font-size:11px">${r.modelo}</code></td>
-          <td>${(r.tokens_input||0).toLocaleString('pt-BR')}</td>
-          <td>${(r.tokens_output||0).toLocaleString('pt-BR')}</td>
-          <td style="font-weight:700">${(r.tokens_total||0).toLocaleString('pt-BR')}</td>
-        </tr>`).join('')}</tbody>
+        <thead><tr><th>Cliente</th><th>Email</th><th>Saldo Tokens</th><th>Usado no Mês</th><th>Total Comprado</th><th>Mês Ref.</th></tr></thead>
+        <tbody>${data.map(r => {
+          const cor = r.saldo_tokens > 2000000 ? '#22c55e' : r.saldo_tokens > 500000 ? '#f59e0b' : '#ef4444';
+          return '<tr>' +
+            '<td style="font-weight:600">' + (r.display_name||'—') + '</td>' +
+            '<td style="font-size:12px;color:#888">' + (r.email||'—') + '</td>' +
+            '<td style="font-weight:700;color:' + cor + '">' + (r.saldo_tokens||0).toLocaleString('pt-BR') + '</td>' +
+            '<td>' + (r.tokens_usados_mes||0).toLocaleString('pt-BR') + '</td>' +
+            '<td>' + (r.total_comprado||0).toLocaleString('pt-BR') + '</td>' +
+            '<td style="font-size:12px">' + (r.mes_referencia||'—') + '</td>' +
+          '</tr>';
+        }).join('')}</tbody>
       </table>`;
   }
 </script>

@@ -1,5 +1,5 @@
 {
-  "name": "🤖 Agente SDR WhatsApp",
+  "name": "🤖 XPERT.IA — Agente SDR WhatsApp",
   "nodes": [
     {
       "parameters": {
@@ -17,13 +17,80 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json;\n\n// Ignora mensagens enviadas pelo próprio bot\nif (body.data?.key?.fromMe === true) {\n  return [];\n}\n\n// Ignora mensagens de grupos\nconst remoteJid = body.data?.key?.remoteJid || '';\nif (remoteJid.includes('@g.us')) {\n  return [];\n}\n\nconst numero = remoteJid.replace('@s.whatsapp.net', '');\nconst mensagem = body.data?.message?.conversation\n  || body.data?.message?.extendedTextMessage?.text\n  || '';\nconst nomeContato = body.data?.pushName || 'Lead';\nconst tipoMensagem = body.data?.messageType || 'conversation';\nconst temArquivo = ['imageMessage', 'documentMessage', 'audioMessage'].includes(tipoMensagem);\n\n// Extrai o instanceName para identificar o cliente (multi-tenancy)\nconst instanceName = body.instance || body.instanceName || body.data?.instance || 'TESTE';\n\nif (!mensagem && !temArquivo) return [];\n\nreturn [{ json: { numero, mensagem, nomeContato, tipoMensagem, temArquivo, instanceName, timestamp: new Date().toISOString() } }];"
+        "jsCode": "const body = $input.first().json;\n\n// Ignora mensagens enviadas pelo próprio bot\nif (body.data?.key?.fromMe === true) return [];\n\n// Ignora mensagens de grupos\nconst remoteJid = body.data?.key?.remoteJid || '';\nif (remoteJid.includes('@g.us')) return [];\n\nconst numero = remoteJid.replace('@s.whatsapp.net', '');\nconst mensagem = body.data?.message?.conversation\n  || body.data?.message?.extendedTextMessage?.text\n  || '';\nconst nomeContato = body.data?.pushName || 'Lead';\nconst tipoMensagem = body.data?.messageType || 'conversation';\nconst temArquivo = ['imageMessage', 'documentMessage', 'audioMessage'].includes(tipoMensagem);\nconst ehAudio = tipoMensagem === 'audioMessage';\n\n// Extrai dados de áudio se for audioMessage\nlet audioBase64 = null;\nlet audioUrl = null;\nlet audioMimetype = null;\nlet audioDuration = 0;\nif (ehAudio) {\n  const am = body.data?.message?.audioMessage || {};\n  audioBase64 = am.base64 || null;\n  audioUrl = am.url || null;\n  audioMimetype = am.mimetype || 'audio/ogg';\n  audioDuration = am.seconds || 0;\n}\n\nconst instanceName = body.instance || body.instanceName || body.data?.instance || '';\n\nif (!mensagem && !temArquivo) return [];\n\nreturn [{ json: { numero, mensagem, nomeContato, tipoMensagem, temArquivo, ehAudio, audioBase64, audioUrl, audioMimetype, audioDuration, instanceName, timestamp: new Date().toISOString() } }];"
       },
       "id": "node-normaliza",
       "name": "Normaliza e filtra mensagem",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [220, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond-audio",
+              "leftValue": "={{ $json.ehAudio }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equal" }
+            }
+          ]
+        }
+      },
+      "id": "node-eh-audio",
+      "name": "É áudio?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "const dados = $input.first().json;\n\n// Se temos base64 direto do webhook, usa ele\n// Se não, baixa da URL\nlet audioBase64 = dados.audioBase64;\n\nif (!audioBase64 && dados.audioUrl) {\n  try {\n    const response = await fetch(dados.audioUrl);\n    const arrayBuffer = await response.arrayBuffer();\n    const uint8 = new Uint8Array(arrayBuffer);\n    let binary = '';\n    uint8.forEach(b => binary += String.fromCharCode(b));\n    audioBase64 = btoa(binary);\n  } catch(e) {\n    return [{ json: { ...dados, mensagem: '[Áudio não pôde ser baixado]', ehAudio: false } }];\n  }\n}\n\nif (!audioBase64) {\n  return [{ json: { ...dados, mensagem: '[Áudio sem conteúdo]', ehAudio: false } }];\n}\n\nreturn [{ json: { ...dados, audioBase64 } }];"
+      },
+      "id": "node-download-audio",
+      "name": "Download áudio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, 260]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/transcriptions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Authorization", "value": "=Bearer SUA_CHAVE_OPENAI_AQUI" }]
+        },
+        "contentType": "multipart-form-data",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "model", "value": "whisper-1" },
+            { "name": "language", "value": "pt" },
+            { "name": "response_format", "value": "json" }
+          ]
+        },
+        "options": {
+          "response": { "response": { "fullResponse": false } }
+        }
+      },
+      "id": "node-whisper",
+      "name": "Transcreve áudio (Whisper)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, 260],
+      "notes": "Configure credencial OpenAI. Envia áudio para Whisper e recebe texto transcrito. Custo: $0.006/min."
+    },
+    {
+      "parameters": {
+        "jsCode": "const dados = $('Normaliza e filtra mensagem').first().json;\nconst transcricao = $input.first().json.text || '[Transcrição indisponível]';\n\n// Substitui a mensagem pela transcrição e marca como áudio transcrito\nreturn [{ json: { ...dados, mensagem: transcricao, mensagemOriginalAudio: true, ehAudio: true } }];"
+      },
+      "id": "node-merge-audio",
+      "name": "Merge: áudio → texto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 260]
     },
     {
       "parameters": {
@@ -35,7 +102,7 @@
           "conditions": [
             {
               "keyName": "evo_instance",
-              "keyValue": "={{ $('Normaliza e filtra mensagem').first().json.instanceName }}"
+              "keyValue": "={{ $json.instanceName }}"
             },
             {
               "keyName": "active",
@@ -49,8 +116,8 @@
       "name": "Resolve cliente pelo instanceName",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [440, 400],
-      "notes": "Busca o profile do cliente pelo instanceName da Evolution API. Isola dados por tenant (multi-tenancy)."
+      "position": [1320, 400],
+      "notes": "Busca o profile do cliente pelo instanceName da Evolution API."
     },
     {
       "parameters": {
@@ -72,18 +139,89 @@
       "name": "Carrega configurações do Supabase",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [660, 400],
-      "notes": "Busca configurações do cliente específico (isolado por user_id)."
+      "position": [1540, 400]
     },
     {
       "parameters": {
-        "jsCode": "// Converte array de {chave, valor} em objeto\nconst rows = $input.all();\nconst config = {};\nrows.forEach(row => {\n  config[row.json.chave] = row.json.valor;\n});\n\nconst dadosMensagem = $('Normaliza e filtra mensagem').first().json;\nconst cliente = $('Resolve cliente pelo instanceName').first().json;\nconst userId = cliente?.id;\nconst evoInstance = cliente?.evo_instance || dadosMensagem.instanceName;\n\n// Monta o system prompt completo com todas as configurações do cliente\nconst systemPrompt = `${config.prompt_sistema || ''}\n\nOBJETIVO: ${config.objetivo || ''}\n\nTONALIDADE: ${config.tonalidade || ''}\n\nINSTRUÇÕES DE COMUNICAÇÃO: ${config.instrucoes_comunicacao || ''}\n\nCRITÉRIOS DE QUALIFICAÇÃO (precisa atender ao menos 3 dos seguintes):\n${config.criterios_qualificacao || ''}\n\nQUANDO O LEAD FOR QUALIFICADO:\n- Responda com: ${config.msg_qualificado || 'Vou encaminhar seu caso ao advogado.'}\n- Inclua no final da mensagem um bloco JSON assim:\n\\`\\`\\`json\n{\"qualificado\":true,\"nome\":\"Nome completo\",\"celular\":\"DDD+número\",\"tese\":\"Tese jurídica identificada\",\"resumo\":\"Resumo completo da conversa\"}\n\\`\\`\\`\n\nQUANDO O LEAD NÃO FOR QUALIFICADO:\n- Responda com: ${config.msg_desqualificado || 'Agradecemos o contato!'}\n- Inclua no final:\n\\`\\`\\`json\n{\"qualificado\":false,\"motivo\":\"Motivo da desqualificação\"}\n\\`\\`\\`\n\nREGRAS IMPORTANTES:\n- Faça uma pergunta por vez\n- Nunca prometa resultado ou vitória\n- Nunca dê consultoria jurídica\n- Se não souber algo, consulte a base de conhecimento antes de responder`;\n\nreturn [{ json: { ...dadosMensagem, userId, evoInstance, config, systemPrompt } }];"
+        "jsCode": "const rows = $input.all();\nconst config = {};\nrows.forEach(row => { config[row.json.chave] = row.json.valor; });\n\n// Pega dados da mensagem — pode vir do branch texto ou do merge áudio\nlet dadosMensagem;\ntry {\n  dadosMensagem = $('Merge: áudio → texto').first().json;\n} catch(e) {\n  dadosMensagem = $('Normaliza e filtra mensagem').first().json;\n}\n\nconst cliente = $('Resolve cliente pelo instanceName').first().json;\nconst userId = cliente?.id;\nconst evoInstance = cliente?.evo_instance || dadosMensagem.instanceName;\nconst responderEmAudio = config.responder_em_audio === 'true';\n\nconst systemPrompt = `${config.prompt_sistema || ''}\n\nOBJETIVO: ${config.objetivo || ''}\n\nTONALIDADE: ${config.tonalidade || ''}\n\nINSTRUÇÕES DE COMUNICAÇÃO: ${config.instrucoes_comunicacao || ''}\n\nCRITÉRIOS DE QUALIFICAÇÃO (precisa atender ao menos 3 dos seguintes):\n${config.criterios_qualificacao || ''}\n\nQUANDO O LEAD FOR QUALIFICADO:\n- Responda com: ${config.msg_qualificado || 'Vou encaminhar seu caso ao advogado.'}\n- Inclua no final da mensagem um bloco JSON assim:\n\\`\\`\\`json\n{\"qualificado\":true,\"nome\":\"Nome completo\",\"celular\":\"DDD+número\",\"tese\":\"Tese jurídica identificada\",\"resumo\":\"Resumo completo da conversa\"}\n\\`\\`\\`\n\nQUANDO O LEAD NÃO FOR QUALIFICADO:\n- Responda com: ${config.msg_desqualificado || 'Agradecemos o contato!'}\n- Inclua no final:\n\\`\\`\\`json\n{\"qualificado\":false,\"motivo\":\"Motivo da desqualificação\"}\n\\`\\`\\`\n\nREGRAS IMPORTANTES:\n- Faça uma pergunta por vez\n- Nunca prometa resultado ou vitória\n- Nunca dê consultoria jurídica\n- Se não souber algo, consulte a base de conhecimento antes de responder`;\n\nreturn [{ json: { ...dadosMensagem, userId, evoInstance, config, systemPrompt, responderEmAudio } }];"
       },
       "id": "node-monta-config",
       "name": "Monta system prompt com config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [880, 400]
+      "position": [1760, 400]
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "tableId": "tokens_creditos",
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "user_id",
+              "keyValue": "={{ $json.userId }}"
+            }
+          ]
+        },
+        "options": { "limit": 1 }
+      },
+      "id": "node-verifica-saldo",
+      "name": "Verifica saldo de tokens",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [1980, 400],
+      "notes": "Verifica se o cliente tem tokens disponíveis. Se saldo <= 0, envia aviso e para."
+    },
+    {
+      "parameters": {
+        "jsCode": "const saldo = $input.first().json;\nconst dadosConfig = $('Monta system prompt com config').first().json;\nconst saldoTokens = saldo?.saldo_tokens || 0;\n\n// Se saldo <= 0, bloqueia e avisa o lead\nif (saldoTokens <= 0) {\n  return [{ json: { ...dadosConfig, saldoTokens, tokensBloqueado: true, textoParaLead: '⚠️ Olá! No momento nosso sistema está temporariamente indisponível. Por favor, tente novamente mais tarde ou entre em contato pelo número do escritório. Pedimos desculpas pelo inconveniente.' } }];\n}\n\nreturn [{ json: { ...dadosConfig, saldoTokens, tokensBloqueado: false } }];"
+      },
+      "id": "node-check-saldo",
+      "name": "Tokens disponíveis?",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2200, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond-bloqueado",
+              "leftValue": "={{ $json.tokensBloqueado }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equal" }
+            }
+          ]
+        }
+      },
+      "id": "node-if-bloqueado",
+      "name": "Bloqueado por tokens?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2420, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/{{ $json.evoInstance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "apikey", "value": "SUA_CHAVE_EVO_API_AQUI" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"number\": \"{{ $json.numero }}\", \"text\": \"{{ $json.textoParaLead }}\"}",
+        "options": {}
+      },
+      "id": "node-envia-aviso-bloqueio",
+      "name": "Envia aviso: tokens esgotados",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2640, 260],
+      "notes": "Envia mensagem de indisponibilidade quando os tokens do cliente acabaram."
     },
     {
       "parameters": {
@@ -95,11 +233,11 @@
           "conditions": [
             {
               "keyName": "numero_whatsapp",
-              "keyValue": "={{ $('Normaliza e filtra mensagem').first().json.numero }}"
+              "keyValue": "={{ $json.numero }}"
             },
             {
               "keyName": "user_id",
-              "keyValue": "={{ $('Monta system prompt com config').first().json.userId }}"
+              "keyValue": "={{ $json.userId }}"
             }
           ]
         },
@@ -109,18 +247,17 @@
       "name": "Supabase — Busca histórico da sessão",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1100, 400],
-      "notes": "Busca o histórico de conversa do lead, isolado por user_id do cliente."
+      "position": [2640, 540]
     },
     {
       "parameters": {
-        "jsCode": "const dadosConfig = $('Monta system prompt com config').first().json;\nconst sessaoRow = $input.first().json;\n\n// Se o agente estiver pausado para esta conversa (cliente assumiu o controle), ignora\nif (sessaoRow.agente_pausado === true) {\n  return [];\n}\n\nlet historico = [];\ntry {\n  historico = JSON.parse(sessaoRow.historico || '[]');\n} catch(e) { historico = []; }\n\nhistorico.push({\n  role: 'user',\n  content: dadosConfig.temArquivo ? '[Usuário enviou um arquivo]' : dadosConfig.mensagem\n});\n\nconst historicoTexto = historico\n  .map(h => `${h.role === 'user' ? 'Lead' : 'Agente'}: ${h.content}`)\n  .join('\\n');\n\nreturn [{ json: { ...dadosConfig, historico, historicoTexto } }];"
+        "jsCode": "const dadosConfig = $('Tokens disponíveis?').first().json;\nconst sessaoRow = $input.first().json;\n\nif (sessaoRow.agente_pausado === true) return [];\n\nlet historico = [];\ntry { historico = JSON.parse(sessaoRow.historico || '[]'); } catch(e) {}\n\n// Se veio de áudio, marca no histórico\nconst prefixo = dadosConfig.ehAudio ? '🎤 [Áudio transcrito]: ' : '';\nhistorico.push({ role: 'user', content: prefixo + dadosConfig.mensagem, type: dadosConfig.ehAudio ? 'audio' : 'text' });\n\nconst historicoTexto = historico.map(h => `${h.role === 'user' ? 'Lead' : 'Agente'}: ${h.content}`).join('\\n');\n\nreturn [{ json: { ...dadosConfig, historico, historicoTexto } }];"
       },
       "id": "node-monta-historico",
       "name": "Monta histórico da conversa",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1320, 400]
+      "position": [2860, 540]
     },
     {
       "parameters": {
@@ -136,32 +273,29 @@
       "name": "Agente SDR — IA",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "position": [1540, 400],
-      "notes": "Configure a credencial OpenAI. As tools (Tavily e Supabase Vector Store) são conectadas abaixo."
+      "position": [3080, 540],
+      "notes": "Configure a credencial OpenAI."
     },
     {
-      "parameters": {
-        "name": "busca_web",
-        "description": "Busca informações atualizadas na internet sobre legislação previdenciária, benefícios do INSS, jurisprudência e notícias relevantes. Use quando precisar validar informações ou buscar dados atuais. Input: a query de busca em português.",
-        "method": "POST",
-        "url": "https://api.tavily.com/search",
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={\"api_key\": \"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\", \"query\": \"{query}\", \"search_depth\": \"basic\", \"max_results\": 5}",
-        "options": {}
+      "parameters": {},
+      "id": "node-tool-serpapi",
+      "name": "Tool: Busca na Web (SerpAPI)",
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [2960, 760],
+      "credentials": {
+        "serpApi": {
+          "id": "CONFIGURE_SERPAPI_CREDENTIAL",
+          "name": "SerpAPI account"
+        }
       },
-      "id": "node-tool-tavily",
-      "name": "Tool: Busca na Web (Tavily)",
-      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-      "typeVersion": 1.1,
-      "position": [1420, 620],
-      "notes": "Chave Tavily incluída diretamente no JSON body. Compatível com todas as versões do n8n."
+      "notes": "Configure a credencial SerpAPI em Settings → Credentials do n8n."
     },
     {
       "parameters": {
         "mode": "retrieve-as-tool",
         "toolName": "base_conhecimento_pdf",
-        "toolDescription": "Consulta a base de conhecimento interna com PDFs de legislação, jurisprudência e tabelas previdenciárias. Use quando precisar de informações específicas dos documentos carregados pelo cliente.",
+        "toolDescription": "Consulta a base de conhecimento interna com PDFs de legislação, jurisprudência e tabelas previdenciárias.",
         "tableName": "documentos_conhecimento",
         "options": {
           "queryFilter": "={{ { user_id: $('Monta system prompt com config').first().json.userId } }}"
@@ -171,8 +305,7 @@
       "name": "Tool: Base de Conhecimento PDF",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
       "typeVersion": 1,
-      "position": [1660, 620],
-      "notes": "Filtra documentos por user_id do cliente — cada cliente acessa apenas sua própria base de PDFs."
+      "position": [3200, 760]
     },
     {
       "parameters": {
@@ -183,32 +316,102 @@
       "name": "Embeddings para busca",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1.2,
-      "position": [1660, 780],
-      "notes": "Necessário para a busca semântica nos PDFs."
+      "position": [3200, 920]
     },
     {
       "parameters": {
         "model": "gpt-4o",
-        "options": {
-          "temperature": 0.3
-        }
+        "options": { "temperature": 0.3 }
       },
       "id": "node-llm-openai",
       "name": "LLM — GPT-4o",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
-      "position": [1420, 780],
-      "notes": "Configure a credencial OpenAI. Temperatura 0.3 para respostas mais consistentes."
+      "position": [2960, 920]
     },
     {
       "parameters": {
-        "jsCode": "const respostaAgente = $input.first().json.output || '';\nconst dadosMsg = $('Normaliza e filtra mensagem').first().json;\nconst configData = $('Monta system prompt com config').first().json;\nconst config = configData.config;\nconst userId = configData.userId;\nconst evoInstance = configData.evoInstance;\n\nlet dadosQualificacao = null;\nlet qualificado = null;\n\n// Extrai JSON da resposta\ntry {\n  const match = respostaAgente.match(/```json([\\s\\S]*?)```/);\n  if (match) {\n    dadosQualificacao = JSON.parse(match[1].trim());\n    qualificado = dadosQualificacao.qualificado === true;\n  }\n} catch(e) {}\n\n// Remove o JSON do texto que vai ao lead\nconst textoParaLead = respostaAgente.replace(/```json[\\s\\S]*?```/g, '').trim();\n\n// Monta relatório formatado\nlet relatorio = null;\nif (qualificado && dadosQualificacao) {\n  const agora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\n  relatorio = `🟢 *LEAD QUALIFICADO — PREVIDENCIÁRIO*\\n\\n`\n    + `👤 *Nome:* ${dadosQualificacao.nome || 'Não informado'}\\n`\n    + `📱 *Celular:* ${dadosQualificacao.celular || dadosMsg.numero}\\n`\n    + `⚖️ *Tese:* ${dadosQualificacao.tese || 'Não identificada'}\\n`\n    + `📋 *Resumo:* ${dadosQualificacao.resumo || 'Ver histórico'}\\n`\n    + `🕐 *Atendimento:* ${agora}`;\n}\n\nreturn [{\n  json: {\n    numero: dadosMsg.numero,\n    textoParaLead,\n    qualificado,\n    dadosQualificacao,\n    relatorio,\n    numeroDestino: config?.numero_destino,\n    userId,\n    evoInstance\n  }\n}];"
+        "jsCode": "const respostaAgente = $input.first().json.output || '';\nconst configData = $('Monta system prompt com config').first().json;\nconst dadosMsg = configData;\nconst config = configData.config;\nconst userId = configData.userId;\nconst evoInstance = configData.evoInstance;\nconst responderEmAudio = configData.responderEmAudio;\n\nlet dadosQualificacao = null;\nlet qualificado = null;\n\ntry {\n  const match = respostaAgente.match(/```json([\\s\\S]*?)```/);\n  if (match) {\n    dadosQualificacao = JSON.parse(match[1].trim());\n    qualificado = dadosQualificacao.qualificado === true;\n  }\n} catch(e) {}\n\nconst textoParaLead = respostaAgente.replace(/```json[\\s\\S]*?```/g, '').trim();\n\nlet relatorio = null;\nif (qualificado && dadosQualificacao) {\n  const agora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\n  relatorio = `🟢 *LEAD QUALIFICADO — PREVIDENCIÁRIO*\\n\\n`\n    + `👤 *Nome:* ${dadosQualificacao.nome || 'Não informado'}\\n`\n    + `📱 *Celular:* ${dadosQualificacao.celular || dadosMsg.numero}\\n`\n    + `⚖️ *Tese:* ${dadosQualificacao.tese || 'Não identificada'}\\n`\n    + `📋 *Resumo:* ${dadosQualificacao.resumo || 'Ver histórico'}\\n`\n    + `🕐 *Atendimento:* ${agora}`;\n}\n\nreturn [{ json: { numero: dadosMsg.numero, textoParaLead, qualificado, dadosQualificacao, relatorio, numeroDestino: config?.numero_destino, userId, evoInstance, responderEmAudio } }];"
       },
       "id": "node-processa-resposta",
       "name": "Processa resposta e qualificação",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1760, 400]
+      "position": [3300, 540]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond-audio-resp",
+              "leftValue": "={{ $json.responderEmAudio }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equal" }
+            }
+          ]
+        }
+      },
+      "id": "node-switch-audio-resp",
+      "name": "Responder em áudio?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [3520, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/audio/speech",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "=Bearer SUA_CHAVE_OPENAI_AQUI" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"model\": \"tts-1\", \"input\": \"{{ $json.textoParaLead }}\", \"voice\": \"nova\", \"response_format\": \"mp3\"}",
+        "options": {
+          "response": { "response": { "responseFormat": "file" } }
+        }
+      },
+      "id": "node-tts",
+      "name": "Gera áudio TTS (OpenAI)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [3740, 260],
+      "notes": "Converte resposta do agente em áudio MP3. Voz: nova (feminina, quente). Custo: $0.015/1K chars."
+    },
+    {
+      "parameters": {
+        "jsCode": "const dados = $('Processa resposta e qualificação').first().json;\nconst binaryData = $input.first().binary?.data;\n\nif (!binaryData) {\n  // Fallback: se TTS falhar, envia texto\n  return [{ json: { ...dados, enviarComoAudio: false } }];\n}\n\n// Converte binary para base64\nconst base64Audio = Buffer.from(binaryData.data, 'base64').toString('base64');\nconst audioDataUri = `data:audio/mp3;base64,${base64Audio}`;\n\nreturn [{ json: { ...dados, audioResposta: audioDataUri, enviarComoAudio: true } }];"
+      },
+      "id": "node-prepara-audio-envio",
+      "name": "Prepara áudio para envio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [3960, 260]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendWhatsAppAudio/{{ $json.evoInstance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "apikey", "value": "SUA_CHAVE_EVO_API_AQUI" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"number\": \"{{ $json.numero }}\", \"audio\": \"{{ $json.audioResposta }}\"}",
+        "options": {}
+      },
+      "id": "node-envia-audio-lead",
+      "name": "Envia áudio ao lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [4180, 260],
+      "notes": "Envia resposta como áudio no WhatsApp via sendWhatsAppAudio."
     },
     {
       "parameters": {
@@ -216,7 +419,7 @@
         "url": "=https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/{{ $json.evoInstance }}",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "apikey", "value": "32AEB8FC2DE4-4F79-A823-E620A11C224F" }]
+          "parameters": [{ "name": "apikey", "value": "SUA_CHAVE_EVO_API_AQUI" }]
         },
         "sendBody": true,
         "specifyBody": "json",
@@ -224,10 +427,46 @@
         "options": {}
       },
       "id": "node-envia-lead",
-      "name": "Envia resposta ao lead",
+      "name": "Envia texto ao lead",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1980, 260]
+      "position": [3740, 540]
+    },
+    {
+      "parameters": {
+        "jsCode": "const dados = $('Processa resposta e qualificação').first().json;\nconst configData = $('Monta system prompt com config').first().json;\nconst saldoAtual = configData.saldoTokens || 0;\n\n// Estima tokens usados nesta interação (~37037 tokens por lead interaction)\nconst tokensEstimado = 37037;\nconst novoSaldo = Math.max(0, saldoAtual - tokensEstimado);\n\nreturn [{ json: { ...dados, tokensUsados: tokensEstimado, novoSaldo } }];"
+      },
+      "id": "node-desconta-tokens",
+      "name": "Desconta tokens do saldo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [4180, 540]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "tokens_creditos",
+        "filterType": "manual",
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            { "keyName": "user_id", "keyValue": "={{ $json.userId }}" }
+          ]
+        },
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "saldo_tokens", "fieldValue": "={{ $json.novoSaldo }}" },
+            { "fieldId": "tokens_usados_mes", "fieldValue": "={{ ($('Verifica saldo de tokens').first().json.tokens_usados_mes || 0) + $json.tokensUsados }}" }
+          ]
+        }
+      },
+      "id": "node-update-saldo",
+      "name": "Atualiza saldo tokens",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [4400, 540],
+      "notes": "Desconta tokens usados do saldo do cliente e incrementa tokens_usados_mes."
     },
     {
       "parameters": {
@@ -235,7 +474,7 @@
           "conditions": [
             {
               "id": "cond-qualificado",
-              "leftValue": "={{ $json.qualificado }}",
+              "leftValue": "={{ $('Processa resposta e qualificação').first().json.qualificado }}",
               "rightValue": true,
               "operator": { "type": "boolean", "operation": "equal" }
             }
@@ -246,27 +485,26 @@
       "name": "Lead qualificado?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1980, 440]
+      "position": [4400, 740]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/{{ $json.evoInstance }}",
+        "url": "=https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/{{ $('Processa resposta e qualificação').first().json.evoInstance }}",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "apikey", "value": "32AEB8FC2DE4-4F79-A823-E620A11C224F" }]
+          "parameters": [{ "name": "apikey", "value": "SUA_CHAVE_EVO_API_AQUI" }]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"number\": \"{{ $json.numeroDestino }}\", \"text\": \"{{ $json.relatorio }}\"}",
+        "jsonBody": "={\"number\": \"{{ $('Processa resposta e qualificação').first().json.numeroDestino }}\", \"text\": \"{{ $('Processa resposta e qualificação').first().json.relatorio }}\"}",
         "options": {}
       },
       "id": "node-envia-advogado",
       "name": "Envia relatório ao advogado",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2200, 360],
-      "notes": "Envia para o número configurado no Painel de Configuração (numero_destino) via instância do cliente."
+      "position": [4620, 660]
     },
     {
       "parameters": {
@@ -275,14 +513,14 @@
         "dataToSend": "defineBelow",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "numero_whatsapp", "fieldValue": "={{ $('Normaliza e filtra mensagem').first().json.numero }}" },
-            { "fieldId": "nome", "fieldValue": "={{ $json.dadosQualificacao?.nome || '' }}" },
-            { "fieldId": "celular", "fieldValue": "={{ $json.dadosQualificacao?.celular || '' }}" },
-            { "fieldId": "tese", "fieldValue": "={{ $json.dadosQualificacao?.tese || '' }}" },
-            { "fieldId": "resumo", "fieldValue": "={{ $json.dadosQualificacao?.resumo || $json.dadosQualificacao?.motivo || '' }}" },
-            { "fieldId": "qualificado", "fieldValue": "={{ $json.qualificado }}" },
-            { "fieldId": "motivo_desqualificacao", "fieldValue": "={{ $json.dadosQualificacao?.motivo || '' }}" },
-            { "fieldId": "user_id", "fieldValue": "={{ $json.userId }}" }
+            { "fieldId": "numero_whatsapp", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.numero }}" },
+            { "fieldId": "nome", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.nome || '' }}" },
+            { "fieldId": "celular", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.celular || '' }}" },
+            { "fieldId": "tese", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.tese || '' }}" },
+            { "fieldId": "resumo", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.resumo || $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '' }}" },
+            { "fieldId": "qualificado", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.qualificado }}" },
+            { "fieldId": "motivo_desqualificacao", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '' }}" },
+            { "fieldId": "user_id", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.userId }}" }
           ]
         }
       },
@@ -290,18 +528,17 @@
       "name": "Salva lead no Supabase",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [2200, 540],
-      "notes": "Registra todos os leads com user_id do cliente para isolamento de dados."
+      "position": [4620, 860]
     },
     {
       "parameters": {
-        "jsCode": "const historico = $('Monta histórico da conversa').first().json.historico;\nconst respostaAgente = $('Agente SDR — IA').first().json.output || '';\nconst numero = $('Normaliza e filtra mensagem').first().json.numero;\nconst userId = $('Monta system prompt com config').first().json.userId;\n\nhistorico.push({ role: 'assistant', content: respostaAgente });\nconst historicoTrimmed = historico.slice(-20);\n\nreturn [{ json: { numero_whatsapp: numero, user_id: userId, historico: JSON.stringify(historicoTrimmed), atualizado_em: new Date().toISOString() } }];"
+        "jsCode": "const historico = $('Monta histórico da conversa').first().json.historico;\nconst respostaAgente = $('Agente SDR — IA').first().json.output || '';\nconst configData = $('Monta system prompt com config').first().json;\nconst responderEmAudio = configData.responderEmAudio;\n\nhistorico.push({ role: 'assistant', content: respostaAgente, type: responderEmAudio ? 'audio' : 'text' });\nconst historicoTrimmed = historico.slice(-20);\n\nreturn [{ json: { numero_whatsapp: configData.numero, user_id: configData.userId, historico: JSON.stringify(historicoTrimmed), atualizado_em: new Date().toISOString() } }];"
       },
       "id": "node-prepara-redis",
       "name": "Prepara sessão para salvar",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2200, 700]
+      "position": [4620, 1040]
     },
     {
       "parameters": {
@@ -327,8 +564,7 @@
       "name": "Supabase — Salva sessão",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [2420, 700],
-      "notes": "Upsert por (numero_whatsapp + user_id) — cada cliente tem sua própria sessão com cada lead."
+      "position": [4840, 1040]
     },
     {
       "parameters": {
@@ -340,7 +576,7 @@
       "name": "Responde 200 OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [2420, 400]
+      "position": [5060, 540]
     }
   ],
   "connections": {
@@ -348,6 +584,21 @@
       "main": [[{ "node": "Normaliza e filtra mensagem", "type": "main", "index": 0 }]]
     },
     "Normaliza e filtra mensagem": {
+      "main": [[{ "node": "É áudio?", "type": "main", "index": 0 }]]
+    },
+    "É áudio?": {
+      "main": [
+        [{ "node": "Download áudio", "type": "main", "index": 0 }],
+        [{ "node": "Resolve cliente pelo instanceName", "type": "main", "index": 0 }]
+      ]
+    },
+    "Download áudio": {
+      "main": [[{ "node": "Transcreve áudio (Whisper)", "type": "main", "index": 0 }]]
+    },
+    "Transcreve áudio (Whisper)": {
+      "main": [[{ "node": "Merge: áudio → texto", "type": "main", "index": 0 }]]
+    },
+    "Merge: áudio → texto": {
       "main": [[{ "node": "Resolve cliente pelo instanceName", "type": "main", "index": 0 }]]
     },
     "Resolve cliente pelo instanceName": {
@@ -357,7 +608,22 @@
       "main": [[{ "node": "Monta system prompt com config", "type": "main", "index": 0 }]]
     },
     "Monta system prompt com config": {
-      "main": [[{ "node": "Supabase — Busca histórico da sessão", "type": "main", "index": 0 }]]
+      "main": [[{ "node": "Verifica saldo de tokens", "type": "main", "index": 0 }]]
+    },
+    "Verifica saldo de tokens": {
+      "main": [[{ "node": "Tokens disponíveis?", "type": "main", "index": 0 }]]
+    },
+    "Tokens disponíveis?": {
+      "main": [[{ "node": "Bloqueado por tokens?", "type": "main", "index": 0 }]]
+    },
+    "Bloqueado por tokens?": {
+      "main": [
+        [{ "node": "Envia aviso: tokens esgotados", "type": "main", "index": 0 }],
+        [{ "node": "Supabase — Busca histórico da sessão", "type": "main", "index": 0 }]
+      ]
+    },
+    "Envia aviso: tokens esgotados": {
+      "main": [[{ "node": "Responde 200 OK", "type": "main", "index": 0 }]]
     },
     "Supabase — Busca histórico da sessão": {
       "main": [[{ "node": "Monta histórico da conversa", "type": "main", "index": 0 }]]
@@ -365,7 +631,7 @@
     "Monta histórico da conversa": {
       "main": [[{ "node": "Agente SDR — IA", "type": "main", "index": 0 }]]
     },
-    "Tool: Busca na Web (Tavily)": {
+    "Tool: Busca na Web (SerpAPI)": {
       "ai_tool": [[{ "node": "Agente SDR — IA", "type": "ai_tool", "index": 0 }]]
     },
     "Tool: Base de Conhecimento PDF": {
@@ -382,10 +648,32 @@
     },
     "Processa resposta e qualificação": {
       "main": [[
-        { "node": "Envia resposta ao lead", "type": "main", "index": 0 },
+        { "node": "Responder em áudio?", "type": "main", "index": 0 },
+        { "node": "Desconta tokens do saldo", "type": "main", "index": 0 },
         { "node": "Lead qualificado?", "type": "main", "index": 0 },
         { "node": "Prepara sessão para salvar", "type": "main", "index": 0 }
       ]]
+    },
+    "Responder em áudio?": {
+      "main": [
+        [{ "node": "Gera áudio TTS (OpenAI)", "type": "main", "index": 0 }],
+        [{ "node": "Envia texto ao lead", "type": "main", "index": 0 }]
+      ]
+    },
+    "Gera áudio TTS (OpenAI)": {
+      "main": [[{ "node": "Prepara áudio para envio", "type": "main", "index": 0 }]]
+    },
+    "Prepara áudio para envio": {
+      "main": [[{ "node": "Envia áudio ao lead", "type": "main", "index": 0 }]]
+    },
+    "Envia áudio ao lead": {
+      "main": [[{ "node": "Responde 200 OK", "type": "main", "index": 0 }]]
+    },
+    "Envia texto ao lead": {
+      "main": [[{ "node": "Responde 200 OK", "type": "main", "index": 0 }]]
+    },
+    "Desconta tokens do saldo": {
+      "main": [[{ "node": "Atualiza saldo tokens", "type": "main", "index": 0 }]]
     },
     "Lead qualificado?": {
       "main": [
@@ -401,9 +689,6 @@
     "Envia relatório ao advogado": {
       "main": [[{ "node": "Responde 200 OK", "type": "main", "index": 0 }]]
     },
-    "Envia resposta ao lead": {
-      "main": [[{ "node": "Responde 200 OK", "type": "main", "index": 0 }]]
-    },
     "Prepara sessão para salvar": {
       "main": [[{ "node": "Supabase — Salva sessão", "type": "main", "index": 0 }]]
     },
@@ -412,6 +697,6 @@
     }
   },
   "settings": { "executionOrder": "v1" },
-  "tags": ["whatsapp", "sdr", "ia", "previdenciario", "multitenancy"],
-  "meta": { "description": "Workflow principal do agente SDR. Multi-tenant: resolve user_id pelo instanceName da Evolution API, filtra configs/PDFs/sessões/leads por cliente. Cada cliente tem uso exclusivo de seus dados.", "version": "4.0.0" }
+  "tags": ["whatsapp", "sdr", "ia", "previdenciario", "multitenancy", "audio", "whisper", "tts"],
+  "meta": { "description": "XPERT.IA — Agente SDR WhatsApp com suporte a áudio (Whisper STT + OpenAI TTS). Multi-tenant com verificação de saldo de tokens. Cada cliente tem dados isolados.", "version": "5.0.0" }
 }
