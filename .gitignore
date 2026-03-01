@@ -1,0 +1,13 @@
+# Nunca commitar valores reais
+.env
+.env.local
+.env.production
+
+# macOS
+.DS_Store
+
+# Node (se usar algum tooling)
+node_modules/
+
+# Supabase local
+.supabase/

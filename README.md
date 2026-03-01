@@ -1,32 +1,32 @@
-# SDR IA — WhatsApp | Direito Previdenciário
-### 100% n8n + Evolution API + Supabase
+# 🤖 XPERT.IA — SDR Previdenciário via WhatsApp
 
-Agente de IA no WhatsApp que qualifica leads de Direito Previdenciário.
-Tudo configurável por formulário, sem precisar editar código.
+SaaS multi-tenant: agente de IA que qualifica leads de Direito Previdenciário no WhatsApp. Cada advogado/escritório tem sua própria instância isolada, gerenciada por um admin central.
 
 ---
 
-## Como funciona
+## Fluxo geral
 
 ```
 Lead manda mensagem no WhatsApp
-        ↓
+         ↓
+Evolution API → Webhook n8n
+         ↓
+Identifica o cliente pelo nome da instância (evo_instance)
+         ↓
 Agente SDR faz as perguntas de qualificação
-        ↓
-   Qualificado?
-   ├── SIM → envia relatório (nome + celular + resumo) pro advogado
-   └── NÃO → encerra a conversa educadamente
+  + ouve áudios (Whisper)
+  + pesquisa na web (SerpAPI)
+  + consulta base de conhecimento em PDF (RAG pgvector)
+         ↓
+       Qualificado?
+       ├── SIM → stage = 'qualificado' no CRM
+       └── NÃO → stage = 'nao_qualificado'
+
+Admin / cliente acompanham tudo no painel XPERT.IA:
+  - CRM Kanban com drag-and-drop
+  - Bate-papo ao vivo (pausa o agente)
+  - Relatórios, billing, tokens
 ```
-
----
-
-## Os 3 Workflows
-
-| Arquivo | Nome no n8n | Para que serve |
-|---|---|---|
-| `workflow-1-painel-config.json` | ⚙️ Painel de Configuração | Formulário para editar prompt, tom, instruções e número de destino |
-| `workflow-2-upload-pdf.json` | 📄 Upload de PDFs | Processa PDFs e salva como base de conhecimento |
-| `workflow-3-agente-sdr.json` | 🤖 Agente SDR WhatsApp | Workflow principal — roda o agente |
 
 ---
 
@@ -34,108 +34,235 @@ Agente SDR faz as perguntas de qualificação
 
 | Componente | Tecnologia | Função |
 |---|---|---|
-| Automação | n8n | Orquestra tudo |
-| WhatsApp | Evolution API | Envia e recebe mensagens |
-| IA | OpenAI GPT-4o | Cérebro do agente |
-| Busca na web | Tavily API | Valida informações previdenciárias |
-| Banco de dados | Supabase | Guarda configs, PDFs e leads |
-| PDFs (RAG) | Supabase pgvector | Base de conhecimento consultada pelo agente |
+| Painel | `software/index.html` (HTML/CSS/JS + Supabase JS) | Interface admin e cliente |
+| Deploy painel | Docker + EasyPanel | Serve o HTML via nginx |
+| Automação | n8n (self-hosted) | Orquestra os 3 workflows |
+| WhatsApp | Evolution API | Envio/recebimento de mensagens |
+| IA | OpenAI GPT-4o + Whisper | Agente conversacional + transcrição de áudio |
+| Busca web | SerpAPI | Valida informações previdenciárias |
+| Banco de dados | Supabase (Postgres) | Multi-tenant com RLS |
+| RAG | Supabase pgvector | Base de conhecimento em PDFs |
+| Auth | Supabase Auth | Login admin e clientes |
+| Edge Functions | Supabase Functions | CRUD seguro de clientes (admin only) |
 
 ---
 
-## Pré-requisitos
+## Estrutura de arquivos
 
-1. **n8n** instalado (self-hosted ou cloud)
-2. **Evolution API** com instância WhatsApp conectada
-3. **Supabase** — conta gratuita em supabase.com
-4. **OpenAI** — chave de API em platform.openai.com
-5. **Tavily** — chave gratuita em tavily.com
+```
+xpert-ia/
+├── software/
+│   ├── index.html          # Painel completo (SPA)
+│   └── Dockerfile          # Build para EasyPanel
+├── supabase/
+│   ├── migrations/
+│   │   └── 20260227170556_add_multi_tenancy.sql  # Schema completo
+│   └── functions/
+│       └── manage-clients/
+│           └── index.ts    # Edge Function (CRUD de clientes)
+├── workflow-1-painel-config.json   # n8n: configuração do agente
+├── workflow-2-upload-pdf.json      # n8n: upload e indexação de PDFs
+├── workflow-3-agente-sdr.json      # n8n: agente principal (multi-tenant)
+├── .env.example                    # Variáveis de ambiente necessárias
+└── README.md
+```
 
 ---
 
-## Configuração do Supabase
+## Multi-tenancy: como funciona
 
-Execute este SQL no editor do Supabase (SQL Editor → New Query):
+**Um único set de 3 workflows n8n serve TODOS os clientes.**
 
+```
+Mensagem chega de instância "escritorio-silva"
+         ↓
+n8n: SELECT user_id FROM profiles WHERE evo_instance = 'escritorio-silva'
+         ↓
+Todos os dados (configs, leads, sessões, docs) filtrados por user_id
+RLS do Supabase garante isolamento total
+```
+
+Cada cliente tem:
+- Seu próprio login (email + senha)
+- Sua própria instância Evolution API
+- Seus próprios leads, configurações e documentos
+
+---
+
+## Sistema de usuários
+
+### Dois tipos de acesso
+
+| Tipo | Como acessar | O que vê |
+|---|---|---|
+| **Admin** (`role = 'admin'`) | Login normal no painel | Tudo: todos os clientes, billing global, uso de tokens, pedidos |
+| **Cliente** (`role = 'client'`) | Login normal no painel | Apenas seus próprios dados |
+
+### Como criar o admin inicial
+
+1. No Supabase → Authentication → Users → Add User
+2. Preencha email e senha
+3. No SQL Editor do Supabase:
 ```sql
--- Tabela de configurações do agente
-CREATE TABLE agente_config (
-  id SERIAL PRIMARY KEY,
-  chave TEXT UNIQUE NOT NULL,
-  valor TEXT,
-  atualizado_em TIMESTAMP DEFAULT NOW()
-);
+UPDATE profiles SET role = 'admin' WHERE id = 'uuid-do-usuario-criado';
+```
 
--- Inserir configurações padrão
-INSERT INTO agente_config (chave, valor) VALUES
-  ('numero_destino', '5511999999999'),
-  ('prompt_sistema', 'Você é um assistente de triagem de Direito Previdenciário...'),
-  ('tonalidade', 'Empático, claro e objetivo. Use linguagem simples.'),
-  ('instrucoes_comunicacao', 'Faça uma pergunta por vez. Nunca prometa resultado.'),
-  ('objetivo', 'Qualificar leads previdenciários e encaminhar ao advogado.'),
-  ('criterios_qualificacao', 'Vínculo INSS, benefício identificável, tese jurídica possível');
+### Como criar um novo cliente (via painel)
 
--- Tabela para base de conhecimento (PDFs)
-CREATE EXTENSION IF NOT EXISTS vector;
+1. Logue como admin
+2. Menu lateral → **👥 Clientes**
+3. Clique em **➕ Adicionar cliente**
+4. Preencha: nome, email, senha, nome da instância EVO
+5. O sistema cria automaticamente: conta de auth, profile, assinatura trial, 500k tokens
 
-CREATE TABLE documentos_conhecimento (
-  id BIGSERIAL PRIMARY KEY,
-  conteudo TEXT,
-  metadata JSONB,
-  embedding VECTOR(1536)
-);
+### O que acontece automaticamente ao criar um cliente
 
-CREATE INDEX ON documentos_conhecimento
-  USING ivfflat (embedding vector_cosine_ops);
+```
+adminFetch POST /manage-clients
+    ↓
+Cria auth.users (email + senha)
+    ↓ trigger
+Cria profiles (role=client, evo_instance=...)
+    ↓
+Cria assinaturas (status=trial)
+    ↓
+Cria tokens_creditos (500k tokens iniciais)
+```
 
--- Tabela de leads
-CREATE TABLE leads (
-  id SERIAL PRIMARY KEY,
-  numero_whatsapp TEXT,
-  nome TEXT,
-  celular TEXT,
-  tese TEXT,
-  resumo TEXT,
-  qualificado BOOLEAN,
-  motivo_desqualificacao TEXT,
-  criado_em TIMESTAMP DEFAULT NOW()
-);
+### Após criar o cliente — passo manual obrigatório
+
+Criar a instância no Evolution API com exatamente o mesmo nome do campo `evo_instance`:
+
+```bash
+# Via API do Evolution
+POST https://sua-evo-api.com/instance/create
+{
+  "instanceName": "nome-que-você-definiu",
+  "qrcode": true,
+  "integration": "WHATSAPP-BAILEYS"
+}
+```
+
+O cliente então escaneia o QR code no painel → WhatsApp → Código QR.
+
+---
+
+## Configuração inicial (do zero)
+
+### 1. Supabase
+
+```bash
+# No SQL Editor do Supabase, execute:
+supabase/migrations/20260227170556_add_multi_tenancy.sql
+```
+
+Depois ative a extensão pgvector:
+```
+Supabase Dashboard → Database → Extensions → vector → Enable
+```
+
+### 2. Edge Function
+
+```bash
+# Com Supabase CLI instalado:
+supabase functions deploy manage-clients --project-ref SEU_PROJECT_ID
+```
+
+Ou via Supabase Dashboard → Edge Functions → New Function → cole o conteúdo de `supabase/functions/manage-clients/index.ts`
+
+### 3. n8n — importar workflows
+
+Importe nesta ordem:
+1. `workflow-1-painel-config.json`
+2. `workflow-2-upload-pdf.json`
+3. `workflow-3-agente-sdr.json`
+
+Configure as credenciais em cada workflow:
+| Credencial | Onde criar no n8n |
+|---|---|
+| Supabase | Credentials → Supabase API → URL + Service Role Key |
+| OpenAI | Credentials → OpenAI → API Key |
+| SerpAPI | Credentials → SerpAPI → API Key |
+| Evolution API | Credencial HTTP Header Auth (chave global) |
+
+**Webhook URL** do workflow-3 → configure no Evolution API como webhook global ou por instância.
+
+### 4. Deploy do painel (EasyPanel)
+
+1. Conecte o repositório GitHub
+2. Crie um serviço → **App** → Source: GitHub, Build Path: `/software`
+3. EasyPanel detecta o Dockerfile automaticamente
+4. O painel sobe em nginx na porta 80
+
+### 5. Configurar o painel
+
+No `software/index.html`, localize e atualize as constantes:
+```javascript
+const SUPABASE_URL = 'https://SEU_PROJECT_ID.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGci...';
+const EVOLUTION_API_URL = 'https://sua-evo-api.com';
+const EVOLUTION_API_KEY = 'SUA_CHAVE';
 ```
 
 ---
 
-## Como importar os workflows no n8n
+## Os 3 workflows n8n
 
-1. No n8n, clique em **Workflows → Import from file**
-2. Importe nesta ordem:
-   - `workflow-1-painel-config.json`
-   - `workflow-2-upload-pdf.json`
-   - `workflow-3-agente-sdr.json`
-3. Em cada workflow, configure as credenciais (Supabase, OpenAI, Evolution API, Tavily)
-4. Ative os workflows
+| Arquivo | Nome | Função |
+|---|---|---|
+| `workflow-1-painel-config.json` | ⚙️ Painel de Config | Webhook que o painel usa para ler/salvar configs |
+| `workflow-2-upload-pdf.json` | 📄 Upload de PDFs | Processa PDFs → gera embeddings → salva no pgvector |
+| `workflow-3-agente-sdr.json` | 🤖 Agente SDR WhatsApp | Workflow principal multi-tenant |
+
+### workflow-3: nós principais
+
+```
+Webhook Evolution API
+  → Normaliza e filtra mensagem
+  → É áudio? → Transcreve (Whisper)
+  → Resolve cliente pelo instanceName
+  → Carrega configurações do Supabase
+  → Verifica saldo de tokens
+  → Busca histórico da sessão
+  → Agente SDR — IA (GPT-4o)
+      ├── Tool: Busca na Web (SerpAPI)
+      └── Tool: Base de Conhecimento PDF (pgvector)
+  → Processa resposta e qualificação
+  → Salva histórico na sessão
+  → Salva/atualiza lead (upsert com stage)
+  → Responder em áudio? → TTS OpenAI
+  → Envia mensagem via Evolution API
+```
 
 ---
 
-## Variáveis de ambiente no n8n
+## CRM Kanban
 
-Configure em **Settings → Environment Variables**:
+Estágios padrão (configuráveis pelo usuário via painel):
 
-```
-EVOLUTION_API_URL=https://sua-evolution-api.com
-EVOLUTION_API_KEY=sua-chave
-EVOLUTION_INSTANCE=nome-da-instancia
-```
+| Stage ID | Label | Gatilho |
+|---|---|---|
+| `novo_contato` | 🆕 Novo Contato | Automático — primeira mensagem |
+| `em_atendimento` | 💬 Em Atendimento | Automático — agente responde |
+| `qualificado` | ✅ Qualificado | Automático — agente qualifica |
+| `nao_qualificado` | ❌ Não Qualificado | Automático — agente desqualifica |
+| `convertido` | 🎉 Convertido | Manual |
+| `perdido` | 🚪 Perdido | Manual |
+
+Colunas são customizáveis: adicionar, renomear, reordenar, trocar cor.
+Configuração salva em `agente_config` (chave: `crm_stages`) por usuário.
 
 ---
 
-## Como usar o Painel de Configuração
+## Segurança
 
-1. Ative o **Workflow 1**
-2. Acesse a URL do formulário (mostrada no node Form Trigger)
-3. Preencha e salve — as mudanças valem imediatamente
+- **RLS ativo em todas as tabelas** — cliente nunca acessa dado de outro cliente
+- **Edge Function `manage-clients`** — verifica `role = 'admin'` no JWT antes de qualquer operação
+- **Service Role Key** — usada apenas nas Edge Functions (nunca exposta no frontend)
+- **Anon Key** — usada no frontend (acesso limitado pelas RLS policies)
 
-## Como adicionar PDFs
+---
 
-1. Ative o **Workflow 2**
-2. Acesse a URL do formulário de upload
-3. Envie o PDF — o sistema processa automaticamente
+## Variáveis de ambiente
+
+Veja `.env.example` para a lista completa de variáveis necessárias.
