@@ -58,8 +58,10 @@ xpert-ia/
 │   ├── migrations/
 │   │   └── 20260227170556_add_multi_tenancy.sql  # Schema completo
 │   └── functions/
-│       └── manage-clients/
-│           └── index.ts        # Edge Function (CRUD de clientes)
+│       ├── manage-clients/
+│       │   └── index.ts        # Edge Function (CRUD de clientes — admin only)
+│       └── process-pdf/
+│           └── index.ts        # Edge Function (upload PDF → embeddings pgvector)
 ├── workflow-agente-sdr.json    # ← O ÚNICO WORKFLOW NECESSÁRIO
 ├── .env.example                # Variáveis de ambiente necessárias
 └── README.md
@@ -159,14 +161,24 @@ Depois ative a extensão pgvector:
 Supabase Dashboard → Database → Extensions → vector → Enable
 ```
 
-### 2. Edge Function
+### 2. Edge Functions
 
 ```bash
 # Com Supabase CLI instalado:
 supabase functions deploy manage-clients --project-ref SEU_PROJECT_ID
+supabase functions deploy process-pdf --project-ref SEU_PROJECT_ID
 ```
 
-Ou via Supabase Dashboard → Edge Functions → New Function → cole o conteúdo de `supabase/functions/manage-clients/index.ts`
+Ou via Supabase Dashboard → Edge Functions → New Function:
+- Cole `supabase/functions/manage-clients/index.ts` → função `manage-clients`
+- Cole `supabase/functions/process-pdf/index.ts` → função `process-pdf`
+
+Configure os Secrets da Edge Function no Supabase Dashboard → Edge Functions → Secrets:
+```
+SUPABASE_URL=https://SEU_PROJECT_ID.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=<service_role_key>
+OPENAI_API_KEY=sk-proj-...
+```
 
 ### 3. n8n — importar o workflow
 

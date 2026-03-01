@@ -12,18 +12,24 @@
       "name": "Webhook — Evolution API",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 1,
-      "position": [0, 400],
+      "position": [
+        0,
+        400
+      ],
       "notes": "Configure este endpoint na Evolution API como webhook de mensagens recebidas."
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json;\n\n// Ignora mensagens enviadas pelo próprio bot\nif (body.data?.key?.fromMe === true) return [];\n\n// Ignora mensagens de grupos\nconst remoteJid = body.data?.key?.remoteJid || '';\nif (remoteJid.includes('@g.us')) return [];\n\nconst numero = remoteJid.replace('@s.whatsapp.net', '');\nconst mensagem = body.data?.message?.conversation\n  || body.data?.message?.extendedTextMessage?.text\n  || '';\nconst nomeContato = body.data?.pushName || 'Lead';\nconst tipoMensagem = body.data?.messageType || 'conversation';\nconst temArquivo = ['imageMessage', 'documentMessage', 'audioMessage'].includes(tipoMensagem);\nconst ehAudio = tipoMensagem === 'audioMessage';\n\n// Extrai dados de áudio se for audioMessage\nlet audioBase64 = null;\nlet audioUrl = null;\nlet audioMimetype = null;\nlet audioDuration = 0;\nif (ehAudio) {\n  const am = body.data?.message?.audioMessage || {};\n  audioBase64 = am.base64 || null;\n  audioUrl = am.url || null;\n  audioMimetype = am.mimetype || 'audio/ogg';\n  audioDuration = am.seconds || 0;\n}\n\nconst instanceName = body.instance || body.instanceName || body.data?.instance || '';\n\nif (!mensagem && !temArquivo) return [];\n\nreturn [{ json: { numero, mensagem, nomeContato, tipoMensagem, temArquivo, ehAudio, audioBase64, audioUrl, audioMimetype, audioDuration, instanceName, timestamp: new Date().toISOString() } }];"
+        "jsCode": "const body = $input.first().json;\n\n// Ignora mensagens enviadas pelo próprio bot\nif (body.data?.key?.fromMe === true) return [];\n\n// Ignora mensagens de grupos\nconst remoteJid = body.data?.key?.remoteJid || '';\nif (remoteJid.includes('@g.us')) return [];\n\nconst numero = remoteJid.replace('@s.whatsapp.net', '');\nconst mensagem = body.data?.message?.conversation\n  || body.data?.message?.extendedTextMessage?.text\n  || '';\nconst nomeContato = body.data?.pushName || 'Lead';\nconst tipoMensagem = body.data?.messageType || 'conversation';\nconst temArquivo = ['imageMessage', 'documentMessage', 'audioMessage'].includes(tipoMensagem);\nconst ehAudio = tipoMensagem === 'audioMessage';\n\n// Extrai dados de áudio se for audioMessage\nlet audioBase64 = null;\nlet audioUrl = null;\nlet audioMimetype = null;\nlet audioDuration = 0;\nif (ehAudio) {\n  const am = body.data?.message?.audioMessage || {};\n  audioBase64 = am.base64 || null;\n  audioUrl = am.url || null;\n  audioMimetype = am.mimetype || 'audio/ogg';\n  audioDuration = am.seconds || 0;\n}\n\n// Imagem\nlet ehImagem = tipoMensagem === 'imageMessage';\nlet imagemUrl = null;\nlet imagemBase64 = null;\nlet imagemMimetype = 'image/jpeg';\nlet imagemCaption = '';\nif (ehImagem) {\n  const im = body.data?.message?.imageMessage || {};\n  imagemUrl = im.url || null;\n  imagemBase64 = im.base64 || null;\n  imagemMimetype = im.mimetype || 'image/jpeg';\n  imagemCaption = im.caption || '';\n}\n// Documento\nlet ehDocumento = ['documentMessage','documentWithCaptionMessage'].includes(tipoMensagem);\nlet docUrl = null;\nlet docBase64 = null;\nlet docMimetype = 'application/octet-stream';\nlet docFileName = 'documento';\nif (ehDocumento) {\n  const dm = body.data?.message?.documentMessage\n            || body.data?.message?.documentWithCaptionMessage?.message?.documentMessage\n            || {};\n  docUrl = dm.url || null;\n  docBase64 = dm.base64 || null;\n  docMimetype = dm.mimetype || 'application/octet-stream';\n  docFileName = dm.fileName || 'documento';\n}\n\nconst instanceName = body.instance || body.instanceName || body.data?.instance || '';\n\nif (!mensagem && !temArquivo) return [];\n\nreturn [{ json: { numero, mensagem, nomeContato, tipoMensagem, temArquivo, ehAudio, audioBase64, audioUrl, audioMimetype, audioDuration, ehImagem, imagemUrl, imagemBase64, imagemMimetype, imagemCaption, ehDocumento, docUrl, docBase64, docMimetype, docFileName, instanceName, timestamp: new Date().toISOString() } }];"
       },
       "id": "node-normaliza",
       "name": "Normaliza e filtra mensagem",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 400]
+      "position": [
+        220,
+        400
+      ]
     },
     {
       "parameters": {
@@ -33,7 +39,10 @@
               "id": "cond-audio",
               "leftValue": "={{ $json.ehAudio }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equal" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
             }
           ]
         }
@@ -42,7 +51,10 @@
       "name": "É áudio?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [440, 400]
+      "position": [
+        440,
+        400
+      ]
     },
     {
       "parameters": {
@@ -52,7 +64,10 @@
       "name": "Download áudio",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [660, 260]
+      "position": [
+        660,
+        260
+      ]
     },
     {
       "parameters": {
@@ -60,26 +75,47 @@
         "url": "https://api.openai.com/v1/audio/transcriptions",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "Authorization", "value": "=Bearer SUA_CHAVE_OPENAI_AQUI" }]
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "=Bearer SUA_CHAVE_OPENAI_AQUI"
+            }
+          ]
         },
         "contentType": "multipart-form-data",
         "sendBody": true,
         "bodyParameters": {
           "parameters": [
-            { "name": "model", "value": "whisper-1" },
-            { "name": "language", "value": "pt" },
-            { "name": "response_format", "value": "json" }
+            {
+              "name": "model",
+              "value": "whisper-1"
+            },
+            {
+              "name": "language",
+              "value": "pt"
+            },
+            {
+              "name": "response_format",
+              "value": "json"
+            }
           ]
         },
         "options": {
-          "response": { "response": { "fullResponse": false } }
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          }
         }
       },
       "id": "node-whisper",
       "name": "Transcreve áudio (Whisper)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [880, 260],
+      "position": [
+        880,
+        260
+      ],
       "notes": "Configure credencial OpenAI. Envia áudio para Whisper e recebe texto transcrito. Custo: $0.006/min."
     },
     {
@@ -90,7 +126,10 @@
       "name": "Merge: áudio → texto",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1100, 260]
+      "position": [
+        1100,
+        260
+      ]
     },
     {
       "parameters": {
@@ -110,13 +149,18 @@
             }
           ]
         },
-        "options": { "limit": 1 }
+        "options": {
+          "limit": 1
+        }
       },
       "id": "node-resolve-cliente",
       "name": "Resolve cliente pelo instanceName",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1320, 400],
+      "position": [
+        1320,
+        400
+      ],
       "notes": "Busca o profile do cliente pelo instanceName da Evolution API."
     },
     {
@@ -139,7 +183,10 @@
       "name": "Carrega configurações do Supabase",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1540, 400]
+      "position": [
+        1540,
+        400
+      ]
     },
     {
       "parameters": {
@@ -149,7 +196,10 @@
       "name": "Monta system prompt com config",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1760, 400]
+      "position": [
+        1760,
+        400
+      ]
     },
     {
       "parameters": {
@@ -165,13 +215,18 @@
             }
           ]
         },
-        "options": { "limit": 1 }
+        "options": {
+          "limit": 1
+        }
       },
       "id": "node-verifica-saldo",
       "name": "Verifica saldo de tokens",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [1980, 400],
+      "position": [
+        1980,
+        400
+      ],
       "notes": "Verifica se o cliente tem tokens disponíveis. Se saldo <= 0, envia aviso e para."
     },
     {
@@ -182,7 +237,10 @@
       "name": "Tokens disponíveis?",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2200, 400]
+      "position": [
+        2200,
+        400
+      ]
     },
     {
       "parameters": {
@@ -192,7 +250,10 @@
               "id": "cond-bloqueado",
               "leftValue": "={{ $json.tokensBloqueado }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equal" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
             }
           ]
         }
@@ -201,7 +262,10 @@
       "name": "Bloqueado por tokens?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [2420, 400]
+      "position": [
+        2420,
+        400
+      ]
     },
     {
       "parameters": {
@@ -209,7 +273,12 @@
         "url": "=https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/{{ $json.evoInstance }}",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "apikey", "value": "SUA_CHAVE_EVO_API_AQUI" }]
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUA_CHAVE_EVO_API_AQUI"
+            }
+          ]
         },
         "sendBody": true,
         "specifyBody": "json",
@@ -220,7 +289,10 @@
       "name": "Envia aviso: tokens esgotados",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [2640, 260],
+      "position": [
+        2640,
+        260
+      ],
       "notes": "Envia mensagem de indisponibilidade quando os tokens do cliente acabaram."
     },
     {
@@ -241,23 +313,31 @@
             }
           ]
         },
-        "options": { "limit": 1 }
+        "options": {
+          "limit": 1
+        }
       },
       "id": "node-redis-get",
       "name": "Supabase — Busca histórico da sessão",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [2640, 540]
+      "position": [
+        2640,
+        540
+      ]
     },
     {
       "parameters": {
-        "jsCode": "const dadosConfig = $('Tokens disponíveis?').first().json;\nconst sessaoRow = $input.first().json;\n\nif (sessaoRow.agente_pausado === true) return [];\n\nlet historico = [];\ntry { historico = JSON.parse(sessaoRow.historico || '[]'); } catch(e) {}\n\n// Se veio de áudio, marca no histórico\nconst prefixo = dadosConfig.ehAudio ? '🎤 [Áudio transcrito]: ' : '';\nhistorico.push({ role: 'user', content: prefixo + dadosConfig.mensagem, type: dadosConfig.ehAudio ? 'audio' : 'text' });\n\nconst historicoTexto = historico.map(h => `${h.role === 'user' ? 'Lead' : 'Agente'}: ${h.content}`).join('\\n');\n\nreturn [{ json: { ...dadosConfig, historico, historicoTexto } }];"
+        "jsCode": "const dadosConfig = $('Tokens disponíveis?').first().json;\nconst sessaoRow = $input.first().json;\n\nif (sessaoRow.agente_pausado === true) return [];\n\nlet historico = [];\ntry { historico = JSON.parse(sessaoRow.historico || '[]'); } catch(e) {}\n\n// Se veio de áudio, marca no histórico\nconst prefixo = '';\nhistorico.push({ role: 'user', content: prefixo + dadosConfig.mensagem, type: dadosConfig.ehAudio ? 'audio' : 'text' });\n\nconst historicoTexto = historico.map(h => `${h.role === 'user' ? 'Lead' : 'Agente'}: ${h.content}`).join('\\n');\n\nreturn [{ json: { ...dadosConfig, historico, historicoTexto } }];"
       },
       "id": "node-monta-historico",
       "name": "Monta histórico da conversa",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [2860, 540]
+      "position": [
+        2860,
+        540
+      ]
     },
     {
       "parameters": {
@@ -273,7 +353,10 @@
       "name": "Agente SDR — IA",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
-      "position": [3080, 540],
+      "position": [
+        3080,
+        540
+      ],
       "notes": "Configure a credencial OpenAI."
     },
     {
@@ -282,7 +365,10 @@
       "name": "Tool: Busca na Web (SerpAPI)",
       "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
       "typeVersion": 1,
-      "position": [2960, 760],
+      "position": [
+        2960,
+        760
+      ],
       "credentials": {
         "serpApi": {
           "id": "CONFIGURE_SERPAPI_CREDENTIAL",
@@ -305,7 +391,10 @@
       "name": "Tool: Base de Conhecimento PDF",
       "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
       "typeVersion": 1,
-      "position": [3200, 760]
+      "position": [
+        3200,
+        760
+      ]
     },
     {
       "parameters": {
@@ -316,18 +405,26 @@
       "name": "Embeddings para busca",
       "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
       "typeVersion": 1.2,
-      "position": [3200, 920]
+      "position": [
+        3200,
+        920
+      ]
     },
     {
       "parameters": {
         "model": "gpt-4o",
-        "options": { "temperature": 0.3 }
+        "options": {
+          "temperature": 0.3
+        }
       },
       "id": "node-llm-openai",
       "name": "LLM — GPT-4o",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
-      "position": [2960, 920]
+      "position": [
+        2960,
+        920
+      ]
     },
     {
       "parameters": {
@@ -337,7 +434,10 @@
       "name": "Processa resposta e qualificação",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3300, 540]
+      "position": [
+        3300,
+        540
+      ]
     },
     {
       "parameters": {
@@ -347,7 +447,10 @@
               "id": "cond-audio-resp",
               "leftValue": "={{ $json.responderEmAudio }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equal" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
             }
           ]
         }
@@ -356,7 +459,10 @@
       "name": "Responder em áudio?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [3520, 400]
+      "position": [
+        3520,
+        400
+      ]
     },
     {
       "parameters": {
@@ -365,22 +471,35 @@
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Authorization", "value": "=Bearer SUA_CHAVE_OPENAI_AQUI" },
-            { "name": "Content-Type", "value": "application/json" }
+            {
+              "name": "Authorization",
+              "value": "=Bearer SUA_CHAVE_OPENAI_AQUI"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
         "jsonBody": "={\"model\": \"tts-1\", \"input\": \"{{ $json.textoParaLead }}\", \"voice\": \"nova\", \"response_format\": \"mp3\"}",
         "options": {
-          "response": { "response": { "responseFormat": "file" } }
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
         }
       },
       "id": "node-tts",
       "name": "Gera áudio TTS (OpenAI)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3740, 260],
+      "position": [
+        3740,
+        260
+      ],
       "notes": "Converte resposta do agente em áudio MP3. Voz: nova (feminina, quente). Custo: $0.015/1K chars."
     },
     {
@@ -391,7 +510,10 @@
       "name": "Prepara áudio para envio",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [3960, 260]
+      "position": [
+        3960,
+        260
+      ]
     },
     {
       "parameters": {
@@ -399,7 +521,12 @@
         "url": "=https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendWhatsAppAudio/{{ $json.evoInstance }}",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "apikey", "value": "SUA_CHAVE_EVO_API_AQUI" }]
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUA_CHAVE_EVO_API_AQUI"
+            }
+          ]
         },
         "sendBody": true,
         "specifyBody": "json",
@@ -410,7 +537,10 @@
       "name": "Envia áudio ao lead",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [4180, 260],
+      "position": [
+        4180,
+        260
+      ],
       "notes": "Envia resposta como áudio no WhatsApp via sendWhatsAppAudio."
     },
     {
@@ -419,7 +549,12 @@
         "url": "=https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/{{ $json.evoInstance }}",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "apikey", "value": "SUA_CHAVE_EVO_API_AQUI" }]
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUA_CHAVE_EVO_API_AQUI"
+            }
+          ]
         },
         "sendBody": true,
         "specifyBody": "json",
@@ -430,7 +565,10 @@
       "name": "Envia texto ao lead",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [3740, 540]
+      "position": [
+        3740,
+        540
+      ]
     },
     {
       "parameters": {
@@ -440,7 +578,10 @@
       "name": "Desconta tokens do saldo",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [4180, 540]
+      "position": [
+        4180,
+        540
+      ]
     },
     {
       "parameters": {
@@ -450,14 +591,23 @@
         "matchType": "allFilters",
         "filters": {
           "conditions": [
-            { "keyName": "user_id", "keyValue": "={{ $json.userId }}" }
+            {
+              "keyName": "user_id",
+              "keyValue": "={{ $json.userId }}"
+            }
           ]
         },
         "dataToSend": "defineBelow",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "saldo_tokens", "fieldValue": "={{ $json.novoSaldo }}" },
-            { "fieldId": "tokens_usados_mes", "fieldValue": "={{ ($('Verifica saldo de tokens').first().json.tokens_usados_mes || 0) + $json.tokensUsados }}" }
+            {
+              "fieldId": "saldo_tokens",
+              "fieldValue": "={{ $json.novoSaldo }}"
+            },
+            {
+              "fieldId": "tokens_usados_mes",
+              "fieldValue": "={{ ($('Verifica saldo de tokens').first().json.tokens_usados_mes || 0) + $json.tokensUsados }}"
+            }
           ]
         }
       },
@@ -465,7 +615,10 @@
       "name": "Atualiza saldo tokens",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [4400, 540],
+      "position": [
+        4400,
+        540
+      ],
       "notes": "Desconta tokens usados do saldo do cliente e incrementa tokens_usados_mes."
     },
     {
@@ -476,7 +629,10 @@
               "id": "cond-qualificado",
               "leftValue": "={{ $('Processa resposta e qualificação').first().json.qualificado }}",
               "rightValue": true,
-              "operator": { "type": "boolean", "operation": "equal" }
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
             }
           ]
         }
@@ -485,7 +641,10 @@
       "name": "Lead qualificado?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [4400, 740]
+      "position": [
+        4400,
+        740
+      ]
     },
     {
       "parameters": {
@@ -493,7 +652,12 @@
         "url": "=https://evolutionapi-evolution-api.yuhqmc.easypanel.host/message/sendText/{{ $('Processa resposta e qualificação').first().json.evoInstance }}",
         "sendHeaders": true,
         "headerParameters": {
-          "parameters": [{ "name": "apikey", "value": "SUA_CHAVE_EVO_API_AQUI" }]
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "SUA_CHAVE_EVO_API_AQUI"
+            }
+          ]
         },
         "sendBody": true,
         "specifyBody": "json",
@@ -504,7 +668,10 @@
       "name": "Envia relatório ao advogado",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [4620, 660]
+      "position": [
+        4620,
+        660
+      ]
     },
     {
       "parameters": {
@@ -513,22 +680,58 @@
         "dataToSend": "defineBelow",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "numero_whatsapp", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.numero }}" },
-            { "fieldId": "nome", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.nome || '' }}" },
-            { "fieldId": "celular", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.celular || '' }}" },
-            { "fieldId": "tese", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.tese || '' }}" },
-            { "fieldId": "resumo", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.resumo || $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '' }}" },
-            { "fieldId": "qualificado", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.qualificado }}" },
-            { "fieldId": "motivo_desqualificacao", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '' }}" },
-            { "fieldId": "user_id", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.userId }}" },
-            { "fieldId": "stage", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.qualificado ? 'qualificado' : ($('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo ? 'nao_qualificado' : 'em_atendimento') }}" },
-            { "fieldId": "atualizado_em", "fieldValue": "={{ new Date().toISOString() }}" }
+            {
+              "fieldId": "numero_whatsapp",
+              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.numero }}"
+            },
+            {
+              "fieldId": "nome",
+              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.nome || '' }}"
+            },
+            {
+              "fieldId": "celular",
+              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.celular || '' }}"
+            },
+            {
+              "fieldId": "tese",
+              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.tese || '' }}"
+            },
+            {
+              "fieldId": "resumo",
+              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.resumo || $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '' }}"
+            },
+            {
+              "fieldId": "qualificado",
+              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.qualificado }}"
+            },
+            {
+              "fieldId": "motivo_desqualificacao",
+              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '' }}"
+            },
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.userId }}"
+            },
+            {
+              "fieldId": "stage",
+              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.qualificado ? 'qualificado' : ($('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo ? 'nao_qualificado' : 'em_atendimento') }}"
+            },
+            {
+              "fieldId": "atualizado_em",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
           ]
         },
         "filters": {
           "conditions": [
-            { "keyName": "numero_whatsapp", "keyValue": "={{ $('Processa resposta e qualificação').first().json.numero }}" },
-            { "keyName": "user_id", "keyValue": "={{ $('Processa resposta e qualificação').first().json.userId }}" }
+            {
+              "keyName": "numero_whatsapp",
+              "keyValue": "={{ $('Processa resposta e qualificação').first().json.numero }}"
+            },
+            {
+              "keyName": "user_id",
+              "keyValue": "={{ $('Processa resposta e qualificação').first().json.userId }}"
+            }
           ]
         }
       },
@@ -536,7 +739,10 @@
       "name": "Salva lead no Supabase",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [4620, 860],
+      "position": [
+        4620,
+        860
+      ],
       "notes": "Upsert por (numero_whatsapp, user_id). Stage: em_atendimento → qualificado/nao_qualificado."
     },
     {
@@ -547,7 +753,10 @@
       "name": "Prepara sessão para salvar",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [4620, 1040]
+      "position": [
+        4620,
+        1040
+      ]
     },
     {
       "parameters": {
@@ -556,16 +765,34 @@
         "dataToSend": "defineBelow",
         "fieldsUi": {
           "fieldValues": [
-            { "fieldId": "numero_whatsapp", "fieldValue": "={{ $json.numero_whatsapp }}" },
-            { "fieldId": "user_id", "fieldValue": "={{ $json.user_id }}" },
-            { "fieldId": "historico", "fieldValue": "={{ $json.historico }}" },
-            { "fieldId": "atualizado_em", "fieldValue": "={{ $json.atualizado_em }}" }
+            {
+              "fieldId": "numero_whatsapp",
+              "fieldValue": "={{ $json.numero_whatsapp }}"
+            },
+            {
+              "fieldId": "user_id",
+              "fieldValue": "={{ $json.user_id }}"
+            },
+            {
+              "fieldId": "historico",
+              "fieldValue": "={{ $json.historico }}"
+            },
+            {
+              "fieldId": "atualizado_em",
+              "fieldValue": "={{ $json.atualizado_em }}"
+            }
           ]
         },
         "filters": {
           "conditions": [
-            { "keyName": "numero_whatsapp", "keyValue": "={{ $json.numero_whatsapp }}" },
-            { "keyName": "user_id", "keyValue": "={{ $json.user_id }}" }
+            {
+              "keyName": "numero_whatsapp",
+              "keyValue": "={{ $json.numero_whatsapp }}"
+            },
+            {
+              "keyName": "user_id",
+              "keyValue": "={{ $json.user_id }}"
+            }
           ]
         }
       },
@@ -573,7 +800,10 @@
       "name": "Supabase — Salva sessão",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [4840, 1040]
+      "position": [
+        4840,
+        1040
+      ]
     },
     {
       "parameters": {
@@ -585,127 +815,576 @@
       "name": "Responde 200 OK",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
-      "position": [5060, 540]
+      "position": [
+        5060,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond-imagem",
+              "leftValue": "={{ $json.ehImagem }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ]
+        }
+      },
+      "id": "node-eh-imagem",
+      "name": "É imagem?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        660,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const dados = $input.first().json;\nconst apiKey = 'SUA_CHAVE_OPENAI_AQUI';\n\n// Monta o conteúdo da mensagem para Vision\nconst imageContent = dados.imagemBase64\n  ? { type: 'image_url', image_url: { url: `data:${dados.imagemMimetype};base64,${dados.imagemBase64}`, detail: 'high' } }\n  : dados.imagemUrl\n    ? { type: 'image_url', image_url: { url: dados.imagemUrl, detail: 'high' } }\n    : null;\n\nif (!imageContent) {\n  const descricao = dados.imagemCaption ? `Lead enviou uma imagem com a legenda: \"${dados.imagemCaption}\"` : 'Lead enviou uma imagem (sem conteúdo disponível)';\n  return [{ json: { ...dados, mensagem: descricao, ehImagem: true } }];\n}\n\nconst messages = [\n  { role: 'system', content: 'Você é um assistente que descreve imagens enviadas por clientes para um escritório de Direito Previdenciário. Descreva o que vê na imagem de forma objetiva, mencionando qualquer documento, laudo, receita, carteira de trabalho, extrato do INSS ou outro documento relevante que apareça. Se for um documento, leia e transcreva o conteúdo principal.' },\n  { role: 'user', content: [\n    { type: 'text', text: dados.imagemCaption ? `O cliente enviou esta imagem com o comentário: \"${dados.imagemCaption}\". Descreva e analise.` : 'O cliente enviou esta imagem. Descreva e analise o conteúdo.' },\n    imageContent\n  ] }\n];\n\nconst response = await $helpers.request({\n  method: 'POST',\n  url: 'https://api.openai.com/v1/chat/completions',\n  headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },\n  body: JSON.stringify({ model: 'gpt-4o', messages, max_tokens: 1024 }),\n  responseType: 'json'\n});\n\nconst descricao = response.choices?.[0]?.message?.content || 'Imagem recebida mas não foi possível analisar.';\nconst mensagemFinal = `📷 [Lead enviou uma imagem]:\\n${descricao}`;\n\nreturn [{ json: { ...dados, mensagem: mensagemFinal, ehImagem: true } }];"
+      },
+      "id": "node-descreve-imagem",
+      "name": "Descreve imagem (Vision)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond-documento",
+              "leftValue": "={{ $json.ehDocumento }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ]
+        }
+      },
+      "id": "node-eh-documento",
+      "name": "É documento?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        880,
+        660
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const dados = $input.first().json;\nconst apiKey = 'SUA_CHAVE_OPENAI_AQUI';\nconst isPdf = dados.docMimetype?.includes('pdf');\n\nif (!dados.docBase64 && !dados.docUrl) {\n  const mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\"]:\\n(Arquivo recebido mas sem conteúdo legível disponível. Pergunte ao lead sobre o conteúdo.)`;\n  return [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];\n}\n\nif (isPdf && dados.docBase64) {\n  // Chama GPT-4o com o PDF como base64 para extrair texto\n  const response = await $helpers.request({\n    method: 'POST',\n    url: 'https://api.openai.com/v1/chat/completions',\n    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      model: 'gpt-4o',\n      messages: [\n        { role: 'system', content: 'Você é um assistente que extrai e resume o conteúdo de documentos enviados por clientes de um escritório de Direito Previdenciário. Leia o documento e forneça um resumo objetivo do conteúdo principal, incluindo datas, nomes, números de benefício, diagnósticos ou qualquer informação relevante.' },\n        { role: 'user', content: [\n          { type: 'text', text: `O cliente enviou o arquivo \"${dados.docFileName}\". Extraia e resuma o conteúdo principal.` },\n          { type: 'file', file: { filename: dados.docFileName, file_data: `data:${dados.docMimetype};base64,${dados.docBase64}` } }\n        ] }\n      ],\n      max_tokens: 2048\n    }),\n    responseType: 'json'\n  });\n  const texto = response.choices?.[0]?.message?.content || 'Não foi possível extrair o conteúdo.';\n  const mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\"]:\\n${texto}`;\n  return [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];\n}\n\n// Arquivo não-PDF ou sem base64 — menciona ao agente\nconst mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\" (${dados.docMimetype})]:\\n(Arquivo recebido. Responda ao lead solicitando o conteúdo em formato de texto ou peça que descreva o documento.)`;\nreturn [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];"
+      },
+      "id": "node-extrai-doc",
+      "name": "Extrai texto documento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Unifica todas as rotas (áudio, imagem, documento, texto)\n// Cada rota já preparou $json.mensagem corretamente\nreturn [$input.first()];"
+      },
+      "id": "node-prepara-contexto",
+      "name": "Prepara contexto final",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1320,
+        420
+      ]
     }
   ],
   "connections": {
     "Webhook — Evolution API": {
-      "main": [[{ "node": "Normaliza e filtra mensagem", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Normaliza e filtra mensagem",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Normaliza e filtra mensagem": {
-      "main": [[{ "node": "É áudio?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "É áudio?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "É áudio?": {
       "main": [
-        [{ "node": "Download áudio", "type": "main", "index": 0 }],
-        [{ "node": "Resolve cliente pelo instanceName", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Download áudio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "É imagem?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Download áudio": {
-      "main": [[{ "node": "Transcreve áudio (Whisper)", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Transcreve áudio (Whisper)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Transcreve áudio (Whisper)": {
-      "main": [[{ "node": "Merge: áudio → texto", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Merge: áudio → texto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Merge: áudio → texto": {
-      "main": [[{ "node": "Resolve cliente pelo instanceName", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Prepara contexto final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Resolve cliente pelo instanceName": {
-      "main": [[{ "node": "Carrega configurações do Supabase", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Carrega configurações do Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Carrega configurações do Supabase": {
-      "main": [[{ "node": "Monta system prompt com config", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Monta system prompt com config",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Monta system prompt com config": {
-      "main": [[{ "node": "Verifica saldo de tokens", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Verifica saldo de tokens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Verifica saldo de tokens": {
-      "main": [[{ "node": "Tokens disponíveis?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Tokens disponíveis?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Tokens disponíveis?": {
-      "main": [[{ "node": "Bloqueado por tokens?", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Bloqueado por tokens?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Bloqueado por tokens?": {
       "main": [
-        [{ "node": "Envia aviso: tokens esgotados", "type": "main", "index": 0 }],
-        [{ "node": "Supabase — Busca histórico da sessão", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Envia aviso: tokens esgotados",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Supabase — Busca histórico da sessão",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Envia aviso: tokens esgotados": {
-      "main": [[{ "node": "Responde 200 OK", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Responde 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Supabase — Busca histórico da sessão": {
-      "main": [[{ "node": "Monta histórico da conversa", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Monta histórico da conversa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Monta histórico da conversa": {
-      "main": [[{ "node": "Agente SDR — IA", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Agente SDR — IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Tool: Busca na Web (SerpAPI)": {
-      "ai_tool": [[{ "node": "Agente SDR — IA", "type": "ai_tool", "index": 0 }]]
+      "ai_tool": [
+        [
+          {
+            "node": "Agente SDR — IA",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Tool: Base de Conhecimento PDF": {
-      "ai_tool": [[{ "node": "Agente SDR — IA", "type": "ai_tool", "index": 0 }]]
+      "ai_tool": [
+        [
+          {
+            "node": "Agente SDR — IA",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Embeddings para busca": {
-      "ai_embedding": [[{ "node": "Tool: Base de Conhecimento PDF", "type": "ai_embedding", "index": 0 }]]
+      "ai_embedding": [
+        [
+          {
+            "node": "Tool: Base de Conhecimento PDF",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
     },
     "LLM — GPT-4o": {
-      "ai_languageModel": [[{ "node": "Agente SDR — IA", "type": "ai_languageModel", "index": 0 }]]
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente SDR — IA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Agente SDR — IA": {
-      "main": [[{ "node": "Processa resposta e qualificação", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Processa resposta e qualificação",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Processa resposta e qualificação": {
-      "main": [[
-        { "node": "Responder em áudio?", "type": "main", "index": 0 },
-        { "node": "Desconta tokens do saldo", "type": "main", "index": 0 },
-        { "node": "Lead qualificado?", "type": "main", "index": 0 },
-        { "node": "Prepara sessão para salvar", "type": "main", "index": 0 }
-      ]]
+      "main": [
+        [
+          {
+            "node": "Responder em áudio?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Desconta tokens do saldo",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Lead qualificado?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepara sessão para salvar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Responder em áudio?": {
       "main": [
-        [{ "node": "Gera áudio TTS (OpenAI)", "type": "main", "index": 0 }],
-        [{ "node": "Envia texto ao lead", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Gera áudio TTS (OpenAI)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Envia texto ao lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Gera áudio TTS (OpenAI)": {
-      "main": [[{ "node": "Prepara áudio para envio", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Prepara áudio para envio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Prepara áudio para envio": {
-      "main": [[{ "node": "Envia áudio ao lead", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Envia áudio ao lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Envia áudio ao lead": {
-      "main": [[{ "node": "Responde 200 OK", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Responde 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Envia texto ao lead": {
-      "main": [[{ "node": "Responde 200 OK", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Responde 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Desconta tokens do saldo": {
-      "main": [[{ "node": "Atualiza saldo tokens", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Atualiza saldo tokens",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Lead qualificado?": {
       "main": [
         [
-          { "node": "Envia relatório ao advogado", "type": "main", "index": 0 },
-          { "node": "Salva lead no Supabase", "type": "main", "index": 0 }
+          {
+            "node": "Envia relatório ao advogado",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Salva lead no Supabase",
+            "type": "main",
+            "index": 0
+          }
         ],
         [
-          { "node": "Salva lead no Supabase", "type": "main", "index": 0 }
+          {
+            "node": "Salva lead no Supabase",
+            "type": "main",
+            "index": 0
+          }
         ]
       ]
     },
     "Envia relatório ao advogado": {
-      "main": [[{ "node": "Responde 200 OK", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Responde 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Prepara sessão para salvar": {
-      "main": [[{ "node": "Supabase — Salva sessão", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Supabase — Salva sessão",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Supabase — Salva sessão": {
-      "main": [[{ "node": "Responde 200 OK", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Responde 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É imagem?": {
+      "main": [
+        [
+          {
+            "node": "Descreve imagem (Vision)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "É documento?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "É documento?": {
+      "main": [
+        [
+          {
+            "node": "Extrai texto documento",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepara contexto final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extrai texto documento": {
+      "main": [
+        [
+          {
+            "node": "Prepara contexto final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Descreve imagem (Vision)": {
+      "main": [
+        [
+          {
+            "node": "Prepara contexto final",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepara contexto final": {
+      "main": [
+        [
+          {
+            "node": "Resolve cliente pelo instanceName",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": { "executionOrder": "v1" },
-  "tags": ["whatsapp", "sdr", "ia", "previdenciario", "multitenancy", "audio", "whisper", "tts"],
-  "meta": { "description": "XPERT.IA — Agente SDR WhatsApp com suporte a áudio (Whisper STT + OpenAI TTS). Multi-tenant com verificação de saldo de tokens. Cada cliente tem dados isolados.", "version": "5.0.0" }
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": [
+    "whatsapp",
+    "sdr",
+    "ia",
+    "previdenciario",
+    "multitenancy",
+    "audio",
+    "whisper",
+    "tts"
+  ],
+  "meta": {
+    "description": "XPERT.IA — Agente SDR WhatsApp com suporte a áudio (Whisper STT + OpenAI TTS). Multi-tenant com verificação de saldo de tokens. Cada cliente tem dados isolados.",
+    "version": "5.0.0"
+  }
 }

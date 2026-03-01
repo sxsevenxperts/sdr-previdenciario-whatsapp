@@ -76,9 +76,13 @@
     .stat-card .sub { font-size: 12px; color: #666; margin-top: 2px; }
     .loading { color: #888; font-size: 13px; }
     .pdf-list { margin-top: 12px; }
-    .pdf-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+    .pdf-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+    .pdf-item > span:first-child { flex: 1; color: #444; }
     .pdf-item span { color: #444; }
-    .pdf-badge { background: #e0e7ff; color: #4f46e5; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+    .pdf-badge { background: #e0e7ff; color: #4f46e5; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .pdf-chunks { color: #9ca3af; font-size: 11px; white-space: nowrap; }
+    .btn-delete-pdf { background: none; border: none; cursor: pointer; font-size: 15px; padding: 2px 4px; border-radius: 4px; opacity: 0.6; transition: opacity 0.2s; }
+    .btn-delete-pdf:hover { opacity: 1; background: #fee2e2; }
     .upload-btn { padding: 10px 20px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 12px; }
     .upload-btn:disabled { background: #a5b4fc; }
     .progress-bar { height: 4px; background: #e5e7eb; border-radius: 4px; margin-top: 12px; overflow: hidden; display: none; }
@@ -1207,7 +1211,7 @@
   const SUPABASE_URL = 'https://vyvdrbkcrvklcaombjqu.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY';
   const MANAGE_CLIENTS_URL = `${SUPABASE_URL}/functions/v1/manage-clients`;
-  const N8N_UPLOAD_WEBHOOK = 'https://sx-n8n.yuhqmc.easypanel.host/webhook/upload-pdf-sdr';
+  const PROCESS_PDF_URL    = `${SUPABASE_URL}/functions/v1/process-pdf`;
   // Evolution API — chamadas via Edge Function proxy (chave segura no servidor)
   const EVO_PROXY_URL = `${SUPABASE_URL}/functions/v1/evo-proxy`;
 
@@ -2203,36 +2207,71 @@
     const btn = document.getElementById('btn-upload-pdf');
     const status = document.getElementById('upload-status');
     if (!nome || !file) { alert('Preencha o nome e selecione um PDF.'); return; }
-    btn.disabled = true; btn.textContent = 'Enviando...'; status.textContent = '';
+    if (!file.name.endsWith('.pdf') && file.type !== 'application/pdf') {
+      alert('Apenas arquivos PDF são suportados.'); return;
+    }
+    btn.disabled = true; btn.textContent = '⏳ Processando...'; status.textContent = '';
     const formData = new FormData();
-    formData.append('Nome do documento', nome);
-    formData.append('Categoria', categoria);
-    formData.append('Arquivo PDF', file);
-    // Envia user_id para isolamento de dados por cliente (multi-tenancy)
-    const { data: { user: uploadUser } } = await db.auth.getUser();
-    if (uploadUser) formData.append('user_id', uploadUser.id);
+    formData.append('nome', nome);
+    formData.append('categoria', categoria);
+    formData.append('file', file);
     try {
-      await fetch(N8N_UPLOAD_WEBHOOK, { method: 'POST', body: formData });
-      status.textContent = '✅ PDF enviado para processamento!'; status.style.color = '#16a34a';
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) throw new Error('Sessão expirada. Faça login novamente.');
+      const res = await fetch(PROCESS_PDF_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': SUPABASE_KEY
+        },
+        body: formData
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Erro desconhecido');
+      status.textContent = `✅ PDF processado! ${result.chunks} chunks indexados (${result.chars} chars).`;
+      status.style.color = '#16a34a';
+      document.getElementById('pdf-nome').value = '';
+      document.getElementById('pdf-file').value = '';
+      document.getElementById('pdf-filename').textContent = 'Clique para selecionar um PDF';
       loadPDFList();
-    } catch {
-      status.textContent = '❌ Erro ao enviar. Verifique se o Workflow 2 está ativo.'; status.style.color = '#ef4444';
+    } catch(e) {
+      status.textContent = '❌ Erro: ' + e.message; status.style.color = '#ef4444';
     }
     btn.disabled = false; btn.textContent = '⬆️ Enviar para o agente';
-    setTimeout(() => status.textContent = '', 4000);
+    setTimeout(() => status.textContent = '', 6000);
   }
 
   async function loadPDFList() {
-    const { data } = await db.from('documentos_conhecimento').select('metadata').limit(30);
+    const { data } = await db.from('documentos_conhecimento').select('metadata').order('id', { ascending: false }).limit(200);
     const el = document.getElementById('pdf-list');
     if (!data || !data.length) {
       el.innerHTML = '<p class="empty-state">Nenhum PDF na base ainda.</p>'; return;
     }
+    // Agrupa por nome (cada doc pode ter vários chunks)
     const unique = {};
-    data.forEach(d => { const k = (d.metadata?.nome || 'Sem nome'); unique[k] = d.metadata; });
-    el.innerHTML = '<div class="pdf-list">' + Object.values(unique).map(meta =>
-      `<div class="pdf-item"><span>📄 ${meta.nome || 'Documento'}</span><span class="pdf-badge">${meta.categoria || 'Geral'}</span></div>`
+    data.forEach(d => {
+      const k = d.metadata?.nome || 'Sem nome';
+      if (!unique[k]) unique[k] = { ...d.metadata, chunks: 0 };
+      unique[k].chunks++;
+    });
+    el.innerHTML = '<div class="pdf-list">' + Object.entries(unique).map(([nome, meta]) =>
+      `<div class="pdf-item">
+        <span>📄 ${meta.nome || nome}</span>
+        <span class="pdf-badge">${meta.categoria || 'Geral'}</span>
+        <span class="pdf-chunks">${meta.chunks} chunks</span>
+        <button class="btn-delete-pdf" onclick="deletePDF('${nome.replace(/'/g,"\\'")}')" title="Remover da base de conhecimento">🗑️</button>
+      </div>`
     ).join('') + '</div>';
+  }
+
+  async function deletePDF(nome) {
+    if (!confirm(`Remover "${nome}" da base de conhecimento?\n\nTodos os chunks serão excluídos permanentemente.`)) return;
+    const { error } = await db
+      .from('documentos_conhecimento')
+      .delete()
+      .contains('metadata', { nome });
+    if (error) { alert('Erro ao remover: ' + error.message); return; }
+    loadPDFList();
   }
 
   // =====================
