@@ -155,6 +155,20 @@
     .btn-entrar-conversa:hover { background:#1ebe5b; }
     .btn-add-tarefa { padding:9px 16px; background:#f0f2f5; color:#444; border:1.5px solid #e0e0e0; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
     .btn-add-tarefa:hover { background:#e5e7eb; }
+    /* Gerenciar Colunas */
+    .stages-list { display:flex; flex-direction:column; gap:8px; margin:16px 0; max-height:380px; overflow-y:auto; }
+    .stage-row { display:flex; align-items:center; gap:10px; background:#f8fafc; border-radius:10px; padding:10px 12px; cursor:grab; border:1.5px solid #e5e7eb; }
+    .stage-row:active { cursor:grabbing; opacity:0.7; }
+    .stage-row.drag-over { border-color:#4f46e5; background:#eef2ff; }
+    .stage-drag-handle { color:#ccc; font-size:16px; cursor:grab; flex-shrink:0; }
+    .stage-color-dot { width:14px; height:14px; border-radius:50%; flex-shrink:0; border:2px solid rgba(0,0,0,0.1); cursor:pointer; }
+    .stage-name-input { flex:1; border:none; background:transparent; font-size:14px; font-weight:600; color:#1a1a2e; outline:none; padding:2px 4px; border-radius:4px; }
+    .stage-name-input:focus { background:#fff; border:1.5px solid #4f46e5; padding:1px 3px; }
+    .stage-del-btn { background:none; border:none; color:#d1d5db; cursor:pointer; font-size:16px; padding:0 2px; flex-shrink:0; }
+    .stage-del-btn:hover { color:#ef4444; }
+    .color-palette { display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:#fff; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.15); position:absolute; z-index:2000; }
+    .color-swatch { width:22px; height:22px; border-radius:50%; cursor:pointer; border:2px solid transparent; }
+    .color-swatch:hover, .color-swatch.selected { border-color:#1a1a2e; transform:scale(1.15); }
     /* WHATSAPP PAGE */
     .wa-status-bar { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 10px; margin-bottom: 20px; font-weight: 600; font-size: 15px; }
     .wa-status-bar.connected { background: #dcfce7; color: #16a34a; border: 1.5px solid #bbf7d0; }
@@ -616,6 +630,7 @@
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn-save" style="padding:9px 18px;font-size:13px;" onclick="loadCRM()">🔄 Atualizar</button>
           <button class="btn-secondary" style="padding:9px 18px;font-size:13px;" onclick="openNewLeadModal()">➕ Novo Lead</button>
+          <button class="btn-secondary" style="padding:9px 18px;font-size:13px;" onclick="openStagesModal()">⚙️ Colunas</button>
         </div>
         <div style="font-size:12px;color:#888;">Arraste os cards entre as colunas para atualizar o estágio</div>
       </div>
@@ -706,6 +721,24 @@
           <button class="btn-save" onclick="createManualLead()">✅ Criar lead</button>
           <button class="btn-secondary" onclick="closeNewLeadModal()">Cancelar</button>
         </div>
+      </div>
+    </div>
+
+    <!-- MODAL: GERENCIAR COLUNAS -->
+    <div class="modal-backdrop" id="modal-gerenciar-colunas" onclick="if(event.target===this)closeStagesModal()">
+      <div class="modal-box" style="width:480px;position:relative;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <h2 style="font-size:16px;font-weight:700;">⚙️ Gerenciar Colunas</h2>
+          <button onclick="closeStagesModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;padding:0;">✕</button>
+        </div>
+        <p style="font-size:12px;color:#999;margin-bottom:8px;">Arraste para reordenar · Clique na bolinha para trocar a cor · Edite o nome diretamente</p>
+        <div class="stages-list" id="stages-list"></div>
+        <div id="color-palette-popup" class="color-palette" style="display:none;"></div>
+        <div style="display:flex;gap:10px;margin-top:8px;border-top:1px solid #f1f5f9;padding-top:14px;">
+          <button class="btn-secondary" onclick="addNewStage()" style="flex:1;padding:10px;">➕ Nova coluna</button>
+          <button class="btn-save" onclick="saveCRMStages()" style="flex:1;padding:10px;">💾 Salvar</button>
+        </div>
+        <span class="save-status" id="stages-save-status" style="display:block;text-align:center;margin-top:8px;min-height:18px;"></span>
       </div>
     </div>
 
@@ -1641,11 +1674,13 @@
   ];
 
   let crmLeads = [];
+  let crmStages = [...CRM_STAGES];
   let crmOpenLeadId = null;
 
   async function loadCRM() {
     const board = document.getElementById('crm-board');
     board.innerHTML = '<div style="padding:40px;color:#aaa;font-size:14px;">Carregando...</div>';
+    await loadCRMStages();
     const { data, error } = await db.from('leads')
       .select('*, lead_tarefas(id, concluida)')
       .order('atualizado_em', { ascending: false });
@@ -1657,15 +1692,15 @@
   function renderKanban(leads) {
     const board = document.getElementById('crm-board');
     const byStage = {};
-    CRM_STAGES.forEach(s => byStage[s.id] = []);
+    crmStages.forEach(s => byStage[s.id] = []);
     leads.forEach(l => {
-      const s = l.stage || 'novo_contato';
-      if (!byStage[s]) byStage['novo_contato'].push(l);
+      const s = l.stage || crmStages[0]?.id || 'novo_contato';
+      if (!byStage[s]) byStage[crmStages[0]?.id || 'novo_contato'].push(l);
       else byStage[s].push(l);
     });
-    board.innerHTML = CRM_STAGES.map(stage => {
-      const cols = byStage[stage.id];
-      return `<div class="crm-col" data-stage="${stage.id}">
+    board.innerHTML = crmStages.map(stage => {
+      const cols = byStage[stage.id] || [];
+      return `<div class="crm-col" data-stage="${stage.id}" style="border-top:3px solid ${stage.color};">
         <div class="crm-col-header">
           <span class="crm-col-title">${stage.label}</span>
           <span class="crm-col-count">${cols.length}</span>
@@ -1674,13 +1709,13 @@
           ondragover="event.preventDefault();this.classList.add('dragover')"
           ondragleave="this.classList.remove('dragover')"
           ondrop="dropCard(event,this)">
-          ${cols.map(l => renderCard(l)).join('')}
+          ${cols.map(l => renderCard(l, stage.color)).join('')}
         </div>
       </div>`;
     }).join('');
   }
 
-  function renderCard(lead) {
+  function renderCard(lead, stageColor) {
     const tasks = lead.lead_tarefas || [];
     const pendentes = tasks.filter(t => !t.concluida).length;
     const hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -1692,7 +1727,10 @@
       if (diff === 0) anivIcon = '<span class="crm-card-aniv" title="Aniversário hoje! 🎂">🎂</span>';
       else if (diff === 1) anivIcon = '<span class="crm-card-aniv" title="Aniversário amanhã">🎁</span>';
     }
-    return `<div class="crm-card" data-lead-id="${lead.id}" data-stage="${lead.stage||'novo_contato'}"
+    const stg = lead.stage || crmStages[0]?.id || 'novo_contato';
+    const color = stageColor || crmStages.find(s => s.id === stg)?.color || '#e5e7eb';
+    return `<div class="crm-card" data-lead-id="${lead.id}" data-stage="${stg}"
+      style="border-left-color:${color};"
       draggable="true"
       ondragstart="dragCard(event,this)"
       onclick="openLeadModal(${lead.id})">
@@ -1727,7 +1765,7 @@
     await updateLeadStage(dragLeadId, newStage);
     dragLeadId = null;
     // Atualiza contador das colunas
-    CRM_STAGES.forEach(s => {
+    crmStages.forEach(s => {
       const col = document.querySelector(`.crm-col[data-stage="${s.id}"]`);
       if (col) col.querySelector('.crm-col-count').textContent = col.querySelectorAll('.crm-card').length;
     });
@@ -1750,7 +1788,10 @@
     document.getElementById('crm-tese').value = lead.tese || '';
     document.getElementById('crm-assunto').value = lead.assunto || '';
     document.getElementById('crm-aniversario').value = lead.data_aniversario || '';
-    document.getElementById('crm-stage').value = lead.stage || 'novo_contato';
+    // Popula select de estágio dinamicamente
+    const stgSel = document.getElementById('crm-stage');
+    stgSel.innerHTML = crmStages.map(s => `<option value="${s.id}">${s.label}</option>`).join('');
+    stgSel.value = lead.stage || crmStages[0]?.id || 'novo_contato';
     document.getElementById('crm-resumo').value = lead.resumo || '';
     document.getElementById('crm-notas').value = lead.notas || '';
     switchCRMTab('dados', document.querySelector('.crm-tab'));
@@ -1896,6 +1937,163 @@
     document.getElementById('nl-assunto').value = '';
     await loadCRM();
   }
+
+  // =====================
+  // GERENCIAR COLUNAS CRM
+  // =====================
+  const STAGE_COLORS = [
+    '#f59e0b','#3b82f6','#16a34a','#dc2626','#7c3aed','#9ca3af',
+    '#f97316','#ec4899','#06b6d4','#84cc16','#64748b','#8b5cf6',
+    '#0891b2','#b45309','#15803d','#be123c'
+  ];
+  let stagesDragSrc = null;
+  let colorPaletteTarget = null;
+
+  async function loadCRMStages() {
+    try {
+      const { data } = await db.from('agente_config')
+        .select('valor').eq('chave','crm_stages').maybeSingle();
+      if (data?.valor) {
+        const parsed = JSON.parse(data.valor);
+        if (Array.isArray(parsed) && parsed.length) { crmStages = parsed; return crmStages; }
+      }
+    } catch {}
+    crmStages = [...CRM_STAGES];
+    return crmStages;
+  }
+
+  async function openStagesModal() {
+    await loadCRMStages();
+    renderStagesList();
+    document.getElementById('stages-save-status').textContent = '';
+    document.getElementById('modal-gerenciar-colunas').classList.add('open');
+  }
+
+  function closeStagesModal() {
+    document.getElementById('modal-gerenciar-colunas').classList.remove('open');
+    hideColorPalette();
+  }
+
+  function renderStagesList() {
+    const list = document.getElementById('stages-list');
+    list.innerHTML = crmStages.map((s, i) => `
+      <div class="stage-row" data-idx="${i}"
+        draggable="true"
+        ondragstart="stageRowDragStart(event,this)"
+        ondragover="stageRowDragOver(event,this)"
+        ondragleave="this.classList.remove('drag-over')"
+        ondrop="stageRowDrop(event,this)"
+        ondragend="stageRowDragEnd(this)">
+        <span class="stage-drag-handle" title="Arrastar para reordenar">⠿</span>
+        <span class="stage-color-dot" style="background:${s.color};" onclick="showColorPalette(event,${i})" title="Trocar cor"></span>
+        <input class="stage-name-input" type="text" value="${s.label.replace(/"/g,'&quot;')}" placeholder="Nome da coluna" />
+        <button class="stage-del-btn" onclick="deleteStageRow(${i})" title="Remover coluna">✕</button>
+      </div>`).join('');
+  }
+
+  function stageRowDragStart(e, el) {
+    stagesDragSrc = el;
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => el.style.opacity = '0.45', 0);
+  }
+  function stageRowDragOver(e, el) {
+    e.preventDefault();
+    document.querySelectorAll('.stage-row').forEach(r => r.classList.remove('drag-over'));
+    if (el !== stagesDragSrc) el.classList.add('drag-over');
+  }
+  function stageRowDragEnd(el) {
+    el.style.opacity = '';
+    document.querySelectorAll('.stage-row').forEach(r => r.classList.remove('drag-over'));
+  }
+  function stageRowDrop(e, el) {
+    e.stopPropagation();
+    el.classList.remove('drag-over');
+    if (!stagesDragSrc || stagesDragSrc === el) { stagesDragSrc = null; return; }
+    // Lê labels atuais antes de reordenar
+    syncStageLabelsFromDOM();
+    const list = document.getElementById('stages-list');
+    const rows = [...list.querySelectorAll('.stage-row')];
+    const srcIdx = rows.indexOf(stagesDragSrc);
+    const dstIdx = rows.indexOf(el);
+    if (srcIdx < 0 || dstIdx < 0) { stagesDragSrc = null; return; }
+    const [moved] = crmStages.splice(srcIdx, 1);
+    crmStages.splice(dstIdx, 0, moved);
+    stagesDragSrc.style.opacity = '';
+    stagesDragSrc = null;
+    renderStagesList();
+  }
+
+  function syncStageLabelsFromDOM() {
+    const inputs = document.querySelectorAll('#stages-list .stage-name-input');
+    inputs.forEach((inp, i) => { if (crmStages[i]) crmStages[i].label = inp.value.trim() || crmStages[i].label; });
+  }
+
+  function addNewStage() {
+    syncStageLabelsFromDOM();
+    crmStages.push({ id: 'custom_' + Date.now(), label: 'Nova coluna', color: '#64748b' });
+    renderStagesList();
+    setTimeout(() => {
+      const inputs = document.querySelectorAll('#stages-list .stage-name-input');
+      if (inputs.length) { const last = inputs[inputs.length - 1]; last.focus(); last.select(); }
+    }, 50);
+  }
+
+  function deleteStageRow(idx) {
+    if (crmStages.length <= 1) { alert('Mantenha ao menos uma coluna.'); return; }
+    syncStageLabelsFromDOM();
+    crmStages.splice(idx, 1);
+    renderStagesList();
+  }
+
+  async function saveCRMStages() {
+    syncStageLabelsFromDOM();
+    const st = document.getElementById('stages-save-status');
+    st.textContent = 'Salvando...'; st.style.color = '#888';
+    const { data: { user } } = await db.auth.getUser();
+    const { error } = await db.from('agente_config').upsert(
+      { user_id: user.id, chave: 'crm_stages', valor: JSON.stringify(crmStages) },
+      { onConflict: 'user_id,chave' }
+    );
+    if (error) { st.textContent = '❌ Erro ao salvar'; st.style.color = '#ef4444'; return; }
+    st.textContent = '✅ Colunas salvas!'; st.style.color = '#16a34a';
+    setTimeout(() => { closeStagesModal(); renderKanban(crmLeads); }, 900);
+  }
+
+  // ---- Color palette ----
+  function showColorPalette(e, stageIdx) {
+    e.stopPropagation();
+    colorPaletteTarget = stageIdx;
+    const popup = document.getElementById('color-palette-popup');
+    popup.innerHTML = STAGE_COLORS.map(c =>
+      `<span class="color-swatch ${crmStages[stageIdx]?.color===c?'selected':''}"
+        style="background:${c};" onclick="pickStageColor('${c}')"></span>`
+    ).join('');
+    // Posição relativa ao modal-box
+    const dot = e.currentTarget;
+    const dotRect = dot.getBoundingClientRect();
+    const mbox = document.querySelector('#modal-gerenciar-colunas .modal-box');
+    const mRect = mbox.getBoundingClientRect();
+    popup.style.display = 'flex';
+    popup.style.top  = (dotRect.bottom - mRect.top + 6) + 'px';
+    popup.style.left = (dotRect.left   - mRect.left) + 'px';
+    popup.style.position = 'absolute';
+    setTimeout(() => document.addEventListener('click', hideColorPaletteOutside, { once: true }), 30);
+  }
+
+  function pickStageColor(color) {
+    if (colorPaletteTarget !== null && crmStages[colorPaletteTarget]) {
+      crmStages[colorPaletteTarget].color = color;
+      renderStagesList();
+    }
+    hideColorPalette();
+  }
+
+  function hideColorPalette() {
+    const p = document.getElementById('color-palette-popup');
+    if (p) p.style.display = 'none';
+    colorPaletteTarget = null;
+  }
+  function hideColorPaletteOutside() { hideColorPalette(); }
 
   // =====================
   // CONFIGURAÇÕES
