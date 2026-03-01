@@ -508,7 +508,7 @@
     },
     {
       "parameters": {
-        "operation": "insert",
+        "operation": "upsert",
         "tableId": "leads",
         "dataToSend": "defineBelow",
         "fieldsUi": {
@@ -520,7 +520,15 @@
             { "fieldId": "resumo", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.resumo || $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '' }}" },
             { "fieldId": "qualificado", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.qualificado }}" },
             { "fieldId": "motivo_desqualificacao", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '' }}" },
-            { "fieldId": "user_id", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.userId }}" }
+            { "fieldId": "user_id", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.userId }}" },
+            { "fieldId": "stage", "fieldValue": "={{ $('Processa resposta e qualificação').first().json.qualificado ? 'qualificado' : ($('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo ? 'nao_qualificado' : 'em_atendimento') }}" },
+            { "fieldId": "atualizado_em", "fieldValue": "={{ new Date().toISOString() }}" }
+          ]
+        },
+        "filters": {
+          "conditions": [
+            { "keyName": "numero_whatsapp", "keyValue": "={{ $('Processa resposta e qualificação').first().json.numero }}" },
+            { "keyName": "user_id", "keyValue": "={{ $('Processa resposta e qualificação').first().json.userId }}" }
           ]
         }
       },
@@ -528,7 +536,8 @@
       "name": "Salva lead no Supabase",
       "type": "n8n-nodes-base.supabase",
       "typeVersion": 1,
-      "position": [4620, 860]
+      "position": [4620, 860],
+      "notes": "Upsert por (numero_whatsapp, user_id). Stage: em_atendimento → qualificado/nao_qualificado."
     },
     {
       "parameters": {

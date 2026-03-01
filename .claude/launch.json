@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "XPERT.IA — Painel Web",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "software", "-p", "3000", "--no-clipboard"],
+      "port": 3000
+    }
+  ]
+}

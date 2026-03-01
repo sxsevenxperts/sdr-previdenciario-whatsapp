@@ -104,6 +104,57 @@
     /* MSG AUDIO ICONS */
     .msg-audio-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #7c3aed; background: #f3e8ff; padding: 2px 8px; border-radius: 10px; margin-bottom: 4px; font-weight: 600; }
 
+    /* ===================== CRM KANBAN ===================== */
+    .crm-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
+    .crm-board-wrap { overflow-x:auto; padding-bottom:16px; }
+    .crm-board { display:flex; gap:14px; min-height:560px; width:max-content; }
+    .crm-col { width:260px; background:#f8fafc; border-radius:14px; padding:12px; flex-shrink:0; display:flex; flex-direction:column; }
+    .crm-col-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding:4px 2px; }
+    .crm-col-title { font-size:13px; font-weight:700; color:#1a1a2e; display:flex; align-items:center; gap:6px; }
+    .crm-col-count { background:#e5e7eb; color:#555; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; }
+    .crm-cards { flex:1; min-height:80px; border-radius:10px; transition:background 0.15s; }
+    .crm-cards.dragover { background:#e0e7ff; outline:2px dashed #4f46e5; outline-offset:2px; }
+    .crm-card { background:#fff; border-radius:10px; padding:14px 14px 12px; margin-bottom:10px; cursor:grab; box-shadow:0 1px 4px rgba(0,0,0,0.08); border-left:4px solid #e5e7eb; transition:box-shadow 0.15s, opacity 0.15s; user-select:none; }
+    .crm-card:active { cursor:grabbing; opacity:0.65; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+    .crm-card:hover { box-shadow:0 3px 10px rgba(0,0,0,0.12); }
+    .crm-card[data-stage="novo_contato"]     { border-left-color:#f59e0b; }
+    .crm-card[data-stage="em_atendimento"]   { border-left-color:#3b82f6; }
+    .crm-card[data-stage="qualificado"]      { border-left-color:#16a34a; }
+    .crm-card[data-stage="nao_qualificado"]  { border-left-color:#dc2626; }
+    .crm-card[data-stage="convertido"]       { border-left-color:#7c3aed; }
+    .crm-card[data-stage="perdido"]          { border-left-color:#9ca3af; }
+    .crm-card-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; }
+    .crm-card-name { font-size:13px; font-weight:700; color:#1a1a2e; }
+    .crm-card-aniv { font-size:14px; cursor:default; }
+    .crm-card-tese { font-size:12px; color:#555; margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .crm-card-assunto { font-size:11px; color:#7c3aed; background:#f3e8ff; padding:2px 7px; border-radius:8px; display:inline-block; margin-bottom:8px; font-weight:600; }
+    .crm-card-footer { display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#888; border-top:1px solid #f1f5f9; padding-top:8px; margin-top:4px; }
+    .crm-card-tasks { display:flex; align-items:center; gap:3px; }
+    .crm-card-tasks.has-pending { color:#f59e0b; font-weight:700; }
+    /* Column left-border colors */
+    .crm-col[data-stage="novo_contato"]    .crm-col-count { background:#fef9c3; color:#92400e; }
+    .crm-col[data-stage="em_atendimento"]  .crm-col-count { background:#dbeafe; color:#1e40af; }
+    .crm-col[data-stage="qualificado"]     .crm-col-count { background:#dcfce7; color:#166534; }
+    .crm-col[data-stage="nao_qualificado"] .crm-col-count { background:#fee2e2; color:#991b1b; }
+    .crm-col[data-stage="convertido"]      .crm-col-count { background:#f3e8ff; color:#5b21b6; }
+    .crm-col[data-stage="perdido"]         .crm-col-count { background:#f1f5f9; color:#64748b; }
+    /* CRM Modal */
+    .crm-modal-box { width:600px; max-width:95vw; max-height:90vh; overflow:hidden; display:flex; flex-direction:column; }
+    .crm-modal-tabs { display:flex; gap:0; border-bottom:2px solid #e5e7eb; margin:-32px -32px 24px; padding:0 32px; }
+    .crm-tab { padding:12px 18px; font-size:13px; font-weight:600; color:#888; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; }
+    .crm-tab.active { color:#4f46e5; border-bottom-color:#4f46e5; }
+    .crm-tab-content { display:none; overflow-y:auto; flex:1; }
+    .crm-tab-content.active { display:block; }
+    .tarefa-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f1f5f9; }
+    .tarefa-item input[type=checkbox] { width:16px; height:16px; cursor:pointer; accent-color:#4f46e5; }
+    .tarefa-item .tarefa-desc { flex:1; font-size:13px; }
+    .tarefa-item .tarefa-desc.done { text-decoration:line-through; color:#aaa; }
+    .tarefa-item .tarefa-date { font-size:11px; color:#888; flex-shrink:0; }
+    .tarefa-item .tarefa-del { background:none; border:none; color:#ef4444; cursor:pointer; font-size:16px; padding:0 2px; }
+    .btn-entrar-conversa { width:100%; padding:13px; background:#25d366; color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:16px; }
+    .btn-entrar-conversa:hover { background:#1ebe5b; }
+    .btn-add-tarefa { padding:9px 16px; background:#f0f2f5; color:#444; border:1.5px solid #e0e0e0; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+    .btn-add-tarefa:hover { background:#e5e7eb; }
     /* WHATSAPP PAGE */
     .wa-status-bar { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 10px; margin-bottom: 20px; font-weight: 600; font-size: 15px; }
     .wa-status-bar.connected { background: #dcfce7; color: #16a34a; border: 1.5px solid #bbf7d0; }
@@ -350,6 +401,9 @@
       <div class="nav-item" onclick="showPage('batepapo', this)">
         <span class="icon">💬</span> Bate-Papo ao Vivo
       </div>
+      <div class="nav-item" onclick="showPage('crm', this)">
+        <span class="icon">🗂️</span> CRM — Pipeline
+      </div>
       <div class="nav-section">Configuração</div>
       <div class="nav-item" onclick="showPage('agente', this)">
         <span class="icon">🤖</span> Agente & Prompt
@@ -552,6 +606,106 @@
         <button class="btn-save" onclick="saveConfigs(['objetivo','prompt_sistema'])">💾 Salvar</button>
         <button class="btn-secondary" onclick="restaurarPadrao()">🔄 Restaurar Padrão</button>
         <span class="save-status" id="save-agente"></span>
+      </div>
+    </div>
+
+    <!-- CRM -->
+    <div class="page" id="page-crm">
+      <div class="page-header"><h1>🗂️ CRM — Pipeline de Leads</h1><p>Acompanhe cada lead do primeiro contato até a conversão</p></div>
+      <div class="crm-toolbar">
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="btn-save" style="padding:9px 18px;font-size:13px;" onclick="loadCRM()">🔄 Atualizar</button>
+          <button class="btn-secondary" style="padding:9px 18px;font-size:13px;" onclick="openNewLeadModal()">➕ Novo Lead</button>
+        </div>
+        <div style="font-size:12px;color:#888;">Arraste os cards entre as colunas para atualizar o estágio</div>
+      </div>
+      <div class="crm-board-wrap">
+        <div class="crm-board" id="crm-board">
+          <div style="padding:40px;color:#aaa;font-size:14px;">Carregando CRM...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL CRM: DETALHES DO LEAD -->
+    <div class="modal-backdrop" id="modal-crm-lead" onclick="if(event.target===this)closeCRMModal()">
+      <div class="modal-box crm-modal-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0;">
+          <h2 id="crm-modal-title" style="font-size:16px;font-weight:700;">Lead</h2>
+          <button onclick="closeCRMModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;padding:0;">✕</button>
+        </div>
+        <div class="crm-modal-tabs">
+          <div class="crm-tab active" onclick="switchCRMTab('dados',this)">📋 Dados</div>
+          <div class="crm-tab" onclick="switchCRMTab('tarefas',this)">☑️ Tarefas</div>
+          <div class="crm-tab" onclick="switchCRMTab('notas',this)">📝 Notas</div>
+          <div class="crm-tab" onclick="switchCRMTab('conversa',this)">💬 Conversa</div>
+        </div>
+        <!-- TAB DADOS -->
+        <div class="crm-tab-content active" id="crm-tab-dados">
+          <input type="hidden" id="crm-lead-id" />
+          <input type="hidden" id="crm-lead-numero" />
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+            <div class="field-group" style="margin:0;"><label>Nome</label><input type="text" id="crm-nome" placeholder="Nome do lead" /></div>
+            <div class="field-group" style="margin:0;"><label>Celular</label><input type="text" id="crm-celular" placeholder="5511999999999" /></div>
+            <div class="field-group" style="margin:0;"><label>Tese jurídica</label><input type="text" id="crm-tese" placeholder="Ex: Aposentadoria por invalidez" /></div>
+            <div class="field-group" style="margin:0;"><label>Assunto</label><input type="text" id="crm-assunto" placeholder="Ex: Aguardando documentos" /></div>
+            <div class="field-group" style="margin:0;"><label>Data de aniversário</label><input type="date" id="crm-aniversario" /></div>
+            <div class="field-group" style="margin:0;"><label>Estágio no CRM</label>
+              <select id="crm-stage">
+                <option value="novo_contato">🆕 Novo Contato</option>
+                <option value="em_atendimento">💬 Em Atendimento</option>
+                <option value="qualificado">✅ Qualificado</option>
+                <option value="nao_qualificado">❌ Não Qualificado</option>
+                <option value="convertido">🎉 Convertido</option>
+                <option value="perdido">🚪 Perdido</option>
+              </select>
+            </div>
+          </div>
+          <div class="field-group" style="margin-top:14px 0 0;"><label>Resumo da triagem</label><textarea id="crm-resumo" style="min-height:70px" placeholder="Resumo gerado pelo agente"></textarea></div>
+          <div class="modal-actions" style="margin-top:16px;">
+            <button class="btn-save" onclick="saveLeadDetails()">💾 Salvar dados</button>
+            <span class="save-status" id="crm-save-status"></span>
+          </div>
+        </div>
+        <!-- TAB TAREFAS -->
+        <div class="crm-tab-content" id="crm-tab-tarefas">
+          <div id="crm-tarefas-list" style="margin-bottom:16px;min-height:60px;"></div>
+          <div style="display:flex;gap:8px;align-items:flex-end;border-top:1px solid #f1f5f9;padding-top:14px;margin-top:4px;">
+            <div class="field-group" style="flex:1;margin:0;"><label>Nova tarefa</label><input type="text" id="nova-tarefa-desc" placeholder="Ex: Ligar para confirmar documentos" /></div>
+            <div class="field-group" style="margin:0;width:140px;"><label>Vencimento</label><input type="date" id="nova-tarefa-data" /></div>
+            <button class="btn-add-tarefa" onclick="addTarefa()" style="margin-bottom:0;flex-shrink:0;">➕ Adicionar</button>
+          </div>
+        </div>
+        <!-- TAB NOTAS -->
+        <div class="crm-tab-content" id="crm-tab-notas">
+          <div class="field-group"><label>Anotações sobre o lead</label>
+            <textarea id="crm-notas" style="min-height:180px" placeholder="Qualquer observação relevante: informações adicionais, preferências, contexto do caso..."></textarea>
+          </div>
+          <button class="btn-save" onclick="saveLeadNotas()">💾 Salvar notas</button>
+          <span class="save-status" id="crm-notas-status"></span>
+        </div>
+        <!-- TAB CONVERSA -->
+        <div class="crm-tab-content" id="crm-tab-conversa">
+          <div style="background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:16px;font-size:13px;color:#555;line-height:1.6;">
+            <strong>💬 Entrar na conversa</strong> abre o Bate-Papo com este lead e <strong>pausa o agente automaticamente</strong>. Você assume o controle diretamente. Quando quiser que o agente retome, clique em "▶️ Retomar agente" no Bate-Papo — ele saberá exatamente onde parou e continuará o atendimento.
+          </div>
+          <button class="btn-entrar-conversa" onclick="entrarNaConversa()">
+            💬 Entrar na conversa (pausa o agente)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL CRM: NOVO LEAD MANUAL -->
+    <div class="modal-backdrop" id="modal-novo-lead" onclick="if(event.target===this)closeNewLeadModal()">
+      <div class="modal-box" style="width:460px;">
+        <h2>➕ Novo Lead Manual</h2>
+        <div class="field-group"><label>Nome</label><input type="text" id="nl-nome" placeholder="Nome do contato" /></div>
+        <div class="field-group"><label>WhatsApp (com DDI+DDD)</label><input type="text" id="nl-numero" placeholder="5511999999999" /></div>
+        <div class="field-group"><label>Assunto</label><input type="text" id="nl-assunto" placeholder="Ex: Quer saber sobre aposentadoria" /></div>
+        <div class="modal-actions">
+          <button class="btn-save" onclick="createManualLead()">✅ Criar lead</button>
+          <button class="btn-secondary" onclick="closeNewLeadModal()">Cancelar</button>
+        </div>
       </div>
     </div>
 
@@ -1183,6 +1337,7 @@
     document.getElementById('page-' + name).classList.add('active');
     el.classList.add('active');
     if (name === 'leads') loadLeads();
+    if (name === 'crm') loadCRM();
     if (name === 'clientes') { loadClients(); loadTokenUsageAdmin(); }
     if (name === 'faturamento') {
       loadBilling();
@@ -1471,6 +1626,275 @@
 
   function escapeHtml(str) {
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  }
+
+  // =====================
+  // CRM KANBAN
+  // =====================
+  const CRM_STAGES = [
+    { id: 'novo_contato',    label: '🆕 Novo Contato',      color: '#f59e0b' },
+    { id: 'em_atendimento',  label: '💬 Em Atendimento',    color: '#3b82f6' },
+    { id: 'qualificado',     label: '✅ Qualificado',        color: '#16a34a' },
+    { id: 'nao_qualificado', label: '❌ Não Qualificado',   color: '#dc2626' },
+    { id: 'convertido',      label: '🎉 Convertido',         color: '#7c3aed' },
+    { id: 'perdido',         label: '🚪 Perdido',            color: '#9ca3af' }
+  ];
+
+  let crmLeads = [];
+  let crmOpenLeadId = null;
+
+  async function loadCRM() {
+    const board = document.getElementById('crm-board');
+    board.innerHTML = '<div style="padding:40px;color:#aaa;font-size:14px;">Carregando...</div>';
+    const { data, error } = await db.from('leads')
+      .select('*, lead_tarefas(id, concluida)')
+      .order('atualizado_em', { ascending: false });
+    if (error || !data) { board.innerHTML = '<div style="padding:40px;color:#ef4444;">Erro ao carregar CRM</div>'; return; }
+    crmLeads = data;
+    renderKanban(data);
+  }
+
+  function renderKanban(leads) {
+    const board = document.getElementById('crm-board');
+    const byStage = {};
+    CRM_STAGES.forEach(s => byStage[s.id] = []);
+    leads.forEach(l => {
+      const s = l.stage || 'novo_contato';
+      if (!byStage[s]) byStage['novo_contato'].push(l);
+      else byStage[s].push(l);
+    });
+    board.innerHTML = CRM_STAGES.map(stage => {
+      const cols = byStage[stage.id];
+      return `<div class="crm-col" data-stage="${stage.id}">
+        <div class="crm-col-header">
+          <span class="crm-col-title">${stage.label}</span>
+          <span class="crm-col-count">${cols.length}</span>
+        </div>
+        <div class="crm-cards" data-stage="${stage.id}"
+          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragleave="this.classList.remove('dragover')"
+          ondrop="dropCard(event,this)">
+          ${cols.map(l => renderCard(l)).join('')}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function renderCard(lead) {
+    const tasks = lead.lead_tarefas || [];
+    const pendentes = tasks.filter(t => !t.concluida).length;
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    let anivIcon = '';
+    if (lead.data_aniversario) {
+      const aniv = new Date(lead.data_aniversario + 'T00:00:00');
+      aniv.setFullYear(hoje.getFullYear());
+      const diff = Math.round((aniv - hoje) / 86400000);
+      if (diff === 0) anivIcon = '<span class="crm-card-aniv" title="Aniversário hoje! 🎂">🎂</span>';
+      else if (diff === 1) anivIcon = '<span class="crm-card-aniv" title="Aniversário amanhã">🎁</span>';
+    }
+    return `<div class="crm-card" data-lead-id="${lead.id}" data-stage="${lead.stage||'novo_contato'}"
+      draggable="true"
+      ondragstart="dragCard(event,this)"
+      onclick="openLeadModal(${lead.id})">
+      <div class="crm-card-top">
+        <span class="crm-card-name">${escapeHtml(lead.nome || lead.numero_whatsapp || '—')}</span>
+        ${anivIcon}
+      </div>
+      ${lead.tese ? `<div class="crm-card-tese">${escapeHtml(lead.tese)}</div>` : ''}
+      ${lead.assunto ? `<div class="crm-card-assunto">${escapeHtml(lead.assunto)}</div>` : ''}
+      <div class="crm-card-footer">
+        <span class="crm-card-tasks ${pendentes > 0 ? 'has-pending' : ''}">
+          ${pendentes > 0 ? `📋 ${pendentes} tarefa${pendentes>1?'s':''} pendente${pendentes>1?'s':''}` : tasks.length > 0 ? `✅ ${tasks.length} tarefa${tasks.length>1?'s':''}` : ''}
+        </span>
+        <span class="crm-card-date">${lead.atualizado_em ? timeAgo(lead.atualizado_em) : '—'}</span>
+      </div>
+    </div>`;
+  }
+
+  // ---- Drag & Drop ----
+  let dragLeadId = null;
+  function dragCard(event, el) {
+    dragLeadId = el.dataset.leadId;
+    event.dataTransfer.effectAllowed = 'move';
+  }
+  async function dropCard(event, dropZone) {
+    event.preventDefault();
+    dropZone.classList.remove('dragover');
+    if (!dragLeadId) return;
+    const newStage = dropZone.dataset.stage;
+    const card = document.querySelector(`.crm-card[data-lead-id="${dragLeadId}"]`);
+    if (card) { card.dataset.stage = newStage; dropZone.appendChild(card); }
+    await updateLeadStage(dragLeadId, newStage);
+    dragLeadId = null;
+    // Atualiza contador das colunas
+    CRM_STAGES.forEach(s => {
+      const col = document.querySelector(`.crm-col[data-stage="${s.id}"]`);
+      if (col) col.querySelector('.crm-col-count').textContent = col.querySelectorAll('.crm-card').length;
+    });
+  }
+  async function updateLeadStage(leadId, stage) {
+    await db.from('leads').update({ stage, atualizado_em: new Date().toISOString() }).eq('id', leadId);
+    const l = crmLeads.find(x => String(x.id) === String(leadId));
+    if (l) l.stage = stage;
+  }
+
+  // ---- Modal de detalhes ----
+  async function openLeadModal(leadId) {
+    crmOpenLeadId = leadId;
+    const lead = crmLeads.find(x => x.id === leadId) || {};
+    document.getElementById('crm-lead-id').value = leadId;
+    document.getElementById('crm-lead-numero').value = lead.numero_whatsapp || '';
+    document.getElementById('crm-modal-title').textContent = lead.nome || lead.numero_whatsapp || 'Lead';
+    document.getElementById('crm-nome').value = lead.nome || '';
+    document.getElementById('crm-celular').value = lead.celular || '';
+    document.getElementById('crm-tese').value = lead.tese || '';
+    document.getElementById('crm-assunto').value = lead.assunto || '';
+    document.getElementById('crm-aniversario').value = lead.data_aniversario || '';
+    document.getElementById('crm-stage').value = lead.stage || 'novo_contato';
+    document.getElementById('crm-resumo').value = lead.resumo || '';
+    document.getElementById('crm-notas').value = lead.notas || '';
+    switchCRMTab('dados', document.querySelector('.crm-tab'));
+    document.getElementById('modal-crm-lead').classList.add('open');
+    await loadTarefas(leadId);
+  }
+
+  function closeCRMModal() {
+    document.getElementById('modal-crm-lead').classList.remove('open');
+    crmOpenLeadId = null;
+  }
+
+  function switchCRMTab(tab, el) {
+    document.querySelectorAll('.crm-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.crm-tab-content').forEach(t => t.classList.remove('active'));
+    if (el) el.classList.add('active');
+    else { const tabs = document.querySelectorAll('.crm-tab'); if(tabs.length) tabs[0].classList.add('active'); }
+    document.getElementById('crm-tab-' + tab).classList.add('active');
+  }
+
+  async function saveLeadDetails() {
+    const id = crmOpenLeadId;
+    if (!id) return;
+    const st = document.getElementById('crm-save-status');
+    st.textContent = 'Salvando...'; st.style.color = '#888';
+    await db.from('leads').update({
+      nome: document.getElementById('crm-nome').value,
+      celular: document.getElementById('crm-celular').value,
+      tese: document.getElementById('crm-tese').value,
+      assunto: document.getElementById('crm-assunto').value,
+      data_aniversario: document.getElementById('crm-aniversario').value || null,
+      stage: document.getElementById('crm-stage').value,
+      resumo: document.getElementById('crm-resumo').value,
+      atualizado_em: new Date().toISOString()
+    }).eq('id', id);
+    st.textContent = '✅ Salvo!'; st.style.color = '#16a34a';
+    setTimeout(() => st.textContent = '', 3000);
+    // Atualiza local e re-renderiza card
+    const lead = crmLeads.find(x => x.id === id);
+    if (lead) {
+      lead.nome = document.getElementById('crm-nome').value;
+      lead.tese = document.getElementById('crm-tese').value;
+      lead.assunto = document.getElementById('crm-assunto').value;
+      lead.stage = document.getElementById('crm-stage').value;
+      lead.data_aniversario = document.getElementById('crm-aniversario').value || null;
+      const card = document.querySelector(`.crm-card[data-lead-id="${id}"]`);
+      if (card) {
+        card.outerHTML = renderCard(lead);
+      }
+      document.getElementById('crm-modal-title').textContent = lead.nome || lead.numero_whatsapp || 'Lead';
+    }
+  }
+
+  async function saveLeadNotas() {
+    const id = crmOpenLeadId; if (!id) return;
+    const st = document.getElementById('crm-notas-status');
+    st.textContent = 'Salvando...'; st.style.color = '#888';
+    await db.from('leads').update({ notas: document.getElementById('crm-notas').value, atualizado_em: new Date().toISOString() }).eq('id', id);
+    st.textContent = '✅ Salvo!'; st.style.color = '#16a34a';
+    setTimeout(() => st.textContent = '', 2500);
+  }
+
+  // ---- Tarefas ----
+  async function loadTarefas(leadId) {
+    const { data } = await db.from('lead_tarefas').select('*').eq('lead_id', leadId).order('criado_em');
+    renderTarefas(data || []);
+    // Atualiza count no lead local
+    const lead = crmLeads.find(x => x.id === leadId);
+    if (lead) lead.lead_tarefas = data || [];
+  }
+
+  function renderTarefas(tarefas) {
+    const el = document.getElementById('crm-tarefas-list');
+    if (!tarefas.length) { el.innerHTML = '<div style="color:#aaa;font-size:13px;padding:8px 0;">Nenhuma tarefa ainda. Adicione abaixo.</div>'; return; }
+    el.innerHTML = tarefas.map(t => `<div class="tarefa-item" data-tarefa-id="${t.id}">
+      <input type="checkbox" ${t.concluida?'checked':''} onchange="toggleTarefa('${t.id}',this.checked)" />
+      <span class="tarefa-desc ${t.concluida?'done':''}">${escapeHtml(t.descricao)}</span>
+      ${t.data_vencimento ? `<span class="tarefa-date">📅 ${new Date(t.data_vencimento+'T00:00:00').toLocaleDateString('pt-BR')}</span>` : ''}
+      <button class="tarefa-del" onclick="deleteTarefa('${t.id}')" title="Excluir">✕</button>
+    </div>`).join('');
+  }
+
+  async function addTarefa() {
+    const desc = document.getElementById('nova-tarefa-desc').value.trim();
+    if (!desc || !crmOpenLeadId) return;
+    const { data: { user } } = await db.auth.getUser();
+    const dataVenc = document.getElementById('nova-tarefa-data').value || null;
+    await db.from('lead_tarefas').insert({ lead_id: crmOpenLeadId, user_id: user.id, descricao: desc, data_vencimento: dataVenc });
+    document.getElementById('nova-tarefa-desc').value = '';
+    document.getElementById('nova-tarefa-data').value = '';
+    await loadTarefas(crmOpenLeadId);
+  }
+
+  async function toggleTarefa(tarefaId, concluida) {
+    await db.from('lead_tarefas').update({ concluida }).eq('id', tarefaId);
+    const el = document.querySelector(`.tarefa-item[data-tarefa-id="${tarefaId}"] .tarefa-desc`);
+    if (el) el.classList.toggle('done', concluida);
+    await loadTarefas(crmOpenLeadId);
+  }
+
+  async function deleteTarefa(tarefaId) {
+    await db.from('lead_tarefas').delete().eq('id', tarefaId);
+    await loadTarefas(crmOpenLeadId);
+  }
+
+  // ---- Entrar na conversa (pausa agente) ----
+  async function entrarNaConversa() {
+    const numero = document.getElementById('crm-lead-numero').value;
+    if (!numero) { alert('Este lead não tem número de WhatsApp registrado.'); return; }
+    closeCRMModal();
+    // Navega para Bate-Papo
+    const navBatepapo = document.querySelector('.nav-item[onclick*="batepapo"]');
+    showPage('batepapo', navBatepapo);
+    // Espera carregar e seleciona a conversa
+    setTimeout(async () => {
+      await loadConversations();
+      setTimeout(async () => {
+        selectConv(numero);
+        // Pausa o agente automaticamente
+        const { data: conv } = await db.from('sessoes').select('agente_pausado').eq('numero_whatsapp', numero).eq('user_id', currentProfile?.id).single();
+        if (conv && !conv.agente_pausado) {
+          await db.from('sessoes').update({ agente_pausado: true, pausado_em: new Date().toISOString() }).eq('numero_whatsapp', numero).eq('user_id', currentProfile?.id);
+          updateAgentePausadoUI(true);
+        }
+      }, 600);
+    }, 400);
+  }
+
+  // ---- Novo lead manual ----
+  function openNewLeadModal() { document.getElementById('modal-novo-lead').classList.add('open'); }
+  function closeNewLeadModal() { document.getElementById('modal-novo-lead').classList.remove('open'); }
+
+  async function createManualLead() {
+    const numero = document.getElementById('nl-numero').value.replace(/\D/g,'');
+    const nome   = document.getElementById('nl-nome').value.trim();
+    const assunto = document.getElementById('nl-assunto').value.trim();
+    if (!numero) { alert('Informe o número de WhatsApp'); return; }
+    const { data: { user } } = await db.auth.getUser();
+    await db.from('leads').insert({ numero_whatsapp: numero, nome, assunto, user_id: user.id, stage: 'novo_contato', atualizado_em: new Date().toISOString() });
+    closeNewLeadModal();
+    document.getElementById('nl-nome').value = '';
+    document.getElementById('nl-numero').value = '';
+    document.getElementById('nl-assunto').value = '';
+    await loadCRM();
   }
 
   // =====================
