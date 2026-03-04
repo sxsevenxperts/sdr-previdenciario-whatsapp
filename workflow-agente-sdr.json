@@ -20,7 +20,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json;\n\n// Ignora mensagens enviadas pelo próprio bot\nif (body.data?.key?.fromMe === true) return [];\n\n// Ignora mensagens de grupos\nconst remoteJid = body.data?.key?.remoteJid || '';\nif (remoteJid.includes('@g.us')) return [];\n\n// Ignora tipos de sistema sem conteúdo útil\nconst tipoMensagem = body.data?.messageType || body.data?.type || 'conversation';\nconst TIPOS_IGNORADOS = ['senderKeyDistributionMessage','protocolMessage','reactionMessage','pollUpdateMessage','callLogMessag'];\nif (TIPOS_IGNORADOS.includes(tipoMensagem)) return [];\n\nconst numero = remoteJid.replace('@s.whatsapp.net', '');\n\n// Extrai texto — múltiplos caminhos para compatibilidade com diferentes versões da Evolution API\nconst mensagem = body.data?.message?.conversation\n  || body.data?.message?.extendedTextMessage?.text\n  || body.data?.message?.buttonsResponseMessage?.selectedDisplayText\n  || body.data?.message?.listResponseMessage?.title\n  || body.data?.message?.templateButtonReplyMessage?.selectedDisplayText\n  || body.data?.message?.imageMessage?.caption\n  || body.data?.message?.videoMessage?.caption\n  || body.data?.message?.documentMessage?.caption\n  || body.data?.text\n  || body.data?.body\n  || '';\n\nconst nomeContato = body.data?.pushName || 'Lead';\nconst temArquivo = ['imageMessage', 'documentMessage', 'audioMessage', 'videoMessage', 'stickerMessage'].includes(tipoMensagem);\nconst ehAudio = tipoMensagem === 'audioMessage';\n\n// Extrai dados de áudio se for audioMessage\nlet audioBase64 = null;\nlet audioUrl = null;\nlet audioMimetype = null;\nlet audioDuration = 0;\nif (ehAudio) {\n  const am = body.data?.message?.audioMessage || {};\n  audioBase64 = am.base64 || null;\n  audioUrl = am.url || null;\n  audioMimetype = am.mimetype || 'audio/ogg';\n  audioDuration = am.seconds || 0;\n}\n\n// Imagem\nlet ehImagem = tipoMensagem === 'imageMessage';\nlet imagemUrl = null;\nlet imagemBase64 = null;\nlet imagemMimetype = 'image/jpeg';\nlet imagemCaption = '';\nif (ehImagem) {\n  const im = body.data?.message?.imageMessage || {};\n  imagemUrl = im.url || null;\n  imagemBase64 = im.base64 || null;\n  imagemMimetype = im.mimetype || 'image/jpeg';\n  imagemCaption = im.caption || '';\n}\n\n// Documento\nlet ehDocumento = ['documentMessage','documentWithCaptionMessage'].includes(tipoMensagem);\nlet docUrl = null;\nlet docBase64 = null;\nlet docMimetype = 'application/octet-stream';\nlet docFileName = 'documento';\nif (ehDocumento) {\n  const dm = body.data?.message?.documentMessage\n            || body.data?.message?.documentWithCaptionMessage?.message?.documentMessage\n            || {};\n  docUrl = dm.url || null;\n  docBase64 = dm.base64 || null;\n  docMimetype = dm.mimetype || 'application/octet-stream';\n  docFileName = dm.fileName || 'documento';\n}\n\nconst instanceName = body.instance || body.instanceName || body.data?.instance || '';\n\nif (!mensagem && !temArquivo) return [];\n\nreturn [{ json: { numero, mensagem, nomeContato, tipoMensagem, temArquivo, ehAudio, audioBase64, audioUrl, audioMimetype, audioDuration, ehImagem, imagemUrl, imagemBase64, imagemMimetype, imagemCaption, ehDocumento, docUrl, docBase64, docMimetype, docFileName, instanceName, timestamp: new Date().toISOString() } }];"
+        "jsCode": "// Formato Evolution API v2 — n8n wraps o body, mas em alguns casos promove campos à raiz\nconst webhook = $input.first().json;\n\n// Tenta extrair instanceName de todos os caminhos possíveis\n// (depende da versão do n8n e do modo de resposta do webhook)\nconst instanceName = webhook.instance            // raiz (mais comum)\n  || webhook.body?.instance                      // dentro de body\n  || webhook.instanceName                        // alias\n  || webhook.body?.instanceName                  \n  || webhook.data?.instance                      \n  || webhook.instanceId                          // UUID como fallback\n  || '';\n\n// Tenta extrair fromMe de todos os caminhos\nconst fromMe = webhook.fromMe \n  || webhook.key?.fromMe \n  || webhook.data?.key?.fromMe \n  || webhook.body?.data?.key?.fromMe \n  || false;\n\nif (fromMe === true) return [];\n\n// remoteJid / sender\nconst remoteJid = webhook.sender \n  || webhook.remoteJid \n  || webhook.key?.remoteJid\n  || webhook.data?.key?.remoteJid \n  || webhook.body?.data?.key?.remoteJid \n  || '';\nif (remoteJid.includes('@g.us')) return [];\n\n// Tipo de mensagem\nconst tipoMensagem = webhook.messageType \n  || webhook.data?.messageType \n  || webhook.body?.data?.messageType \n  || 'conversation';\nconst TIPOS_IGNORADOS = ['senderKeyDistributionMessage','protocolMessage','reactionMessage','pollUpdateMessage'];\nif (TIPOS_IGNORADOS.includes(tipoMensagem)) return [];\n\nconst numero = remoteJid.replace('@s.whatsapp.net', '');\n\n// Mensagem de texto — múltiplos caminhos\nconst mensagem = webhook.conversation\n  || webhook.text\n  || webhook.body\n  || webhook.data?.message?.conversation\n  || webhook.data?.message?.extendedTextMessage?.text\n  || webhook.body?.data?.message?.conversation\n  || '';\n\nconst nomeContato = webhook.pushName || webhook.senderName \n  || webhook.data?.pushName || webhook.body?.data?.pushName \n  || 'Lead';\n\nconst temArquivo = ['imageMessage','documentMessage','audioMessage','videoMessage','stickerMessage'].includes(tipoMensagem);\nconst ehAudio = tipoMensagem === 'audioMessage';\n\n// Áudio\nlet audioBase64 = webhook.mediaBase64 || null;\nlet audioUrl = webhook.mediaUrl || null;\nlet audioMimetype = webhook.mimetype || 'audio/ogg';\nlet audioDuration = webhook.duration || 0;\n\n// Imagem\nlet ehImagem = tipoMensagem === 'imageMessage';\nlet imagemUrl = webhook.mediaUrl || null;\nlet imagemBase64 = webhook.mediaBase64 || null;\nlet imagemMimetype = webhook.mimetype || 'image/jpeg';\nlet imagemCaption = webhook.caption || '';\n\n// Documento\nlet ehDocumento = ['documentMessage','documentWithCaptionMessage'].includes(tipoMensagem);\nlet docUrl = webhook.mediaUrl || null;\nlet docBase64 = webhook.mediaBase64 || null;\nlet docMimetype = webhook.mimetype || 'application/octet-stream';\nlet docFileName = webhook.fileName || webhook.filename || 'documento';\n\nif (!mensagem && !temArquivo) return [];\n\nreturn [{ json: { \n  numero, mensagem, nomeContato, tipoMensagem, temArquivo, \n  ehAudio, audioBase64, audioUrl, audioMimetype, audioDuration,\n  ehImagem, imagemUrl, imagemBase64, imagemMimetype, imagemCaption,\n  ehDocumento, docUrl, docBase64, docMimetype, docFileName,\n  instanceName,\n  timestamp: new Date().toISOString() \n} }];"
       },
       "id": "node-normaliza",
       "name": "Normaliza e filtra mensagem",
@@ -133,30 +133,34 @@
     },
     {
       "parameters": {
-        "operation": "select",
-        "tableId": "profiles",
-        "filterType": "manual",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/get_profile_by_instance",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "keyName": "evo_instance",
-              "keyValue": "={{ $json.instanceName }}"
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
             },
             {
-              "keyName": "active",
-              "keyValue": "true"
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
             }
           ]
         },
-        "options": {
-          "limit": 1
-        }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_instance: $json.instanceName }) }}",
+        "options": {}
       },
       "id": "node-resolve-cliente",
       "name": "Resolve cliente pelo instanceName",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1320,
         400
@@ -165,32 +169,43 @@
     },
     {
       "parameters": {
-        "operation": "select",
-        "tableId": "agente_config",
-        "filterType": "manual",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/get_agente_config",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "keyName": "user_id",
-              "keyValue": "={{ $('Resolve cliente pelo instanceName').first().json.id }}"
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
             }
           ]
         },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_user_id: $('Resolve cliente pelo instanceName').first().json[0]?.id || $('Resolve cliente pelo instanceName').first().json?.id }) }}",
         "options": {}
       },
       "id": "node-carrega-config",
       "name": "Carrega configurações do Supabase",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1540,
         400
-      ]
+      ],
+      "notes": ""
     },
     {
       "parameters": {
-        "jsCode": "const rows = $input.all();\nconst config = {};\nrows.forEach(row => { config[row.json.chave] = row.json.valor; });\n\n// Pega dados da mensagem — pode vir do branch texto ou do merge áudio\nlet dadosMensagem;\ntry {\n  dadosMensagem = $('Merge: áudio → texto').first().json;\n} catch(e) {\n  dadosMensagem = $('Normaliza e filtra mensagem').first().json;\n}\n\nconst cliente = $('Resolve cliente pelo instanceName').first().json;\nconst userId = cliente?.id;\nconst evoInstance = cliente?.evo_instance || dadosMensagem.instanceName;\nconst responderEmAudio = config.responder_em_audio === 'true';\n\nconst systemPrompt = `${config.prompt_sistema || ''}\n\nOBJETIVO: ${config.objetivo || ''}\n\nTONALIDADE: ${config.tonalidade || ''}\n\nINSTRUÇÕES DE COMUNICAÇÃO: ${config.instrucoes_comunicacao || ''}\n\nCRITÉRIOS DE QUALIFICAÇÃO (precisa atender ao menos 3 dos seguintes):\n${config.criterios_qualificacao || ''}\n\nQUANDO O LEAD FOR QUALIFICADO:\n- Responda com: ${config.msg_qualificado || 'Vou encaminhar seu caso ao advogado.'}\n- Inclua no final da mensagem um bloco JSON assim:\n\\`\\`\\`json\n{\"qualificado\":true,\"nome\":\"Nome completo\",\"celular\":\"DDD+número\",\"tese\":\"Tese jurídica identificada\",\"resumo\":\"Resumo completo da conversa\"}\n\\`\\`\\`\n\nQUANDO O LEAD NÃO FOR QUALIFICADO:\n- Responda com: ${config.msg_desqualificado || 'Agradecemos o contato!'}\n- Inclua no final:\n\\`\\`\\`json\n{\"qualificado\":false,\"motivo\":\"Motivo da desqualificação\"}\n\\`\\`\\`\n\nREGRAS IMPORTANTES:\n- Faça uma pergunta por vez\n- Nunca prometa resultado ou vitória\n- Nunca dê consultoria jurídica\n- Se não souber algo, consulte a base de conhecimento antes de responder`;\n\nreturn [{ json: { ...dadosMensagem, userId, evoInstance, config, systemPrompt, responderEmAudio } }];"
+        "jsCode": "const rows = $input.first().json; // Array retornado pelo RPC get_agente_config\nconst config = {};\nif (Array.isArray(rows)) {\n  rows.forEach(row => { config[row.chave] = row.valor; });\n} else if (rows) {\n  config[rows.chave] = rows.valor;\n}\n\n// Pega dados da mensagem — pode vir do branch texto ou do merge áudio\nlet dadosMensagem;\ntry {\n  dadosMensagem = $('Merge: áudio → texto').first().json;\n} catch(e) {\n  dadosMensagem = $('Normaliza e filtra mensagem').first().json;\n}\n\n// RPC get_profile_by_instance retorna array\nconst clienteRaw = $('Resolve cliente pelo instanceName').first().json;\nconst cliente = Array.isArray(clienteRaw) ? clienteRaw[0] : clienteRaw;\nconst userId = cliente?.id;\nconst evoInstance = cliente?.evo_instance || dadosMensagem.instanceName;\nconst responderEmAudio = config.responder_em_audio === 'true';\n\nconst systemPrompt = `${config.prompt_sistema || ''}\n\nOBJETIVO: ${config.objetivo || ''}\n\nTONALIDADE: ${config.tonalidade || ''}\n\nINSTRUÇÕES DE COMUNICAÇÃO: ${config.instrucoes_comunicacao || ''}\n\nCRITÉRIOS DE QUALIFICAÇÃO (precisa atender ao menos 3 dos seguintes):\n${config.criterios_qualificacao || ''}\n\nQUANDO O LEAD FOR QUALIFICADO:\n- Responda com: ${config.msg_qualificado || 'Vou encaminhar seu caso ao advogado.'}\n- Inclua no final da mensagem um bloco JSON assim:\n\\`\\`\\`json\n{\"qualificado\":true,\"nome\":\"Nome completo\",\"celular\":\"DDD+número\",\"tese\":\"Tese jurídica identificada\",\"resumo\":\"Resumo completo da conversa\"}\n\\`\\`\\`\n\nQUANDO O LEAD NÃO FOR QUALIFICADO:\n- Responda com: ${config.msg_desqualificado || 'Agradecemos o contato!'}\n- Inclua no final:\n\\`\\`\\`json\n{\"qualificado\":false,\"motivo\":\"Motivo da desqualificação\"}\n\\`\\`\\`\n\nREGRAS IMPORTANTES:\n- Faça uma pergunta por vez\n- Nunca prometa resultado ou vitória\n- Nunca dê consultoria jurídica\n- Se não souber algo, consulte a base de conhecimento antes de responder`;\n\nreturn [{ json: { ...dadosMensagem, userId, evoInstance, config, systemPrompt, responderEmAudio } }];"
       },
       "id": "node-monta-config",
       "name": "Monta system prompt com config",
@@ -203,35 +218,43 @@
     },
     {
       "parameters": {
-        "operation": "select",
-        "tableId": "tokens_creditos",
-        "filterType": "manual",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/get_token_balance",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "keyName": "user_id",
-              "keyValue": "={{ $json.userId }}"
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
             }
           ]
         },
-        "options": {
-          "limit": 1
-        }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_user_id: $('Resolve cliente pelo instanceName').first().json[0]?.id || $('Resolve cliente pelo instanceName').first().json?.id }) }}",
+        "options": {}
       },
       "id": "node-verifica-saldo",
       "name": "Verifica saldo de tokens",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         1980,
         400
       ],
-      "notes": "Verifica se o cliente tem tokens disponíveis. Se saldo <= 0, envia aviso e para."
+      "notes": "Verifica se o cliente tem tokens disponíveis."
     },
     {
       "parameters": {
-        "jsCode": "const saldo = $input.first().json;\nconst dadosConfig = $('Monta system prompt com config').first().json;\nconst saldoTokens = saldo?.saldo_tokens || 0;\n\n// Se saldo <= 0, bloqueia e avisa o lead\nif (saldoTokens <= 0) {\n  return [{ json: { ...dadosConfig, saldoTokens, tokensBloqueado: true, textoParaLead: '⚠️ Olá! No momento nosso sistema está temporariamente indisponível. Por favor, tente novamente mais tarde ou entre em contato pelo número do escritório. Pedimos desculpas pelo inconveniente.' } }];\n}\n\nreturn [{ json: { ...dadosConfig, saldoTokens, tokensBloqueado: false } }];"
+        "jsCode": "const saldoArr = $input.first().json; // Array retornado pelo RPC\nconst saldo = Array.isArray(saldoArr) ? saldoArr[0] : saldoArr;\nconst dadosConfig = $('Monta system prompt com config').first().json;\n\n// saldo_tokens pode ser: numero, string, undefined, null\n// Se get_token_balance retornou [] (usuario sem registro), saldo = undefined → assume disponível\nconst saldoRaw = saldo?.saldo_tokens;\nconst saldoTokens = (saldoRaw !== undefined && saldoRaw !== null) ? Number(saldoRaw) : 1000000;\n\n// Se saldo <= 0, bloqueia e avisa o lead\nif (saldoTokens <= 0) {\n  return [{ json: { ...dadosConfig, saldoTokens, tokensBloqueado: true, textoParaLead: '⚠️ Olá! No momento nosso sistema está temporariamente indisponível. Por favor, tente novamente mais tarde ou entre em contato pelo número do escritório. Pedimos desculpas pelo inconveniente.' } }];\n}\n\nreturn [{ json: { ...dadosConfig, saldoTokens, tokensBloqueado: false } }];"
       },
       "id": "node-check-saldo",
       "name": "Tokens disponíveis?",
@@ -297,38 +320,43 @@
     },
     {
       "parameters": {
-        "operation": "select",
-        "tableId": "sessoes",
-        "filterType": "manual",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/get_sessao",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "keyName": "numero_whatsapp",
-              "keyValue": "={{ $json.numero }}"
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
             },
             {
-              "keyName": "user_id",
-              "keyValue": "={{ $json.userId }}"
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
             }
           ]
         },
-        "options": {
-          "limit": 1
-        }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_numero: $json.numero, p_user_id: $json.userId }) }}",
+        "options": {}
       },
       "id": "node-redis-get",
       "name": "Supabase — Busca histórico da sessão",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         2640,
         540
-      ]
+      ],
+      "notes": ""
     },
     {
       "parameters": {
-        "jsCode": "const dadosConfig = $('Tokens disponíveis?').first().json;\nconst sessaoRow = $input.first().json;\n\nif (sessaoRow.agente_pausado === true) return [];\n\nlet historico = [];\ntry { historico = JSON.parse(sessaoRow.historico || '[]'); } catch(e) {}\n\n// Se veio de áudio, marca no histórico\nconst prefixo = '';\nhistorico.push({ role: 'user', content: prefixo + dadosConfig.mensagem, type: dadosConfig.ehAudio ? 'audio' : 'text' });\n\nconst historicoTexto = historico.map(h => `${h.role === 'user' ? 'Lead' : 'Agente'}: ${h.content}`).join('\\n');\n\nreturn [{ json: { ...dadosConfig, historico, historicoTexto } }];"
+        "jsCode": "const dadosConfig = $('Tokens disponíveis?').first().json;\nconst sessaoArr = $input.first().json; // Array retornado pelo RPC get_sessao\nconst sessaoRow = Array.isArray(sessaoArr) ? sessaoArr[0] : sessaoArr;\n\nif (sessaoRow?.agente_pausado === true) return [];\n\nlet historico = [];\ntry { historico = JSON.parse(sessaoRow?.historico || '[]'); } catch(e) {}\n\n// Adiciona a mensagem do usuário ao histórico\nconst prefixo = '';\nhistorico.push({ role: 'user', content: prefixo + dadosConfig.mensagem, type: dadosConfig.ehAudio ? 'audio' : 'text' });\n\nconst historicoTexto = historico.map(h => `${h.role === 'user' ? 'Lead' : 'Agente'}: ${h.content}`).join('\\n');\n\nreturn [{ json: { ...dadosConfig, historico, historicoTexto } }];"
       },
       "id": "node-monta-historico",
       "name": "Monta histórico da conversa",
@@ -596,7 +624,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const dados = $('Processa resposta e qualificação').first().json;\nconst configData = $('Monta system prompt com config').first().json;\nconst saldoAtual = configData.saldoTokens || 0;\n\n// Estima tokens usados nesta interação (~37037 tokens por lead interaction)\nconst tokensEstimado = 37037;\nconst novoSaldo = Math.max(0, saldoAtual - tokensEstimado);\n\nreturn [{ json: { ...dados, tokensUsados: tokensEstimado, novoSaldo } }];"
+        "jsCode": "const dados = $('Processa resposta e qualificação').first().json;\n// Usa saldo do nó 'Tokens disponíveis?' que tem o valor real\nconst saldoAtual = $('Tokens disponíveis?').first().json.saldoTokens || 0;\n\n// Estima tokens usados nesta interação (~37037 tokens por lead interaction)\nconst tokensEstimado = 37037;\nconst novoSaldo = Math.max(0, saldoAtual - tokensEstimado);\n\nreturn [{ json: { ...dados, tokensUsados: tokensEstimado, novoSaldo } }];"
       },
       "id": "node-desconta-tokens",
       "name": "Desconta tokens do saldo",
@@ -609,41 +637,39 @@
     },
     {
       "parameters": {
-        "operation": "update",
-        "tableId": "tokens_creditos",
-        "filterType": "manual",
-        "matchType": "allFilters",
-        "filters": {
-          "conditions": [
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/update_token_balance",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "keyName": "user_id",
-              "keyValue": "={{ $json.userId }}"
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
             }
           ]
         },
-        "dataToSend": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
-            {
-              "fieldId": "saldo_tokens",
-              "fieldValue": "={{ $json.novoSaldo }}"
-            },
-            {
-              "fieldId": "tokens_usados_mes",
-              "fieldValue": "={{ ($('Verifica saldo de tokens').first().json.tokens_usados_mes || 0) + $json.tokensUsados }}"
-            }
-          ]
-        }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_user_id: $json.userId, p_novo_saldo: $json.novoSaldo, p_tokens_usados_mes: ($('Verifica saldo de tokens').first().json[0]?.tokens_usados_mes || 0) + $json.tokensUsados }) }}",
+        "options": {}
       },
       "id": "node-update-saldo",
       "name": "Atualiza saldo tokens",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         4400,
         540
       ],
-      "notes": "Desconta tokens usados do saldo do cliente e incrementa tokens_usados_mes."
+      "notes": "Desconta tokens usados do saldo do cliente."
     },
     {
       "parameters": {
@@ -699,70 +725,34 @@
     },
     {
       "parameters": {
-        "operation": "upsert",
-        "tableId": "leads",
-        "dataToSend": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/upsert_lead",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "fieldId": "numero_whatsapp",
-              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.numero }}"
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
             },
             {
-              "fieldId": "nome",
-              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.nome || '' }}"
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
             },
             {
-              "fieldId": "celular",
-              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.celular || '' }}"
-            },
-            {
-              "fieldId": "tese",
-              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.tese || '' }}"
-            },
-            {
-              "fieldId": "resumo",
-              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.resumo || $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '' }}"
-            },
-            {
-              "fieldId": "qualificado",
-              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.qualificado }}"
-            },
-            {
-              "fieldId": "motivo_desqualificacao",
-              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '' }}"
-            },
-            {
-              "fieldId": "user_id",
-              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.userId }}"
-            },
-            {
-              "fieldId": "stage",
-              "fieldValue": "={{ $('Processa resposta e qualificação').first().json.qualificado ? 'qualificado' : ($('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo ? 'nao_qualificado' : 'em_atendimento') }}"
-            },
-            {
-              "fieldId": "atualizado_em",
-              "fieldValue": "={{ new Date().toISOString() }}"
+              "name": "Content-Type",
+              "value": "application/json"
             }
           ]
         },
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "numero_whatsapp",
-              "keyValue": "={{ $('Processa resposta e qualificação').first().json.numero }}"
-            },
-            {
-              "keyName": "user_id",
-              "keyValue": "={{ $('Processa resposta e qualificação').first().json.userId }}"
-            }
-          ]
-        }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_numero_whatsapp: $('Processa resposta e qualificação').first().json.numero, p_user_id: $('Processa resposta e qualificação').first().json.userId, p_nome: $('Processa resposta e qualificação').first().json.dadosQualificacao?.nome || '', p_celular: $('Processa resposta e qualificação').first().json.dadosQualificacao?.celular || '', p_tese: $('Processa resposta e qualificação').first().json.dadosQualificacao?.tese || '', p_resumo: $('Processa resposta e qualificação').first().json.dadosQualificacao?.resumo || $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '', p_qualificado: $('Processa resposta e qualificação').first().json.qualificado, p_motivo_desqualificacao: $('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo || '', p_stage: $('Processa resposta e qualificação').first().json.qualificado ? 'qualificado' : ($('Processa resposta e qualificação').first().json.dadosQualificacao?.motivo ? 'nao_qualificado' : 'em_atendimento') }) }}",
+        "options": {}
       },
       "id": "node-salva-lead",
       "name": "Salva lead no Supabase",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         4620,
         860
@@ -784,50 +774,39 @@
     },
     {
       "parameters": {
-        "operation": "upsert",
-        "tableId": "sessoes",
-        "dataToSend": "defineBelow",
-        "fieldsUi": {
-          "fieldValues": [
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/upsert_sessao",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
             {
-              "fieldId": "numero_whatsapp",
-              "fieldValue": "={{ $json.numero_whatsapp }}"
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
             },
             {
-              "fieldId": "user_id",
-              "fieldValue": "={{ $json.user_id }}"
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
             },
             {
-              "fieldId": "historico",
-              "fieldValue": "={{ $json.historico }}"
-            },
-            {
-              "fieldId": "atualizado_em",
-              "fieldValue": "={{ $json.atualizado_em }}"
+              "name": "Content-Type",
+              "value": "application/json"
             }
           ]
         },
-        "filters": {
-          "conditions": [
-            {
-              "keyName": "numero_whatsapp",
-              "keyValue": "={{ $json.numero_whatsapp }}"
-            },
-            {
-              "keyName": "user_id",
-              "keyValue": "={{ $json.user_id }}"
-            }
-          ]
-        }
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_numero_whatsapp: $json.numero_whatsapp, p_user_id: $json.user_id, p_historico: $json.historico }) }}",
+        "options": {}
       },
       "id": "node-redis-set",
       "name": "Supabase — Salva sessão",
-      "type": "n8n-nodes-base.supabase",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         4840,
         1040
-      ]
+      ],
+      "notes": ""
     },
     {
       "parameters": {
