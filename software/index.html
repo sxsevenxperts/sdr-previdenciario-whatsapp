@@ -370,6 +370,8 @@
     .drawflow .drawflow-node.node-desqualificado .title-box { background:#dc2626; }
     .drawflow .drawflow-node.node-condicao .title-box { background:#ca8a04; }
     .drawflow .drawflow-node.node-pergunta .title-box { background:#7c3aed; }
+    .drawflow .drawflow-node.node-followup .title-box { background:#0891b2; }
+    .drawflow .drawflow-node.node-aguardar .title-box { background:#d97706; }
     .drawflow-delete { background:#ef4444 !important; }
     .flow-saved-list { display:flex; flex-direction:column; gap:8px; }
     .flow-saved-item { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#f8fafc; border-radius:8px; font-size:13px; cursor:pointer; border:1.5px solid transparent; transition:all .2s; }
@@ -1013,12 +1015,14 @@
         <div class="flow-palette">
           <h4>Nós disponíveis</h4>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'inicio')">🟢 Início</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'mensagem')">💬 Mensagem Bot</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'mensagem')">💬 Mensagem Agente IA</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'pergunta')">❓ Pergunta</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'condicao')">🔀 Condição</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'qualificado')">✅ Qualificado</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'desqualificado')">❌ Desqualificado</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'fim')">🔴 Fim</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'followup')">📤 Disparo / Follow-up</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'aguardar')">⏳ Aguardar</div>
 
           <h4 style="margin-top:16px">Fluxos salvos</h4>
           <div id="saved-flows-list"><p style="font-size:12px;color:#aaa;text-align:center;padding:8px;">Nenhum fluxo salvo</p></div>
@@ -1192,9 +1196,8 @@
       <label>Senha inicial</label>
       <input type="password" id="new-client-password" placeholder="Mínimo 6 caracteres" />
     </div>
-    <div class="field-group">
-      <label>Nome da instância WhatsApp <small style="color:#888;">(sem espaços, ex: EscritorioPereira)</small></label>
-      <input type="text" id="new-client-instance" placeholder="EscritorioPereira" />
+    <div class="field-group" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:10px 14px;">
+      <span style="font-size:12px;color:#166534;">⚡ A instância WhatsApp será criada automaticamente a partir do nome do cliente.</span>
     </div>
     <div class="modal-actions">
       <button class="btn-save" id="btn-create-client" onclick="criarCliente()">✅ Criar conta</button>
@@ -2349,18 +2352,18 @@
     const name     = document.getElementById('new-client-name').value.trim();
     const email    = document.getElementById('new-client-email').value.trim();
     const password = document.getElementById('new-client-password').value;
-    const instance = document.getElementById('new-client-instance').value.trim().replace(/\s+/g, '');
     const errEl    = document.getElementById('create-client-error');
     const btn      = document.getElementById('btn-create-client');
     errEl.textContent = '';
-    if (!name || !email || !password || !instance) {
+    if (!name || !email || !password) {
       errEl.textContent = 'Preencha todos os campos.'; return;
     }
     if (password.length < 6) {
       errEl.textContent = 'Senha deve ter no mínimo 6 caracteres.'; return;
     }
     btn.disabled = true; btn.textContent = 'Criando...';
-    const result = await adminFetch('POST', { name, email, password, evo_instance: instance });
+    // evo_instance é auto-gerado pelo backend a partir do nome
+    const result = await adminFetch('POST', { name, email, password });
     if (result?.error) {
       errEl.textContent = 'Erro: ' + result.error;
       btn.disabled = false; btn.textContent = '✅ Criar conta';
@@ -2734,12 +2737,39 @@
 
   const NODE_TEMPLATES = {
     inicio:          { title:'🟢 Início',          inputs:0, outputs:1, html:'<div class="box">Ponto de entrada do fluxo</div>', cls:'node-inicio' },
-    mensagem:        { title:'💬 Mensagem Bot',     inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Texto da mensagem..."></textarea></div>', cls:'' },
+    mensagem:        { title:'💬 Mensagem Agente IA',     inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Texto da mensagem..."></textarea></div>', cls:'' },
     pergunta:        { title:'❓ Pergunta',          inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Pergunta para o lead..."></textarea></div>', cls:'node-pergunta' },
     condicao:        { title:'🔀 Condição',          inputs:1, outputs:2, html:'<div class="box"><input style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;" placeholder="Se contém..." /><div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-top:6px;"><span>Saída 1: Sim</span><span>Saída 2: Não</span></div></div>', cls:'node-condicao' },
     qualificado:     { title:'✅ Lead Qualificado', inputs:1, outputs:0, html:'<div class="box" style="color:#16a34a">Registra lead como qualificado e notifica advogado</div>', cls:'node-qualificado' },
     desqualificado:  { title:'❌ Desqualificado',   inputs:1, outputs:0, html:'<div class="box" style="color:#dc2626">Registra lead como desqualificado</div>', cls:'node-desqualificado' },
     fim:             { title:'🔴 Fim',              inputs:1, outputs:0, html:'<div class="box">Encerra a conversa</div>', cls:'node-fim' },
+    followup: {
+      title: '📤 Disparo / Follow-up',
+      inputs: 1, outputs: 1,
+      html: `<div class="box">
+        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">📱 Número destino</label>
+        <input style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:5px;" placeholder="5511999999999 ou {{numero_lead}}" class="followup-numero" />
+        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin:8px 0 4px;">💬 Mensagem</label>
+        <textarea style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;resize:vertical;min-height:60px;" placeholder="Olá {{nome}}! Tudo bem? Queria acompanhar o seu caso..." class="followup-msg"></textarea>
+        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin:8px 0 4px;">⏱ Enviar após (minutos)</label>
+        <input type="number" style="width:80px;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:5px;" value="60" min="1" class="followup-delay" />
+        <div style="font-size:10px;color:#888;margin-top:6px;">Variáveis: {{nome}}, {{numero_lead}}, {{tese}}</div>
+      </div>`,
+      cls: 'node-followup'
+    },
+    aguardar: {
+      title: '⏳ Aguardar',
+      inputs: 1, outputs: 1,
+      html: `<div class="box">
+        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Aguardar resposta por</label>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <input type="number" style="width:70px;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:5px;" value="24" min="1" class="aguardar-horas" />
+          <span style="font-size:12px;color:#555">horas</span>
+        </div>
+        <div style="font-size:10px;color:#888;margin-top:6px;">Pausa o fluxo até receber mensagem ou o tempo esgotar</div>
+      </div>`,
+      cls: 'node-aguardar'
+    },
   };
 
   function initDrawflow() {
