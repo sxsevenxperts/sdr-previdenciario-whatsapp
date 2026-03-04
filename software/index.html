@@ -6,38 +6,125 @@
   <title>XPERT.IA — Painel</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
+    :root {
+      --bg:       #0d1117;
+      --bg-card:  #161b22;
+      --bg-card2: #1c2128;
+      --border:   #30363d;
+      --border2:  #21262d;
+      --text:     #e6edf3;
+      --text2:    #8b949e;
+      --text3:    #6e7681;
+      --lime:     #a3e635;
+      --lime-dk:  #84cc16;
+      --lime-bg:  #1a2e00;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; color: #1a1a2e; }
+    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+
+    /* ── Inputs escuros globais ───────────────────────────────────────── */
+    input:not([type=checkbox]):not([type=radio]),
+    textarea,
+    select {
+      background: var(--bg) !important;
+      color: var(--text) !important;
+      border-color: var(--border) !important;
+    }
+    input::placeholder, textarea::placeholder { color: var(--text3) !important; }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--lime) !important;
+      outline: none;
+    }
+
+    /* ── Cards/modais que ainda ficaram brancos ──────────────────────── */
+    .card, .modal-box, .stat-card, .login-box,
+    .chat-window, .chat-sidebar, .chat-main,
+    .flow-palette, .drawflow-node .box,
+    .crm-modal-overlay > div {
+      background: var(--bg-card) !important;
+      color: var(--text) !important;
+    }
+
+    /* ── Tabelas ─────────────────────────────────────────────────────── */
+    table { width: 100%; background: var(--bg-card); }
+    table th { background: var(--bg-card2) !important; color: var(--text2) !important; border-color: var(--border2) !important; }
+    table td { border-color: var(--border2) !important; color: var(--text) !important; }
+    table tr:hover td { background: var(--bg-card2) !important; }
+
+    /* ── Drawflow canvas ─────────────────────────────────────────────── */
+    #drawflow { background: #0a0f0a !important; }
+    .drawflow-node { background: var(--bg-card) !important; border-color: var(--border) !important; color: var(--text) !important; }
+    .drawflow-node .title-box { color: #0a0a0a !important; }
+    .drawflow-node input, .drawflow-node textarea { background: var(--bg) !important; color: var(--text) !important; border-color: var(--border) !important; }
+
+    /* ── Tabs ────────────────────────────────────────────────────────── */
+    .tabs { background: var(--bg-card2) !important; }
+    .tab { color: var(--text2) !important; }
+    .tab.active { background: var(--bg-card) !important; color: var(--lime) !important; }
+
+    /* ── CRM ─────────────────────────────────────────────────────────── */
+    .crm-col { background: var(--bg-card) !important; }
+    .crm-card { background: var(--bg-card2) !important; color: var(--text) !important; }
+    .crm-tab.active { color: var(--lime) !important; border-bottom-color: var(--lime) !important; }
+    .crm-modal-tabs { border-color: var(--border2) !important; }
+    .tarefa-item { border-color: var(--border2) !important; }
+    .crm-drop-zone.dragover { background: var(--lime-bg) !important; border-color: var(--lime) !important; }
+
+    /* ── Bate-Papo ───────────────────────────────────────────────────── */
+    .chat-sidebar, .chat-main, .chat-header, .chat-input-area { background: var(--bg-card) !important; border-color: var(--border2) !important; }
+    .chat-sidebar-header { border-color: var(--border2) !important; }
+    .conv-item { border-color: var(--border2) !important; color: var(--text) !important; }
+    .conv-item:hover, .conv-item.active { background: var(--bg-card2) !important; }
+    .conv-name { color: var(--text) !important; }
+    .conv-preview { color: var(--text2) !important; }
+    .msg-row.assistant .msg-bubble { background: var(--bg-card2) !important; color: var(--text) !important; }
+    .msg-row.user .msg-bubble { background: var(--lime) !important; color: #0a0a0a !important; }
+
+    /* ── Misc ────────────────────────────────────────────────────────── */
+    .wa-status-bar { border-color: var(--border) !important; }
+    .btn-secondary { background: var(--bg-card) !important; color: var(--lime) !important; border-color: var(--lime) !important; }
+    .btn-secondary:hover { background: var(--lime-bg) !important; }
+    .pdf-item { background: var(--bg-card2) !important; }
+    .pdf-badge { background: var(--lime-bg) !important; color: var(--lime) !important; }
+    .flow-saved-item { background: var(--bg-card2) !important; border-color: var(--border) !important; color: var(--text) !important; }
+    .flow-saved-item:hover { border-color: var(--lime) !important; background: var(--lime-bg) !important; }
+    .flow-palette { background: var(--bg-card) !important; border-right: 1px solid var(--border) !important; }
+    .palette-node { background: var(--bg-card2) !important; border-color: var(--border) !important; color: var(--text) !important; }
+    .palette-node:hover { border-color: var(--lime) !important; background: var(--lime-bg) !important; }
+    .modal-box h2 { color: var(--text) !important; }
+    .field-group label { color: var(--text2) !important; }
+    .nav-item:hover { color: #fff !important; background: rgba(163,230,53,0.07) !important; }
+    .nav-item.active { color: var(--lime) !important; border-left-color: var(--lime) !important; background: rgba(163,230,53,0.1) !important; }
 
     /* LOGIN */
     #login-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; }
-    .login-box { background: #fff; padding: 48px 40px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); width: 100%; max-width: 420px; }
-    .login-box h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; color: #1a1a2e; }
-    .login-box p { color: #666; margin-bottom: 32px; font-size: 14px; }
+    .login-box { background: #161b22; padding: 48px 40px; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.1); width: 100%; max-width: 420px; }
+    .login-box h1 { font-size: 24px; font-weight: 700; margin-bottom: 8px; color: #e6edf3; }
+    .login-box p { color: #8b949e; margin-bottom: 32px; font-size: 14px; }
     .form-group { margin-bottom: 16px; }
-    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #444; }
+    .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #c9d1d9; }
     .form-group input { width: 100%; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: border 0.2s; }
-    .form-group input:focus { outline: none; border-color: #4f46e5; }
-    .btn-primary { width: 100%; padding: 13px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-    .btn-primary:hover { background: #4338ca; }
-    .btn-primary:disabled { background: #a5b4fc; cursor: not-allowed; }
+    .form-group input:focus { outline: none; border-color: #a3e635; }
+    .btn-primary { width: 100%; padding: 13px; background: #a3e635; color: #0a0a0a; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+    .btn-primary:hover { background: #84cc16; }
+    .btn-primary:disabled { background: #4d7c0f; cursor: not-allowed; }
     .error-msg { color: #ef4444; font-size: 13px; margin-top: 12px; text-align: center; }
 
     /* DASHBOARD */
     #dashboard-page { display: none; min-height: 100vh; }
-    .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: #1a1a2e; padding: 24px 0; display: flex; flex-direction: column; overflow-y: auto; }
-    .sidebar .logo { padding: 0 24px 24px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: #0a0a0a; padding: 24px 0; display: flex; flex-direction: column; overflow-y: auto; }
+    .sidebar .logo { padding: 0 24px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
     .sidebar .logo h2 { color: #fff; font-size: 16px; font-weight: 700; }
-    .sidebar .logo p { color: #a5b4fc; font-size: 12px; margin-top: 2px; }
+    .sidebar .logo p { color: #a3e635; font-size: 12px; margin-top: 2px; }
     .nav-section { padding: 12px 24px 4px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; }
     .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 24px; color: rgba(255,255,255,0.6); cursor: pointer; transition: all 0.2s; font-size: 14px; border-left: 3px solid transparent; }
     .nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
-    .nav-item.active { color: #a5b4fc; border-left-color: #a5b4fc; background: rgba(165,180,252,0.1); }
+    .nav-item.active { color: #a3e635; border-left-color: #a3e635; background: rgba(165,180,252,0.1); }
     .nav-item .icon { font-size: 18px; width: 20px; text-align: center; }
     .nav-item .badge-dot { width: 8px; height: 8px; border-radius: 50%; margin-left: auto; }
     .badge-dot.online { background: #22c55e; }
     .badge-dot.offline { background: #ef4444; }
-    .sidebar-bottom { margin-top: auto; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-bottom { margin-top: auto; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.08); }
     .btn-logout { width: 100%; padding: 10px; background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
     .btn-logout:hover { background: rgba(239,68,68,0.25); }
     .main-content { margin-left: 240px; padding: 32px; }
@@ -45,94 +132,94 @@
     .page.active { display: block; }
     .page-header { margin-bottom: 28px; }
     .page-header h1 { font-size: 22px; font-weight: 700; }
-    .page-header p { color: #666; font-size: 14px; margin-top: 4px; }
-    .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
-    .card h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+    .page-header p { color: #8b949e; font-size: 14px; margin-top: 4px; }
+    .card { background: #161b22; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .card h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; color: #e6edf3; display: flex; align-items: center; gap: 8px; }
     .field-group { margin-bottom: 18px; }
-    .field-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #444; }
+    .field-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #c9d1d9; }
     .field-group input, .field-group textarea, .field-group select { width: 100%; padding: 10px 12px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-family: inherit; transition: border 0.2s; resize: vertical; }
-    .field-group input:focus, .field-group textarea:focus { outline: none; border-color: #4f46e5; }
+    .field-group input:focus, .field-group textarea:focus { outline: none; border-color: #a3e635; }
     .field-group textarea { min-height: 100px; line-height: 1.6; }
-    .btn-save { padding: 11px 28px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
-    .btn-save:hover { background: #4338ca; }
-    .btn-save:disabled { background: #a5b4fc; }
-    .btn-secondary { padding: 11px 20px; background: #fff; color: #4f46e5; border: 1.5px solid #4f46e5; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-    .btn-secondary:hover { background: #eef2ff; }
+    .btn-save { padding: 11px 28px; background: #a3e635; color: #0a0a0a; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .btn-save:hover { background: #84cc16; }
+    .btn-save:disabled { background: #4d7c0f; }
+    .btn-secondary { padding: 11px 20px; background: #161b22; color: #a3e635; border: 1.5px solid #a3e635; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-secondary:hover { background: #1a2e00; }
     .save-status { display: inline-block; margin-left: 12px; font-size: 13px; color: #16a34a; }
     .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-    .badge-green { background: #dcfce7; color: #16a34a; }
-    .badge-red { background: #fee2e2; color: #dc2626; }
-    .badge-yellow { background: #fef9c3; color: #ca8a04; }
-    .badge-blue { background: #dbeafe; color: #2563eb; }
+    .badge-green { background: #052e16; color: #4ade80; }
+    .badge-red { background: #2d0a0a; color: #f87171; }
+    .badge-yellow { background: #2d2000; color: #facc15; }
+    .badge-blue { background: #0c1a3d; color: #60a5fa; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    table th { text-align: left; padding: 10px 12px; background: #f8fafc; font-weight: 600; color: #555; border-bottom: 1px solid #e5e7eb; }
-    table td { padding: 12px 12px; border-bottom: 1px solid #f1f5f9; vertical-align: top; }
-    table tr:hover td { background: #f8fafc; }
-    .empty-state { text-align: center; padding: 48px; color: #aaa; }
+    table th { text-align: left; padding: 10px 12px; background: #1c2128; font-weight: 600; color: #8b949e; border-bottom: 1px solid #21262d; }
+    table td { padding: 12px 12px; border-bottom: 1px solid #21262d; vertical-align: top; }
+    table tr:hover td { background: #1c2128; }
+    .empty-state { text-align: center; padding: 48px; color: #6e7681; }
     .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
-    .stat-card { background: #fff; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-    .stat-card .label { font-size: 12px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; color: #1a1a2e; }
-    .stat-card .sub { font-size: 12px; color: #666; margin-top: 2px; }
-    .loading { color: #888; font-size: 13px; }
+    .stat-card { background: #161b22; border-radius: 12px; padding: 20px 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .stat-card .label { font-size: 12px; font-weight: 600; color: #6e7681; text-transform: uppercase; letter-spacing: 0.5px; }
+    .stat-card .value { font-size: 28px; font-weight: 700; margin-top: 4px; color: #e6edf3; }
+    .stat-card .sub { font-size: 12px; color: #8b949e; margin-top: 2px; }
+    .loading { color: #6e7681; font-size: 13px; }
     .pdf-list { margin-top: 12px; }
-    .pdf-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #f8fafc; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
-    .pdf-item > span:first-child { flex: 1; color: #444; }
-    .pdf-item span { color: #444; }
-    .pdf-badge { background: #e0e7ff; color: #4f46e5; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-    .pdf-chunks { color: #9ca3af; font-size: 11px; white-space: nowrap; }
+    .pdf-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; background: #1c2128; border-radius: 8px; margin-bottom: 8px; font-size: 13px; }
+    .pdf-item > span:first-child { flex: 1; color: #c9d1d9; }
+    .pdf-item span { color: #c9d1d9; }
+    .pdf-badge { background: #1a3a00; color: #a3e635; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .pdf-chunks { color: #6e7681; font-size: 11px; white-space: nowrap; }
     .btn-delete-pdf { background: none; border: none; cursor: pointer; font-size: 15px; padding: 2px 4px; border-radius: 4px; opacity: 0.6; transition: opacity 0.2s; }
     .btn-delete-pdf:hover { opacity: 1; background: #fee2e2; }
-    .upload-btn { padding: 10px 20px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 12px; }
-    .upload-btn:disabled { background: #a5b4fc; }
-    .progress-bar { height: 4px; background: #e5e7eb; border-radius: 4px; margin-top: 12px; overflow: hidden; display: none; }
-    .progress-fill { height: 100%; background: #4f46e5; border-radius: 4px; transition: width 0.3s; }
+    .upload-btn { padding: 10px 20px; background: #a3e635; color: #0a0a0a; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; margin-top: 12px; }
+    .upload-btn:disabled { background: #4d7c0f; }
+    .progress-bar { height: 4px; background: #21262d; border-radius: 4px; margin-top: 12px; overflow: hidden; display: none; }
+    .progress-fill { height: 100%; background: #a3e635; border-radius: 4px; transition: width 0.3s; }
     .upload-area { border: 2px dashed #d1d5db; border-radius: 10px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; }
-    .upload-area:hover { border-color: #4f46e5; background: #f5f3ff; }
+    .upload-area:hover { border-color: #a3e635; background: #1a2e00; }
     .upload-area input[type=file] { display: none; }
-    .upload-area p { color: #666; font-size: 14px; margin-top: 8px; }
+    .upload-area p { color: #8b949e; font-size: 14px; margin-top: 8px; }
 
     /* TOGGLE SWITCH */
     .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 0; }
     .toggle-row .toggle-info { flex: 1; }
-    .toggle-row .toggle-label { font-size: 15px; font-weight: 600; color: #1a1a2e; }
-    .toggle-row .toggle-desc { font-size: 13px; color: #888; margin-top: 2px; }
+    .toggle-row .toggle-label { font-size: 15px; font-weight: 600; color: #e6edf3; }
+    .toggle-row .toggle-desc { font-size: 13px; color: #6e7681; margin-top: 2px; }
     .toggle-switch { position: relative; width: 50px; height: 28px; flex-shrink: 0; margin-left: 16px; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #d1d5db; border-radius: 28px; transition: 0.3s; }
-    .toggle-slider:before { content: ''; position: absolute; width: 22px; height: 22px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
-    .toggle-switch input:checked + .toggle-slider { background: #4f46e5; }
+    .toggle-slider:before { content: ''; position: absolute; width: 22px; height: 22px; left: 3px; bottom: 3px; background: #161b22; border-radius: 50%; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+    .toggle-switch input:checked + .toggle-slider { background: #a3e635; }
     .toggle-switch input:checked + .toggle-slider:before { transform: translateX(22px); }
-    .audio-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 12px; background: #f3e8ff; color: #7c3aed; font-weight: 600; margin-left: 6px; vertical-align: middle; }
+    .audio-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; padding: 2px 8px; border-radius: 12px; background: #1a2e00; color: #a3e635; font-weight: 600; margin-left: 6px; vertical-align: middle; }
 
     /* MSG AUDIO ICONS */
-    .msg-audio-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #7c3aed; background: #f3e8ff; padding: 2px 8px; border-radius: 10px; margin-bottom: 4px; font-weight: 600; }
+    .msg-audio-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 11px; color: #a3e635; background: #1a2e00; padding: 2px 8px; border-radius: 10px; margin-bottom: 4px; font-weight: 600; }
 
     /* ===================== CRM KANBAN ===================== */
     .crm-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; flex-wrap:wrap; gap:10px; }
     .crm-board-wrap { overflow-x:auto; padding-bottom:16px; }
     .crm-board { display:flex; gap:14px; min-height:560px; width:max-content; }
-    .crm-col { width:260px; background:#f8fafc; border-radius:14px; padding:12px; flex-shrink:0; display:flex; flex-direction:column; }
+    .crm-col { width:260px; background:#1c2128; border-radius:14px; padding:12px; flex-shrink:0; display:flex; flex-direction:column; }
     .crm-col-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; padding:4px 2px; }
-    .crm-col-title { font-size:13px; font-weight:700; color:#1a1a2e; display:flex; align-items:center; gap:6px; }
-    .crm-col-count { background:#e5e7eb; color:#555; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; }
+    .crm-col-title { font-size:13px; font-weight:700; color:#e6edf3; display:flex; align-items:center; gap:6px; }
+    .crm-col-count { background:#e5e7eb; color:#8b949e; font-size:11px; font-weight:700; padding:2px 8px; border-radius:10px; }
     .crm-cards { flex:1; min-height:80px; border-radius:10px; transition:background 0.15s; }
-    .crm-cards.dragover { background:#e0e7ff; outline:2px dashed #4f46e5; outline-offset:2px; }
-    .crm-card { background:#fff; border-radius:10px; padding:14px 14px 12px; margin-bottom:10px; cursor:grab; box-shadow:0 1px 4px rgba(0,0,0,0.08); border-left:4px solid #e5e7eb; transition:box-shadow 0.15s, opacity 0.15s; user-select:none; }
+    .crm-cards.dragover { background:#1a3a00; outline:2px dashed #4f46e5; outline-offset:2px; }
+    .crm-card { background:#1c2128; border-radius:10px; padding:14px 14px 12px; margin-bottom:10px; cursor:grab; box-shadow:0 1px 4px rgba(0,0,0,0.08); border-left:4px solid #e5e7eb; transition:box-shadow 0.15s, opacity 0.15s; user-select:none; }
     .crm-card:active { cursor:grabbing; opacity:0.65; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
     .crm-card:hover { box-shadow:0 3px 10px rgba(0,0,0,0.12); }
     .crm-card[data-stage="novo_contato"]     { border-left-color:#f59e0b; }
     .crm-card[data-stage="em_atendimento"]   { border-left-color:#3b82f6; }
     .crm-card[data-stage="qualificado"]      { border-left-color:#16a34a; }
     .crm-card[data-stage="nao_qualificado"]  { border-left-color:#dc2626; }
-    .crm-card[data-stage="convertido"]       { border-left-color:#7c3aed; }
+    .crm-card[data-stage="convertido"]       { border-left-color:#a3e635; }
     .crm-card[data-stage="perdido"]          { border-left-color:#9ca3af; }
     .crm-card-top { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:6px; }
-    .crm-card-name { font-size:13px; font-weight:700; color:#1a1a2e; }
+    .crm-card-name { font-size:13px; font-weight:700; color:#e6edf3; }
     .crm-card-aniv { font-size:14px; cursor:default; }
-    .crm-card-tese { font-size:12px; color:#555; margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
-    .crm-card-assunto { font-size:11px; color:#7c3aed; background:#f3e8ff; padding:2px 7px; border-radius:8px; display:inline-block; margin-bottom:8px; font-weight:600; }
-    .crm-card-footer { display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#888; border-top:1px solid #f1f5f9; padding-top:8px; margin-top:4px; }
+    .crm-card-tese { font-size:12px; color:#8b949e; margin-bottom:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .crm-card-assunto { font-size:11px; color:#a3e635; background:#1a2e00; padding:2px 7px; border-radius:8px; display:inline-block; margin-bottom:8px; font-weight:600; }
+    .crm-card-footer { display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#6e7681; border-top:1px solid #f1f5f9; padding-top:8px; margin-top:4px; }
     .crm-card-tasks { display:flex; align-items:center; gap:3px; }
     .crm-card-tasks.has-pending { color:#f59e0b; font-weight:700; }
     /* Column left-border colors */
@@ -140,44 +227,44 @@
     .crm-col[data-stage="em_atendimento"]  .crm-col-count { background:#dbeafe; color:#1e40af; }
     .crm-col[data-stage="qualificado"]     .crm-col-count { background:#dcfce7; color:#166534; }
     .crm-col[data-stage="nao_qualificado"] .crm-col-count { background:#fee2e2; color:#991b1b; }
-    .crm-col[data-stage="convertido"]      .crm-col-count { background:#f3e8ff; color:#5b21b6; }
+    .crm-col[data-stage="convertido"]      .crm-col-count { background:#1a2e00; color:#5b21b6; }
     .crm-col[data-stage="perdido"]         .crm-col-count { background:#f1f5f9; color:#64748b; }
     /* CRM Modal */
     .crm-modal-box { width:600px; max-width:95vw; max-height:90vh; overflow:hidden; display:flex; flex-direction:column; }
     .crm-modal-tabs { display:flex; gap:0; border-bottom:2px solid #e5e7eb; margin:-32px -32px 24px; padding:0 32px; }
-    .crm-tab { padding:12px 18px; font-size:13px; font-weight:600; color:#888; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; }
-    .crm-tab.active { color:#4f46e5; border-bottom-color:#4f46e5; }
+    .crm-tab { padding:12px 18px; font-size:13px; font-weight:600; color:#6e7681; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all 0.15s; }
+    .crm-tab.active { color:#a3e635; border-bottom-color:#a3e635; }
     .crm-tab-content { display:none; overflow-y:auto; flex:1; }
     .crm-tab-content.active { display:block; }
     .tarefa-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f1f5f9; }
-    .tarefa-item input[type=checkbox] { width:16px; height:16px; cursor:pointer; accent-color:#4f46e5; }
+    .tarefa-item input[type=checkbox] { width:16px; height:16px; cursor:pointer; accent-color:#a3e635; }
     .tarefa-item .tarefa-desc { flex:1; font-size:13px; }
-    .tarefa-item .tarefa-desc.done { text-decoration:line-through; color:#aaa; }
-    .tarefa-item .tarefa-date { font-size:11px; color:#888; flex-shrink:0; }
+    .tarefa-item .tarefa-desc.done { text-decoration:line-through; color:#6e7681; }
+    .tarefa-item .tarefa-date { font-size:11px; color:#6e7681; flex-shrink:0; }
     .tarefa-item .tarefa-del { background:none; border:none; color:#ef4444; cursor:pointer; font-size:16px; padding:0 2px; }
     .btn-entrar-conversa { width:100%; padding:13px; background:#25d366; color:#fff; border:none; border-radius:10px; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:16px; }
     .btn-entrar-conversa:hover { background:#1ebe5b; }
-    .btn-add-tarefa { padding:9px 16px; background:#f0f2f5; color:#444; border:1.5px solid #e0e0e0; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
+    .btn-add-tarefa { padding:9px 16px; background:#0d1117; color:#c9d1d9; border:1.5px solid #e0e0e0; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; }
     .btn-add-tarefa:hover { background:#e5e7eb; }
     /* Gerenciar Colunas */
     .stages-list { display:flex; flex-direction:column; gap:8px; margin:16px 0; max-height:380px; overflow-y:auto; }
-    .stage-row { display:flex; align-items:center; gap:10px; background:#f8fafc; border-radius:10px; padding:10px 12px; cursor:grab; border:1.5px solid #e5e7eb; }
+    .stage-row { display:flex; align-items:center; gap:10px; background:#1c2128; border-radius:10px; padding:10px 12px; cursor:grab; border:1.5px solid #e5e7eb; }
     .stage-row:active { cursor:grabbing; opacity:0.7; }
-    .stage-row.drag-over { border-color:#4f46e5; background:#eef2ff; }
+    .stage-row.drag-over { border-color:#a3e635; background:#1a2e00; }
     .stage-drag-handle { color:#ccc; font-size:16px; cursor:grab; flex-shrink:0; }
     .stage-color-dot { width:14px; height:14px; border-radius:50%; flex-shrink:0; border:2px solid rgba(0,0,0,0.1); cursor:pointer; }
-    .stage-name-input { flex:1; border:none; background:transparent; font-size:14px; font-weight:600; color:#1a1a2e; outline:none; padding:2px 4px; border-radius:4px; }
-    .stage-name-input:focus { background:#fff; border:1.5px solid #4f46e5; padding:1px 3px; }
+    .stage-name-input { flex:1; border:none; background:transparent; font-size:14px; font-weight:600; color:#e6edf3; outline:none; padding:2px 4px; border-radius:4px; }
+    .stage-name-input:focus { background:#161b22; border:1.5px solid #a3e635; padding:1px 3px; }
     .stage-del-btn { background:none; border:none; color:#d1d5db; cursor:pointer; font-size:16px; padding:0 2px; flex-shrink:0; }
     .stage-del-btn:hover { color:#ef4444; }
-    .color-palette { display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:#fff; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.15); position:absolute; z-index:2000; }
+    .color-palette { display:flex; flex-wrap:wrap; gap:6px; padding:8px; background:#161b22; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.15); position:absolute; z-index:2000; }
     .color-swatch { width:22px; height:22px; border-radius:50%; cursor:pointer; border:2px solid transparent; }
-    .color-swatch:hover, .color-swatch.selected { border-color:#1a1a2e; transform:scale(1.15); }
+    .color-swatch:hover, .color-swatch.selected { border-color:#e6edf3; transform:scale(1.15); }
     /* WHATSAPP PAGE */
     .wa-status-bar { display: flex; align-items: center; gap: 12px; padding: 16px 20px; border-radius: 10px; margin-bottom: 20px; font-weight: 600; font-size: 15px; }
-    .wa-status-bar.connected { background: #dcfce7; color: #16a34a; border: 1.5px solid #bbf7d0; }
-    .wa-status-bar.disconnected { background: #fee2e2; color: #dc2626; border: 1.5px solid #fecaca; }
-    .wa-status-bar.connecting { background: #fef9c3; color: #ca8a04; border: 1.5px solid #fef08a; }
+    .wa-status-bar.connected { background: #052e16; color: #4ade80; border: 1.5px solid #bbf7d0; }
+    .wa-status-bar.disconnected { background: #2d0a0a; color: #f87171; border: 1.5px solid #fecaca; }
+    .wa-status-bar.connecting { background: #2d2000; color: #facc15; border: 1.5px solid #fef08a; }
     .wa-status-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
     .wa-status-bar.connected .wa-status-dot { background: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,0.2); }
     .wa-status-bar.disconnected .wa-status-dot { background: #dc2626; box-shadow: 0 0 0 3px rgba(220,38,38,0.2); }
@@ -185,75 +272,75 @@
     @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
     .qr-container { display: flex; flex-direction: column; align-items: center; padding: 32px; }
     .qr-container img { width: 240px; height: 240px; border: 8px solid #fff; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
-    .qr-placeholder { width: 240px; height: 240px; background: #f8fafc; border: 2px dashed #d1d5db; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #aaa; }
+    .qr-placeholder { width: 240px; height: 240px; background: #1c2128; border: 2px dashed #d1d5db; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #6e7681; }
     .qr-placeholder .qr-icon { font-size: 48px; }
     .qr-steps { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; }
-    .qr-step { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: #444; }
-    .qr-step-num { width: 24px; height: 24px; background: #4f46e5; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
-    .btn-secondary { padding: 10px 22px; background: #f0f2f5; color: #444; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .qr-step { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; color: #c9d1d9; }
+    .qr-step-num { width: 24px; height: 24px; background: #a3e635; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+    .btn-secondary { padding: 10px 22px; background: #0d1117; color: #c9d1d9; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
     .btn-secondary:hover { background: #e5e7eb; }
     .btn-wa-connect { padding: 12px 28px; background: #25d366; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-top: 16px; }
     .btn-wa-connect:hover { background: #1ebe5b; }
-    .btn-wa-connect:disabled { background: #a5b4fc; cursor: not-allowed; }
+    .btn-wa-connect:disabled { background: #4d7c0f; cursor: not-allowed; }
     .btn-wa-disconnect { padding: 10px 22px; background: rgba(239,68,68,0.1); color: #dc2626; border: 1.5px solid rgba(239,68,68,0.3); border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
     .btn-wa-disconnect:hover { background: rgba(239,68,68,0.2); }
-    .qr-timer { font-size: 13px; color: #888; margin-top: 8px; }
+    .qr-timer { font-size: 13px; color: #6e7681; margin-top: 8px; }
     .qr-timer span { color: #ef4444; font-weight: 700; }
 
     /* BATE-PAPO */
-    .chat-layout { display: grid; grid-template-columns: 300px 1fr; gap: 0; height: calc(100vh - 160px); min-height: 500px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }
+    .chat-layout { display: grid; grid-template-columns: 300px 1fr; gap: 0; height: calc(100vh - 160px); min-height: 500px; background: #161b22; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; }
     .chat-sidebar { border-right: 1px solid #f1f5f9; display: flex; flex-direction: column; overflow: hidden; }
-    .chat-sidebar-header { padding: 16px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; justify-content: space-between; }
-    .chat-sidebar-header h3 { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+    .chat-sidebar-header { padding: 16px; border-bottom: 1px solid #21262d; display: flex; align-items: center; justify-content: space-between; }
+    .chat-sidebar-header h3 { font-size: 14px; font-weight: 700; color: #e6edf3; }
     .chat-search { padding: 10px 14px; border: 1.5px solid #e5e7eb; border-radius: 8px; font-size: 13px; width: 100%; margin: 10px 14px; width: calc(100% - 28px); }
-    .chat-search:focus { outline: none; border-color: #4f46e5; }
+    .chat-search:focus { outline: none; border-color: #a3e635; }
     .conv-list { flex: 1; overflow-y: auto; }
     .conv-item { padding: 14px 16px; border-bottom: 1px solid #f8fafc; cursor: pointer; transition: background 0.15s; }
-    .conv-item:hover { background: #f8fafc; }
-    .conv-item.active { background: #eef2ff; border-left: 3px solid #4f46e5; }
-    .conv-name { font-size: 13px; font-weight: 700; color: #1a1a2e; display: flex; justify-content: space-between; align-items: center; }
-    .conv-time { font-size: 11px; color: #aaa; font-weight: 400; }
-    .conv-preview { font-size: 12px; color: #888; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .conv-unread { background: #4f46e5; color: #fff; border-radius: 10px; font-size: 10px; font-weight: 700; padding: 1px 6px; min-width: 18px; text-align: center; }
+    .conv-item:hover { background: #1c2128; }
+    .conv-item.active { background: #1a2e00; border-left: 3px solid #4f46e5; }
+    .conv-name { font-size: 13px; font-weight: 700; color: #e6edf3; display: flex; justify-content: space-between; align-items: center; }
+    .conv-time { font-size: 11px; color: #6e7681; font-weight: 400; }
+    .conv-preview { font-size: 12px; color: #6e7681; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .conv-unread { background: #a3e635; color: #fff; border-radius: 10px; font-size: 10px; font-weight: 700; padding: 1px 6px; min-width: 18px; text-align: center; }
     .chat-main { display: flex; flex-direction: column; overflow: hidden; }
-    .chat-header { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
-    .chat-header-avatar { width: 38px; height: 38px; background: #4f46e5; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; flex-shrink: 0; }
+    .chat-header { padding: 14px 20px; border-bottom: 1px solid #21262d; display: flex; align-items: center; gap: 12px; }
+    .chat-header-avatar { width: 38px; height: 38px; background: #a3e635; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; flex-shrink: 0; }
     .chat-header-info h4 { font-size: 14px; font-weight: 700; }
-    .chat-header-info p { font-size: 12px; color: #888; }
+    .chat-header-info p { font-size: 12px; color: #6e7681; }
     .chat-header-actions { margin-left: auto; display: flex; gap: 8px; }
-    .messages-area { flex: 1; overflow-y: auto; padding: 20px; background: #f8fafc; display: flex; flex-direction: column; gap: 10px; }
+    .messages-area { flex: 1; overflow-y: auto; padding: 20px; background: #1c2128; display: flex; flex-direction: column; gap: 10px; }
     .msg-row { display: flex; align-items: flex-end; gap: 8px; }
     .msg-row.user { flex-direction: row-reverse; }
     .msg-bubble { max-width: 68%; padding: 10px 14px; border-radius: 16px; font-size: 13px; line-height: 1.55; word-break: break-word; }
-    .msg-row.assistant .msg-bubble { background: #fff; color: #1a1a2e; border-bottom-left-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
-    .msg-row.user .msg-bubble { background: #4f46e5; color: #fff; border-bottom-right-radius: 4px; }
+    .msg-row.assistant .msg-bubble { background: #161b22; color: #e6edf3; border-bottom-left-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); }
+    .msg-row.user .msg-bubble { background: #a3e635; color: #fff; border-bottom-right-radius: 4px; }
     .msg-time { font-size: 10px; color: #bbb; margin-bottom: 2px; flex-shrink: 0; }
     .msg-row.user .msg-time { text-align: right; }
-    .chat-input-area { padding: 16px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; align-items: flex-end; background: #fff; }
+    .chat-input-area { padding: 16px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; align-items: flex-end; background: #161b22; }
     .chat-input { flex: 1; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 20px; font-size: 14px; font-family: inherit; resize: none; max-height: 100px; line-height: 1.5; }
-    .chat-input:focus { outline: none; border-color: #4f46e5; }
-    .btn-send { width: 42px; height: 42px; background: #4f46e5; color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
-    .btn-send:hover { background: #4338ca; }
-    .btn-send:disabled { background: #a5b4fc; }
-    .chat-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #aaa; gap: 8px; }
+    .chat-input:focus { outline: none; border-color: #a3e635; }
+    .btn-send { width: 42px; height: 42px; background: #a3e635; color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+    .btn-send:hover { background: #84cc16; }
+    .btn-send:disabled { background: #4d7c0f; }
+    .chat-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #6e7681; gap: 8px; }
     .chat-empty .icon { font-size: 48px; }
-    .auto-refresh-badge { display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #16a34a; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .auto-refresh-badge { display: inline-flex; align-items: center; gap: 5px; background: #052e16; color: #4ade80; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
     .auto-refresh-dot { width: 6px; height: 6px; background: #16a34a; border-radius: 50%; animation: pulse 1.5s infinite; }
-    .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: #f0f2f5; padding: 4px; border-radius: 10px; width: fit-content; }
-    .tab-btn { padding: 8px 18px; border: none; background: transparent; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; color: #666; transition: all 0.2s; }
-    .tab-btn.active { background: #fff; color: #4f46e5; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+    .tabs { display: flex; gap: 4px; margin-bottom: 24px; background: #0d1117; padding: 4px; border-radius: 10px; width: fit-content; }
+    .tab-btn { padding: 8px 18px; border: none; background: transparent; border-radius: 7px; cursor: pointer; font-size: 13px; font-weight: 600; color: #8b949e; transition: all 0.2s; }
+    .tab-btn.active { background: #161b22; color: #a3e635; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
     /* MODAL */
     .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:1000; align-items:center; justify-content:center; }
     .modal-backdrop.open { display:flex; }
-    .modal-box { background:#fff; padding:32px; border-radius:16px; width:460px; max-width:92vw; box-shadow:0 16px 48px rgba(0,0,0,0.2); }
-    .modal-box h2 { font-size:18px; font-weight:700; margin-bottom:24px; color:#1a1a2e; }
+    .modal-box { background:#161b22; padding:32px; border-radius:16px; width:460px; max-width:92vw; box-shadow:0 16px 48px rgba(0,0,0,0.2); }
+    .modal-box h2 { font-size:18px; font-weight:700; margin-bottom:24px; color:#e6edf3; }
     .modal-actions { display:flex; gap:10px; margin-top:20px; }
 
     /* ADMIN */
-    .badge-purple { background:#ede9fe; color:#7c3aed; }
+    .badge-purple { background:#ede9fe; color:#a3e635; }
     .admin-only { display:none !important; }
     .admin-only.visible { display:flex !important; }
     .nav-section.admin-only.visible { display:block !important; }
@@ -261,7 +348,7 @@
     .client-tag.inactive { background:#fee2e2; color:#dc2626; }
 
     /* FATURAMENTO */
-    .billing-hero { background: linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%); color:#fff; border-radius:16px; padding:32px 36px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; }
+    .billing-hero { background: linear-gradient(135deg,#1a3a00 0%,#365314 100%); color:#fff; border-radius:16px; padding:32px 36px; margin-bottom:24px; display:flex; justify-content:space-between; align-items:center; }
     .billing-hero h2 { font-size:22px; font-weight:800; margin-bottom:4px; }
     .billing-hero p { opacity:.8; font-size:14px; }
     .billing-hero .price { font-size:42px; font-weight:900; letter-spacing:-1px; }
@@ -273,10 +360,10 @@
     .billing-status-badge.inadimplente { background:#fee2e2; color:#dc2626; }
     .billing-status-badge.cancelada { background:#f3f4f6; color:#6b7280; }
     .billing-info-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:24px; }
-    .billing-info-card { background:#fff; border-radius:12px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
-    .billing-info-card .label { font-size:11px; font-weight:700; text-transform:uppercase; color:#888; letter-spacing:.5px; }
-    .billing-info-card .value { font-size:20px; font-weight:700; margin-top:4px; color:#1a1a2e; }
-    .billing-info-card .sub { font-size:12px; color:#666; margin-top:2px; }
+    .billing-info-card { background:#161b22; border-radius:12px; padding:20px 22px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+    .billing-info-card .label { font-size:11px; font-weight:700; text-transform:uppercase; color:#6e7681; letter-spacing:.5px; }
+    .billing-info-card .value { font-size:20px; font-weight:700; margin-top:4px; color:#e6edf3; }
+    .billing-info-card .sub { font-size:12px; color:#8b949e; margin-top:2px; }
     .history-row-pago { color:#16a34a; font-weight:700; }
     .history-row-pendente { color:#ca8a04; font-weight:700; }
     .history-row-atrasado { color:#dc2626; font-weight:700; }
@@ -292,36 +379,36 @@
     .credits-balance .tokens-box { background: rgba(255,255,255,0.12); padding: 14px 20px; border-radius: 12px; text-align: center; min-width: 120px; }
     .credits-balance .tokens-box .leads-num { font-size: 28px; font-weight: 800; }
     .credits-balance .tokens-box .leads-label { font-size: 11px; opacity: 0.7; margin-top: 2px; }
-    .pricing-section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #1a1a2e; display: flex; align-items: center; gap: 8px; }
+    .pricing-section-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: #e6edf3; display: flex; align-items: center; gap: 8px; }
     .pricing-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
-    .pricing-card { background: #fff; border-radius: 14px; padding: 24px 20px; box-shadow: 0 2px 8px rgba(0,0,0,.07); border: 2px solid #e5e7eb; position: relative; transition: all .2s; }
-    .pricing-card:hover { border-color: #4f46e5; box-shadow: 0 6px 24px rgba(79,70,229,.15); transform: translateY(-2px); }
-    .pricing-card.popular { border-color: #4f46e5; box-shadow: 0 4px 24px rgba(79,70,229,.2); }
-    .pricing-card .pop-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #4f46e5; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 14px; border-radius: 20px; white-space: nowrap; }
-    .pricing-card .pkg-name { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 2px; }
-    .pricing-card .pkg-leads { font-size: 12px; color: #888; margin-bottom: 14px; }
-    .pricing-card .pkg-price { font-size: 34px; font-weight: 800; color: #4f46e5; letter-spacing: -1px; line-height: 1; }
+    .pricing-card { background: #161b22; border-radius: 14px; padding: 24px 20px; box-shadow: 0 2px 8px rgba(0,0,0,.07); border: 2px solid #e5e7eb; position: relative; transition: all .2s; }
+    .pricing-card:hover { border-color: #a3e635; box-shadow: 0 6px 24px rgba(79,70,229,.15); transform: translateY(-2px); }
+    .pricing-card.popular { border-color: #a3e635; box-shadow: 0 4px 24px rgba(79,70,229,.2); }
+    .pricing-card .pop-badge { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); background: #a3e635; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 14px; border-radius: 20px; white-space: nowrap; }
+    .pricing-card .pkg-name { font-size: 15px; font-weight: 700; color: #e6edf3; margin-bottom: 2px; }
+    .pricing-card .pkg-leads { font-size: 12px; color: #6e7681; margin-bottom: 14px; }
+    .pricing-card .pkg-price { font-size: 34px; font-weight: 800; color: #a3e635; letter-spacing: -1px; line-height: 1; }
     .pricing-card .pkg-price sup { font-size: 16px; font-weight: 600; vertical-align: super; }
-    .pricing-card .pkg-price sub { font-size: 13px; font-weight: 400; color: #888; }
-    .pricing-card .pkg-tokens { font-size: 12px; color: #888; margin: 8px 0 14px; }
+    .pricing-card .pkg-price sub { font-size: 13px; font-weight: 400; color: #6e7681; }
+    .pricing-card .pkg-tokens { font-size: 12px; color: #6e7681; margin: 8px 0 14px; }
     .pkg-features { list-style: none; margin: 0 0 16px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-    .pkg-features li { font-size: 12px; color: #555; display: flex; align-items: center; gap: 6px; }
+    .pkg-features li { font-size: 12px; color: #8b949e; display: flex; align-items: center; gap: 6px; }
     .pkg-features li::before { content: '✓'; color: #16a34a; font-weight: 700; flex-shrink: 0; }
-    .pricing-card .btn-buy { width: 100%; padding: 11px; background: #4f46e5; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
-    .pricing-card .btn-buy:hover { background: #4338ca; }
-    .buy-modal-pkg-info { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1.5px solid #e5e7eb; }
+    .pricing-card .btn-buy { width: 100%; padding: 11px; background: #a3e635; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background .2s; }
+    .pricing-card .btn-buy:hover { background: #84cc16; }
+    .buy-modal-pkg-info { background: #1c2128; border-radius: 12px; padding: 20px; margin-bottom: 16px; border: 1.5px solid #e5e7eb; }
     .buy-modal-pkg-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-    .buy-modal-pkg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: #555; margin-top: 12px; }
+    .buy-modal-pkg-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: #8b949e; margin-top: 12px; }
     .pedidos-badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-    .pedidos-badge.pendente { background: #fef9c3; color: #ca8a04; }
-    .pedidos-badge.aprovado { background: #dcfce7; color: #16a34a; }
-    .pedidos-badge.recusado { background: #fee2e2; color: #dc2626; }
+    .pedidos-badge.pendente { background: #2d2000; color: #facc15; }
+    .pedidos-badge.aprovado { background: #052e16; color: #4ade80; }
+    .pedidos-badge.recusado { background: #2d0a0a; color: #f87171; }
 
     /* POPUP TOKENS BAIXOS */
     .token-alert-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(3px); animation:fadeIn .25s ease; }
     .token-alert-backdrop.open { display:flex; }
     @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-    .token-alert-box { background:#fff; border-radius:20px; width:460px; max-width:94vw; box-shadow:0 24px 64px rgba(0,0,0,0.22); overflow:hidden; animation:slideUp .3s ease; }
+    .token-alert-box { background:#161b22; border-radius:20px; width:460px; max-width:94vw; box-shadow:0 24px 64px rgba(0,0,0,0.22); overflow:hidden; animation:slideUp .3s ease; }
     @keyframes slideUp { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
     .token-alert-header { background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%); padding:28px 28px 20px; text-align:center; position:relative; }
     .token-alert-header.warning { background:linear-gradient(135deg,#ea580c 0%,#c2410c 100%); }
@@ -332,51 +419,51 @@
     .token-alert-saldo { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.2); border-radius:30px; padding:6px 16px; margin-top:10px; color:#fff; font-size:13px; font-weight:700; }
     .token-alert-body { padding:24px 28px; }
     .token-alert-pkg { background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 100%); border:2px solid #4f46e5; border-radius:14px; padding:20px 22px; margin-bottom:20px; position:relative; }
-    .token-alert-pkg .pop-label { position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#4f46e5; color:#fff; font-size:11px; font-weight:800; padding:4px 16px; border-radius:20px; white-space:nowrap; letter-spacing:.3px; }
+    .token-alert-pkg .pop-label { position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:#a3e635; color:#fff; font-size:11px; font-weight:800; padding:4px 16px; border-radius:20px; white-space:nowrap; letter-spacing:.3px; }
     .token-alert-pkg-row { display:flex; justify-content:space-between; align-items:center; }
-    .token-alert-pkg-name { font-size:18px; font-weight:800; color:#1a1a2e; }
-    .token-alert-pkg-price { font-size:28px; font-weight:900; color:#4f46e5; letter-spacing:-1px; }
+    .token-alert-pkg-name { font-size:18px; font-weight:800; color:#e6edf3; }
+    .token-alert-pkg-price { font-size:28px; font-weight:900; color:#a3e635; letter-spacing:-1px; }
     .token-alert-pkg-price sup { font-size:14px; font-weight:700; vertical-align:super; }
     .token-alert-pkg-features { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-    .token-alert-pkg-features span { background:#fff; border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:#4f46e5; border:1px solid #c7d2fe; }
+    .token-alert-pkg-features span { background:#161b22; border-radius:20px; padding:4px 12px; font-size:12px; font-weight:600; color:#a3e635; border:1px solid #c7d2fe; }
     .token-alert-urgency { display:flex; align-items:center; gap:8px; background:#fef9c3; border:1px solid #fde68a; border-radius:10px; padding:10px 14px; margin-bottom:16px; font-size:13px; color:#78350f; font-weight:600; }
-    .btn-token-alert-buy { width:100%; padding:15px; background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%); color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:800; cursor:pointer; letter-spacing:.3px; transition:all .2s; box-shadow:0 4px 16px rgba(79,70,229,.4); }
+    .btn-token-alert-buy { width:100%; padding:15px; background:linear-gradient(135deg,#1a3a00 0%,#365314 100%); color:#fff; border:none; border-radius:12px; font-size:16px; font-weight:800; cursor:pointer; letter-spacing:.3px; transition:all .2s; box-shadow:0 4px 16px rgba(79,70,229,.4); }
     .btn-token-alert-buy:hover { transform:translateY(-1px); box-shadow:0 6px 24px rgba(79,70,229,.5); }
-    .btn-token-alert-later { width:100%; padding:10px; background:transparent; color:#aaa; border:none; cursor:pointer; font-size:13px; margin-top:8px; transition:color .2s; }
-    .btn-token-alert-later:hover { color:#666; }
+    .btn-token-alert-later { width:100%; padding:10px; background:transparent; color:#6e7681; border:none; cursor:pointer; font-size:13px; margin-top:8px; transition:color .2s; }
+    .btn-token-alert-later:hover { color:#8b949e; }
     .token-progress-bar { height:8px; background:#fee2e2; border-radius:8px; margin:12px 0 4px; overflow:hidden; }
     .token-progress-fill { height:100%; border-radius:8px; transition:width .5s ease; }
 
     /* FLOW DESIGNER */
     .flow-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
     .flow-toolbar input { flex:1; min-width:200px; padding:9px 14px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:14px; }
-    .flow-toolbar input:focus { outline:none; border-color:#4f46e5; }
-    .flow-layout { display:grid; grid-template-columns:200px 1fr; gap:0; height:calc(100vh - 220px); min-height:500px; background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); overflow:hidden; }
+    .flow-toolbar input:focus { outline:none; border-color:#a3e635; }
+    .flow-layout { display:grid; grid-template-columns:200px 1fr; gap:0; height:calc(100vh - 220px); min-height:500px; background:#161b22; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); overflow:hidden; }
     .flow-palette { border-right:1px solid #f1f5f9; padding:16px 12px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; background:#fafafa; }
-    .flow-palette h4 { font-size:11px; font-weight:700; color:#888; text-transform:uppercase; letter-spacing:.8px; margin-bottom:4px; }
-    .palette-node { padding:10px 12px; background:#fff; border:1.5px solid #e5e7eb; border-radius:8px; cursor:grab; font-size:13px; font-weight:600; text-align:center; transition:all .2s; user-select:none; }
-    .palette-node:hover { border-color:#4f46e5; background:#eef2ff; color:#4f46e5; }
+    .flow-palette h4 { font-size:11px; font-weight:700; color:#6e7681; text-transform:uppercase; letter-spacing:.8px; margin-bottom:4px; }
+    .palette-node { padding:10px 12px; background:#161b22; border:1.5px solid #e5e7eb; border-radius:8px; cursor:grab; font-size:13px; font-weight:600; text-align:center; transition:all .2s; user-select:none; }
+    .palette-node:hover { border-color:#a3e635; background:#1a2e00; color:#a3e635; }
     .palette-node:active { cursor:grabbing; }
-    .flow-canvas-wrap { position:relative; overflow:hidden; background:#f8fafc; }
+    .flow-canvas-wrap { position:relative; overflow:hidden; background:#1c2128; }
     #drawflow { width:100%; height:100%; }
     .drawflow { background-color:#f8fafc !important; background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px) !important; background-size: 24px 24px !important; }
-    .drawflow .drawflow-node { background:#fff; border:2px solid #e5e7eb; border-radius:10px; min-width:140px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
-    .drawflow .drawflow-node.selected { border-color:#4f46e5; box-shadow:0 0 0 3px rgba(79,70,229,.2); }
-    .drawflow .drawflow-node .title-box { background:#4f46e5; color:#fff; padding:8px 12px; border-radius:8px 8px 0 0; font-size:12px; font-weight:700; }
-    .drawflow .drawflow-node .box { padding:12px; font-size:12px; color:#444; }
+    .drawflow .drawflow-node { background:#161b22; border:2px solid #e5e7eb; border-radius:10px; min-width:140px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+    .drawflow .drawflow-node.selected { border-color:#a3e635; box-shadow:0 0 0 3px rgba(79,70,229,.2); }
+    .drawflow .drawflow-node .title-box { background:#a3e635; color:#fff; padding:8px 12px; border-radius:8px 8px 0 0; font-size:12px; font-weight:700; }
+    .drawflow .drawflow-node .box { padding:12px; font-size:12px; color:#c9d1d9; }
     .drawflow .drawflow-node.node-inicio .title-box { background:#16a34a; }
     .drawflow .drawflow-node.node-fim .title-box { background:#dc2626; }
     .drawflow .drawflow-node.node-qualificado .title-box { background:#16a34a; }
     .drawflow .drawflow-node.node-desqualificado .title-box { background:#dc2626; }
     .drawflow .drawflow-node.node-condicao .title-box { background:#ca8a04; }
-    .drawflow .drawflow-node.node-pergunta .title-box { background:#7c3aed; }
+    .drawflow .drawflow-node.node-pergunta .title-box { background:#65a30d; }
     .drawflow .drawflow-node.node-followup .title-box { background:#0891b2; }
     .drawflow .drawflow-node.node-aguardar .title-box { background:#d97706; }
     .drawflow-delete { background:#ef4444 !important; }
     .flow-saved-list { display:flex; flex-direction:column; gap:8px; }
-    .flow-saved-item { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#f8fafc; border-radius:8px; font-size:13px; cursor:pointer; border:1.5px solid transparent; transition:all .2s; }
-    .flow-saved-item:hover { border-color:#4f46e5; background:#eef2ff; }
-    .flow-empty-canvas { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#aaa; gap:8px; pointer-events:none; }
+    .flow-saved-item { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#1c2128; border-radius:8px; font-size:13px; cursor:pointer; border:1.5px solid transparent; transition:all .2s; }
+    .flow-saved-item:hover { border-color:#a3e635; background:#1a2e00; }
+    .flow-empty-canvas { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#6e7681; gap:8px; pointer-events:none; }
     .flow-empty-canvas .icon { font-size:48px; }
   </style>
   <link rel="stylesheet" href="https://unpkg.com/drawflow/dist/drawflow.min.css" />
@@ -511,11 +598,11 @@
             <button class="btn-save" onclick="checkWAStatus()" style="padding:10px 20px;">🔄 Verificar Status</button>
             <button class="btn-wa-disconnect" id="btn-desconectar" onclick="disconnectWA()" style="display:none;">⏹ Desconectar</button>
           </div>
-          <div style="margin-top:20px;padding:16px;background:#f8fafc;border-radius:10px;font-size:13px;color:#555;">
-            <div style="font-weight:700;margin-bottom:8px;color:#1a1a2e;">📋 Informações da Instância</div>
+          <div style="margin-top:20px;padding:16px;background:#1c2128;border-radius:10px;font-size:13px;color:#8b949e;">
+            <div style="font-weight:700;margin-bottom:8px;color:#e6edf3;">📋 Informações da Instância</div>
             <div style="display:flex;flex-direction:column;gap:6px;">
-              <div><strong>Instância:</strong> <code id="wa-instance-display" style="background:#e0e7ff;color:#4f46e5;padding:2px 6px;border-radius:4px;">—</code></div>
-              <div><strong>Servidor:</strong> <code style="background:#e0e7ff;color:#4f46e5;padding:2px 6px;border-radius:4px;font-size:11px;">Proxy Seguro (evo-proxy)</code></div>
+              <div><strong>Instância:</strong> <code id="wa-instance-display" style="background:#1a3a00;color:#a3e635;padding:2px 6px;border-radius:4px;">—</code></div>
+              <div><strong>Servidor:</strong> <code style="background:#1a3a00;color:#a3e635;padding:2px 6px;border-radius:4px;font-size:11px;">Proxy Seguro (evo-proxy)</code></div>
             </div>
           </div>
         </div>
@@ -564,7 +651,7 @@
         <div class="chat-sidebar">
           <div class="chat-sidebar-header">
             <h3>Conversas Ativas</h3>
-            <span id="conv-count" style="font-size:12px;color:#888;">0</span>
+            <span id="conv-count" style="font-size:12px;color:#6e7681;">0</span>
           </div>
           <input class="chat-search" type="text" placeholder="🔍 Buscar número..." id="chat-search" oninput="filterConversations(this.value)" />
           <div class="conv-list" id="conv-list">
@@ -638,11 +725,11 @@
           <button class="btn-secondary" style="padding:9px 18px;font-size:13px;" onclick="openNewLeadModal()">➕ Novo Lead</button>
           <button class="btn-secondary" style="padding:9px 18px;font-size:13px;" onclick="openStagesModal()">⚙️ Colunas</button>
         </div>
-        <div style="font-size:12px;color:#888;">Arraste os cards entre as colunas para atualizar o estágio</div>
+        <div style="font-size:12px;color:#6e7681;">Arraste os cards entre as colunas para atualizar o estágio</div>
       </div>
       <div class="crm-board-wrap">
         <div class="crm-board" id="crm-board">
-          <div style="padding:40px;color:#aaa;font-size:14px;">Carregando CRM...</div>
+          <div style="padding:40px;color:#6e7681;font-size:14px;">Carregando CRM...</div>
         </div>
       </div>
     </div>
@@ -652,7 +739,7 @@
       <div class="modal-box crm-modal-box">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0;">
           <h2 id="crm-modal-title" style="font-size:16px;font-weight:700;">Lead</h2>
-          <button onclick="closeCRMModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;padding:0;">✕</button>
+          <button onclick="closeCRMModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6e7681;padding:0;">✕</button>
         </div>
         <div class="crm-modal-tabs">
           <div class="crm-tab active" onclick="switchCRMTab('dados',this)">📋 Dados</div>
@@ -706,7 +793,7 @@
         </div>
         <!-- TAB CONVERSA -->
         <div class="crm-tab-content" id="crm-tab-conversa">
-          <div style="background:#f8fafc;border-radius:10px;padding:16px;margin-bottom:16px;font-size:13px;color:#555;line-height:1.6;">
+          <div style="background:#1c2128;border-radius:10px;padding:16px;margin-bottom:16px;font-size:13px;color:#8b949e;line-height:1.6;">
             <strong>💬 Entrar na conversa</strong> abre o Bate-Papo com este lead e <strong>pausa o agente automaticamente</strong>. Você assume o controle diretamente. Quando quiser que o agente retome, clique em "▶️ Retomar agente" no Bate-Papo — ele saberá exatamente onde parou e continuará o atendimento.
           </div>
           <button class="btn-entrar-conversa" onclick="entrarNaConversa()">
@@ -735,7 +822,7 @@
       <div class="modal-box" style="width:480px;position:relative;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
           <h2 style="font-size:16px;font-weight:700;">⚙️ Gerenciar Colunas</h2>
-          <button onclick="closeStagesModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#888;padding:0;">✕</button>
+          <button onclick="closeStagesModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6e7681;padding:0;">✕</button>
         </div>
         <p style="font-size:12px;color:#999;margin-bottom:8px;">Arraste para reordenar · Clique na bolinha para trocar a cor · Edite o nome diretamente</p>
         <div class="stages-list" id="stages-list"></div>
@@ -807,7 +894,27 @@
 
     <!-- PDFs -->
     <div class="page" id="page-pdfs">
-      <div class="page-header"><h1>📄 Base de Conhecimento (PDFs)</h1><p>Documentos que o agente consulta durante as conversas</p></div>
+      <div class="page-header"><h1>📄 Base de Conhecimento</h1><p>Documentos e links que o Agente de IA consulta durante as conversas</p></div>
+
+      <!-- CARD: Adicionar por URL/Link -->
+      <div class="card">
+        <h3>🌐 Adicionar Link da Web</h3>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">O agente vai extrair e indexar o conteúdo da página automaticamente.</p>
+        <div class="field-group">
+          <label>URL da página</label>
+          <input type="url" id="url-link" placeholder="https://exemplo.com/artigo-inss" style="font-family:monospace;font-size:13px;" />
+        </div>
+        <div class="field-group">
+          <label>Nome / descrição</label>
+          <input type="text" id="url-nome" placeholder="Ex: Tabela de Salários de Benefício 2025" />
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
+          <button class="btn-save" id="btn-add-url" onclick="addURLKnowledge()" style="padding:10px 20px;">🌐 Indexar link</button>
+          <span class="save-status" id="url-status"></span>
+        </div>
+      </div>
+
+      <!-- CARD: Upload PDF -->
       <div class="card">
         <h3>⬆️ Enviar novo PDF</h3>
         <div class="field-group"><label>Nome do documento</label>
@@ -905,7 +1012,7 @@
 
       <!-- COMPRAR TOKENS EXTRAS -->
       <div class="pricing-section-title">⚡ Comprar Tokens Extras</div>
-      <p style="font-size:13px;color:#888;margin-bottom:16px;margin-top:-8px;">
+      <p style="font-size:13px;color:#6e7681;margin-bottom:16px;margin-top:-8px;">
         Seu plano já inclui <strong>5M tokens/mês</strong>. Precisa atender mais leads? Adicione tokens extras a qualquer momento.
       </p>
       <div class="pricing-grid">
@@ -1025,7 +1132,7 @@
           <div class="palette-node" draggable="true" ondragstart="drag(event,'aguardar')">⏳ Aguardar</div>
 
           <h4 style="margin-top:16px">Fluxos salvos</h4>
-          <div id="saved-flows-list"><p style="font-size:12px;color:#aaa;text-align:center;padding:8px;">Nenhum fluxo salvo</p></div>
+          <div id="saved-flows-list"><p style="font-size:12px;color:#6e7681;text-align:center;padding:8px;">Nenhum fluxo salvo</p></div>
         </div>
 
         <!-- Canvas Drawflow -->
@@ -1076,14 +1183,14 @@
     </div>
     <div class="token-alert-body">
       <!-- Barra de progresso do saldo -->
-      <div style="font-size:12px;color:#888;margin-bottom:4px;display:flex;justify-content:space-between;">
+      <div style="font-size:12px;color:#6e7681;margin-bottom:4px;display:flex;justify-content:space-between;">
         <span>Saldo atual</span>
         <span id="token-alert-pct-txt">—</span>
       </div>
       <div class="token-progress-bar">
         <div class="token-progress-fill" id="token-alert-progress" style="width:0%;background:#ef4444;"></div>
       </div>
-      <div style="font-size:11px;color:#aaa;text-align:right;margin-bottom:16px;">
+      <div style="font-size:11px;color:#6e7681;text-align:right;margin-bottom:16px;">
         de 5.000.000 tokens do plano base
       </div>
 
@@ -1098,11 +1205,11 @@
         <div class="token-alert-pkg-row">
           <div>
             <div class="token-alert-pkg-name">➕➕ Médio</div>
-            <div style="font-size:12px;color:#666;margin-top:2px;">+270 atendimentos extras</div>
+            <div style="font-size:12px;color:#8b949e;margin-top:2px;">+270 atendimentos extras</div>
           </div>
           <div style="text-align:right;">
             <div class="token-alert-pkg-price"><sup>R$</sup>177</div>
-            <div style="font-size:11px;color:#888;">pagamento via PIX</div>
+            <div style="font-size:11px;color:#6e7681;">pagamento via PIX</div>
           </div>
         </div>
         <div class="token-alert-pkg-features">
@@ -1130,7 +1237,7 @@
     <div class="buy-modal-pkg-info">
       <div class="buy-modal-pkg-row">
         <span id="buy-pkg-name" style="font-weight:700;font-size:16px;"></span>
-        <span id="buy-pkg-price" style="font-size:22px;font-weight:800;color:#4f46e5;"></span>
+        <span id="buy-pkg-price" style="font-size:22px;font-weight:800;color:#a3e635;"></span>
       </div>
       <div class="buy-modal-pkg-grid">
         <div id="buy-pkg-leads"></div>
@@ -1166,7 +1273,7 @@
     <div class="field-group">
       <label>Tokens a adicionar</label>
       <input type="number" id="add-credits-tokens" placeholder="Ex: 10000000" min="1000000" step="1000000" />
-      <div style="font-size:12px;color:#888;margin-top:4px;">Referência: 10M tokens ≈ 270 leads</div>
+      <div style="font-size:12px;color:#6e7681;margin-top:4px;">Referência: 10M tokens ≈ 270 leads</div>
     </div>
     <div class="field-group">
       <label>Observação (opcional)</label>
@@ -1686,7 +1793,7 @@
 
   async function loadCRM() {
     const board = document.getElementById('crm-board');
-    board.innerHTML = '<div style="padding:40px;color:#aaa;font-size:14px;">Carregando...</div>';
+    board.innerHTML = '<div style="padding:40px;color:#6e7681;font-size:14px;">Carregando...</div>';
     await loadCRMStages();
     const { data, error } = await db.from('leads')
       .select('*, lead_tarefas(id, concluida)')
@@ -1872,7 +1979,7 @@
 
   function renderTarefas(tarefas) {
     const el = document.getElementById('crm-tarefas-list');
-    if (!tarefas.length) { el.innerHTML = '<div style="color:#aaa;font-size:13px;padding:8px 0;">Nenhuma tarefa ainda. Adicione abaixo.</div>'; return; }
+    if (!tarefas.length) { el.innerHTML = '<div style="color:#6e7681;font-size:13px;padding:8px 0;">Nenhuma tarefa ainda. Adicione abaixo.</div>'; return; }
     el.innerHTML = tarefas.map(t => `<div class="tarefa-item" data-tarefa-id="${t.id}">
       <input type="checkbox" ${t.concluida?'checked':''} onchange="toggleTarefa('${t.id}',this.checked)" />
       <span class="tarefa-desc ${t.concluida?'done':''}">${escapeHtml(t.descricao)}</span>
@@ -2203,6 +2310,46 @@
     document.getElementById('pdf-filename').textContent = input.files[0]?.name || 'Clique para selecionar um PDF';
   }
 
+  // ── ADICIONAR LINK WEB À BASE DE CONHECIMENTO ────────────────────────
+  async function addURLKnowledge() {
+    const url   = document.getElementById('url-link').value.trim();
+    const nome  = document.getElementById('url-nome').value.trim();
+    const btn    = document.getElementById('btn-add-url');
+    const status = document.getElementById('url-status');
+    if (!url || !nome) { alert('Preencha a URL e a descrição.'); return; }
+    if (!url.startsWith('http')) { alert('URL inválida. Deve começar com http:// ou https://'); return; }
+
+    btn.disabled = true; btn.textContent = '⏳ Indexando...'; status.textContent = '';
+
+    try {
+      const { data: { session } } = await db.auth.getSession();
+      if (!session) throw new Error('Sessão expirada.');
+
+      // Busca conteúdo da URL via Supabase Edge Function (process-pdf aceita url)
+      const res = await fetch(PROCESS_PDF_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'apikey': SUPABASE_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ url, nome, categoria: 'Web' })
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Erro desconhecido');
+
+      status.textContent = `✅ Link indexado! ${result.chunks || '?'} trechos na base.`;
+      status.style.color = '#4ade80';
+      document.getElementById('url-link').value = '';
+      document.getElementById('url-nome').value = '';
+      loadPDFList();
+    } catch(e) {
+      status.textContent = '❌ ' + e.message; status.style.color = '#f87171';
+    }
+    btn.disabled = false; btn.textContent = '🌐 Indexar link';
+    setTimeout(() => status.textContent = '', 8000);
+  }
+
   async function uploadPDF() {
     const nome = document.getElementById('pdf-nome').value.trim();
     const categoria = document.getElementById('pdf-categoria').value;
@@ -2248,7 +2395,7 @@
     const { data } = await db.from('documentos_conhecimento').select('metadata').order('id', { ascending: false }).limit(200);
     const el = document.getElementById('pdf-list');
     if (!data || !data.length) {
-      el.innerHTML = '<p class="empty-state">Nenhum PDF na base ainda.</p>'; return;
+      el.innerHTML = '<p class="empty-state">Nenhum documento na base ainda.</p>'; return;
     }
     // Agrupa por nome (cada doc pode ter vários chunks)
     const unique = {};
@@ -2257,14 +2404,18 @@
       if (!unique[k]) unique[k] = { ...d.metadata, chunks: 0 };
       unique[k].chunks++;
     });
-    el.innerHTML = '<div class="pdf-list">' + Object.entries(unique).map(([nome, meta]) =>
-      `<div class="pdf-item">
-        <span>📄 ${meta.nome || nome}</span>
+    el.innerHTML = '<div class="pdf-list">' + Object.entries(unique).map(([nome, meta]) => {
+      const isWeb = meta.categoria === 'Web' || (meta.url && meta.url.startsWith('http'));
+      const icon  = isWeb ? '🌐' : '📄';
+      const urlTag = isWeb && meta.url ? `<a href="${meta.url}" target="_blank" style="font-size:11px;color:var(--lime);text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;" title="${meta.url}">${meta.url.replace(/^https?:\/\//, '').substring(0,40)}…</a>` : '';
+      return `<div class="pdf-item">
+        <span>${icon} ${meta.nome || nome}</span>
+        ${urlTag}
         <span class="pdf-badge">${meta.categoria || 'Geral'}</span>
-        <span class="pdf-chunks">${meta.chunks} chunks</span>
-        <button class="btn-delete-pdf" onclick="deletePDF('${nome.replace(/'/g,"\\'")}')" title="Remover da base de conhecimento">🗑️</button>
-      </div>`
-    ).join('') + '</div>';
+        <span class="pdf-chunks">${meta.chunks} trechos</span>
+        <button class="btn-delete-pdf" onclick="deletePDF('${nome.replace(/'/g,"\\'")}')" title="Remover da base">🗑️</button>
+      </div>`;
+    }).join('') + '</div>';
   }
 
   async function deletePDF(nome) {
@@ -2319,10 +2470,10 @@
         return `<tr>
           <td style="font-weight:600">${escapeHtml(p.display_name || '—')}</td>
           <td><span class="badge ${p.role==='admin'?'badge-purple':'badge-blue'}">${p.role==='admin'?'🔑 Admin':'👤 Cliente'}</span></td>
-          <td><code style="background:#f0f2f5;padding:2px 7px;border-radius:4px;font-size:12px;">${escapeHtml(p.evo_instance||'—')}</code></td>
+          <td><code style="background:#0d1117;padding:2px 7px;border-radius:4px;font-size:12px;">${escapeHtml(p.evo_instance||'—')}</code></td>
           <td><span class="badge ${p.active?'badge-green':'badge-red'}">${p.active?'✅ Ativo':'❌ Inativo'}</span></td>
           <td style="font-weight:700;color:${cor};font-size:13px;">${(saldo/1000000).toFixed(1)}M</td>
-          <td style="font-size:13px;color:#555;">${leads.toLocaleString('pt-BR')}</td>
+          <td style="font-size:13px;color:#8b949e;">${leads.toLocaleString('pt-BR')}</td>
           <td style="display:flex;gap:6px;flex-wrap:wrap;">
             ${p.role !== 'admin' ? `
               <button onclick="toggleClient('${p.id}',${p.active})" style="padding:5px 10px;font-size:12px;" class="btn-secondary">${p.active?'Desativar':'Ativar'}</button>
@@ -2428,10 +2579,10 @@
     el.innerHTML = `<table>
       <thead><tr><th>Data</th><th>Pacote</th><th>Tokens</th><th>Valor</th><th>Status</th></tr></thead>
       <tbody>${data.map(p => `<tr>
-        <td style="font-size:12px;color:#888">${new Date(p.criado_em).toLocaleDateString('pt-BR')}</td>
+        <td style="font-size:12px;color:#6e7681">${new Date(p.criado_em).toLocaleDateString('pt-BR')}</td>
         <td style="font-weight:600">${PACOTES_CREDITOS[p.pacote]?.nome || p.pacote}</td>
         <td>${(p.tokens/1000000).toFixed(1)}M tokens</td>
-        <td style="font-weight:700;color:#4f46e5">${p.preco_brl ? 'R$ '+p.preco_brl : p.preco_usd ? '$'+p.preco_usd : '—'}</td>
+        <td style="font-weight:700;color:#a3e635">${p.preco_brl ? 'R$ '+p.preco_brl : p.preco_usd ? '$'+p.preco_usd : '—'}</td>
         <td><span class="pedidos-badge ${p.status}">${p.status === 'pendente' ? '⏳ Pendente' : p.status === 'aprovado' ? '✅ Aprovado' : '❌ Recusado'}</span></td>
       </tr>`).join('')}</tbody>
     </table>`;
@@ -2607,11 +2758,11 @@
     el.innerHTML = `<table>
       <thead><tr><th>Data</th><th>Cliente</th><th>Pacote</th><th>Tokens</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
       <tbody>${data.map(p => `<tr>
-        <td style="font-size:12px;color:#888">${new Date(p.criado_em).toLocaleDateString('pt-BR')}</td>
+        <td style="font-size:12px;color:#6e7681">${new Date(p.criado_em).toLocaleDateString('pt-BR')}</td>
         <td style="font-weight:600">${escapeHtml(p.profiles?.display_name || '—')}</td>
         <td>${PACOTES_CREDITOS[p.pacote]?.nome || p.pacote}</td>
         <td>${(p.tokens/1000000).toFixed(1)}M tokens</td>
-        <td style="font-weight:700;color:#4f46e5">${p.preco_brl ? 'R$ '+p.preco_brl : p.preco_usd ? '$'+p.preco_usd : '—'}</td>
+        <td style="font-weight:700;color:#a3e635">${p.preco_brl ? 'R$ '+p.preco_brl : p.preco_usd ? '$'+p.preco_usd : '—'}</td>
         <td><span class="pedidos-badge ${p.status}">${p.status === 'pendente' ? '⏳ Pendente' : p.status === 'aprovado' ? '✅ Aprovado' : '❌ Recusado'}</span></td>
         <td>
           ${p.status === 'pendente' ? `
@@ -2679,7 +2830,7 @@
         <td class="history-row-${h.status}">${h.status === 'pago' ? '✅ Pago' : h.status === 'pendente' ? '⏳ Pendente' : h.status === 'atrasado' ? '🔴 Atrasado' : h.status}</td>
         <td>${h.vencimento ? new Date(h.vencimento+'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
         <td>${h.pago_em ? new Date(h.pago_em).toLocaleDateString('pt-BR') : '—'}</td>
-        <td style="color:#888;font-size:12px">${h.observacao || '—'}</td>
+        <td style="color:#6e7681;font-size:12px">${h.observacao || '—'}</td>
       </tr>`).join('')}</tbody>
     </table>`;
   }
@@ -2700,7 +2851,7 @@
       <thead><tr><th>Cliente</th><th>Instância WA</th><th>Status</th><th>Próx. Cobrança</th><th>Valor</th><th>Ações</th></tr></thead>
       <tbody>${data.map(a => `<tr>
         <td style="font-weight:600">${escapeHtml(a.profiles?.display_name || '—')}</td>
-        <td><code style="background:#f0f2f5;padding:2px 7px;border-radius:4px;font-size:12px;">${escapeHtml(a.profiles?.evo_instance || '—')}</code></td>
+        <td><code style="background:#0d1117;padding:2px 7px;border-radius:4px;font-size:12px;">${escapeHtml(a.profiles?.evo_instance || '—')}</code></td>
         <td><span class="badge ${a.status === 'ativa' ? 'badge-green' : a.status === 'inadimplente' ? 'badge-red' : a.status === 'trial' ? 'badge-yellow' : 'badge-blue'}">${STATUS_LABELS[a.status] || a.status}</span></td>
         <td style="font-size:13px">${a.proxima_cobranca ? new Date(a.proxima_cobranca+'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td>
         <td style="font-weight:700">R$ ${Number(a.valor || 497).toFixed(2).replace('.',',')}</td>
@@ -2737,9 +2888,9 @@
 
   const NODE_TEMPLATES = {
     inicio:          { title:'🟢 Início',          inputs:0, outputs:1, html:'<div class="box">Ponto de entrada do fluxo</div>', cls:'node-inicio' },
-    mensagem:        { title:'💬 Mensagem Agente IA',     inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Texto da mensagem..."></textarea></div>', cls:'' },
-    pergunta:        { title:'❓ Pergunta',          inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Pergunta para o lead..."></textarea></div>', cls:'node-pergunta' },
-    condicao:        { title:'🔀 Condição',          inputs:1, outputs:2, html:'<div class="box"><input style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;" placeholder="Se contém..." /><div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-top:6px;"><span>Saída 1: Sim</span><span>Saída 2: Não</span></div></div>', cls:'node-condicao' },
+    mensagem:        { title:'💬 Mensagem Agente IA',     inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Texto da mensagem..."></textarea></div>', cls:'' },
+    pergunta:        { title:'❓ Pergunta',          inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Pergunta para o lead..."></textarea></div>', cls:'node-pergunta' },
+    condicao:        { title:'🔀 Condição',          inputs:1, outputs:2, html:'<div class="box"><input style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;" placeholder="Se contém..." /><div style="display:flex;justify-content:space-between;font-size:10px;color:#6e7681;margin-top:6px;"><span>Saída 1: Sim</span><span>Saída 2: Não</span></div></div>', cls:'node-condicao' },
     qualificado:     { title:'✅ Lead Qualificado', inputs:1, outputs:0, html:'<div class="box" style="color:#16a34a">Registra lead como qualificado e notifica advogado</div>', cls:'node-qualificado' },
     desqualificado:  { title:'❌ Desqualificado',   inputs:1, outputs:0, html:'<div class="box" style="color:#dc2626">Registra lead como desqualificado</div>', cls:'node-desqualificado' },
     fim:             { title:'🔴 Fim',              inputs:1, outputs:0, html:'<div class="box">Encerra a conversa</div>', cls:'node-fim' },
@@ -2747,13 +2898,13 @@
       title: '📤 Disparo / Follow-up',
       inputs: 1, outputs: 1,
       html: `<div class="box">
-        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">📱 Número destino</label>
-        <input style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:5px;" placeholder="5511999999999 ou {{numero_lead}}" class="followup-numero" />
-        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin:8px 0 4px;">💬 Mensagem</label>
-        <textarea style="width:100%;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:6px;resize:vertical;min-height:60px;" placeholder="Olá {{nome}}! Tudo bem? Queria acompanhar o seu caso..." class="followup-msg"></textarea>
-        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin:8px 0 4px;">⏱ Enviar após (minutos)</label>
-        <input type="number" style="width:80px;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:5px;" value="60" min="1" class="followup-delay" />
-        <div style="font-size:10px;color:#888;margin-top:6px;">Variáveis: {{nome}}, {{numero_lead}}, {{tese}}</div>
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">📱 Número destino</label>
+        <input style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:5px;" placeholder="5511999999999 ou {{numero_lead}}" class="followup-numero" />
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin:8px 0 4px;">💬 Mensagem</label>
+        <textarea style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;resize:vertical;min-height:60px;" placeholder="Olá {{nome}}! Tudo bem? Queria acompanhar o seu caso..." class="followup-msg"></textarea>
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin:8px 0 4px;">⏱ Enviar após (minutos)</label>
+        <input type="number" style="width:80px;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:5px;" value="60" min="1" class="followup-delay" />
+        <div style="font-size:10px;color:#6e7681;margin-top:6px;">Variáveis: {{nome}}, {{numero_lead}}, {{tese}}</div>
       </div>`,
       cls: 'node-followup'
     },
@@ -2761,12 +2912,12 @@
       title: '⏳ Aguardar',
       inputs: 1, outputs: 1,
       html: `<div class="box">
-        <label style="font-size:11px;font-weight:600;color:#555;display:block;margin-bottom:4px;">Aguardar resposta por</label>
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Aguardar resposta por</label>
         <div style="display:flex;align-items:center;gap:6px;">
-          <input type="number" style="width:70px;font-size:12px;border:1px solid #e5e7eb;border-radius:6px;padding:5px;" value="24" min="1" class="aguardar-horas" />
-          <span style="font-size:12px;color:#555">horas</span>
+          <input type="number" style="width:70px;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:5px;" value="24" min="1" class="aguardar-horas" />
+          <span style="font-size:12px;color:#8b949e">horas</span>
         </div>
-        <div style="font-size:10px;color:#888;margin-top:6px;">Pausa o fluxo até receber mensagem ou o tempo esgotar</div>
+        <div style="font-size:10px;color:#6e7681;margin-top:6px;">Pausa o fluxo até receber mensagem ou o tempo esgotar</div>
       </div>`,
       cls: 'node-aguardar'
     },
@@ -2847,7 +2998,7 @@
     const { data } = await db.from('fluxos').select('id,nome,atualizado_em').order('atualizado_em', { ascending: false }).limit(20);
     const el = document.getElementById('saved-flows-list');
     if (!data || !data.length) {
-      el.innerHTML = '<p style="font-size:12px;color:#aaa;text-align:center;padding:8px;">Nenhum fluxo salvo</p>'; return;
+      el.innerHTML = '<p style="font-size:12px;color:#6e7681;text-align:center;padding:8px;">Nenhum fluxo salvo</p>'; return;
     }
     el.innerHTML = data.map(f => `
       <div class="flow-saved-item" onclick="loadFlow('${f.id}','${escapeHtml(f.nome)}')">
@@ -2917,7 +3068,7 @@
           const cor = r.saldo_tokens > 2000000 ? '#22c55e' : r.saldo_tokens > 500000 ? '#f59e0b' : '#ef4444';
           return '<tr>' +
             '<td style="font-weight:600">' + (r.display_name||'—') + '</td>' +
-            '<td style="font-size:12px;color:#888">' + (r.email||'—') + '</td>' +
+            '<td style="font-size:12px;color:#6e7681">' + (r.email||'—') + '</td>' +
             '<td style="font-weight:700;color:' + cor + '">' + (r.saldo_tokens||0).toLocaleString('pt-BR') + '</td>' +
             '<td>' + (r.tokens_usados_mes||0).toLocaleString('pt-BR') + '</td>' +
             '<td>' + (r.total_comprado||0).toLocaleString('pt-BR') + '</td>' +
