@@ -1038,6 +1038,42 @@
         1320,
         420
       ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/upsert_lead",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_numero_whatsapp: $('Normaliza e filtra mensagem').first().json.numero, p_user_id: $('Resolve cliente pelo instanceName').first().json[0]?.id || $('Resolve cliente pelo instanceName').first().json?.id, p_stage: 'novo_contato' }) }}",
+        "options": {}
+      },
+      "id": "node-registra-novo-contato",
+      "name": "Registra novo contato",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1430,
+        400
+      ],
+      "notes": "Upsert mínimo: garante que lead existe com stage=novo_contato para leads novos. Smart stage logic impede rebaixamento de leads existentes."
     }
   ],
   "connections": {
@@ -1118,7 +1154,7 @@
       "main": [
         [
           {
-            "node": "Carrega configurações do Supabase",
+            "node": "Registra novo contato",
             "type": "main",
             "index": 0
           }
@@ -1544,6 +1580,17 @@
         [
           {
             "node": "Resolve cliente pelo instanceName",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Registra novo contato": {
+      "main": [
+        [
+          {
+            "node": "Carrega configurações do Supabase",
             "type": "main",
             "index": 0
           }
