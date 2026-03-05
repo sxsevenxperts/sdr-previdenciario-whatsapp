@@ -753,7 +753,7 @@
         <span class="icon">✅</span> Qualificação
       </div>
       <div class="nav-item" onclick="showPage('pdfs', this)">
-        <span class="icon">📄</span> Base de PDFs
+        <span class="icon">📚</span> Base de Conhecimento
       </div>
       <div class="nav-section">Resultados</div>
       <div class="nav-item" onclick="showPage('leads', this)">
@@ -1084,8 +1084,9 @@
           <div class="field-group" style="margin:0;grid-column:1/-1;"><label>Tese jurídica</label><input type="text" id="nl-tese" placeholder="Ex: Aposentadoria por invalidez" /></div>
           <div class="field-group" style="margin:0;grid-column:1/-1;"><label>Assunto / Observação inicial</label><input type="text" id="nl-assunto" placeholder="Ex: Quer saber sobre aposentadoria, aguardando documentos" /></div>
         </div>
-        <div class="modal-actions" style="margin-top:18px;">
-          <button class="btn-save" onclick="createManualLead()">✅ Criar lead</button>
+        <div id="nl-error" style="display:none;color:#f87171;font-size:13px;margin-top:10px;"></div>
+        <div class="modal-actions" style="margin-top:12px;">
+          <button class="btn-save" id="btn-create-lead" onclick="createManualLead()">✅ Criar lead</button>
           <button class="btn-secondary" onclick="closeNewLeadModal()">Cancelar</button>
         </div>
       </div>
@@ -1101,8 +1102,9 @@
         <div style="font-size:13px;color:#8b949e;margin-bottom:16px;line-height:1.5;">Um funil é um fluxo de automação que organiza os leads em um kanban dedicado. Você pode criar funis para diferentes campanhas, produtos ou equipes.</div>
         <div class="field-group"><label>Nome do funil</label><input type="text" id="nf-nome" placeholder="Ex: Campanha Setembro, Leads Facebook..." /></div>
         <div class="field-group"><label>Descrição <span style="color:#6e7681;font-weight:400;">(opcional)</span></label><input type="text" id="nf-descricao" placeholder="Finalidade deste funil" /></div>
-        <div class="modal-actions" style="margin-top:18px;">
-          <button class="btn-save" onclick="createNewFunil()">✅ Criar funil</button>
+        <div style="font-size:12px;color:#6e7681;margin-bottom:10px;" id="nf-capacity"></div>
+        <div class="modal-actions" style="margin-top:8px;">
+          <button class="btn-save" id="btn-create-funil" onclick="createNewFunil()">✅ Criar funil</button>
           <button class="btn-secondary" onclick="closeNewFunilModal()">Cancelar</button>
         </div>
         <div id="nf-error" class="error-msg" style="margin-top:10px;display:none;"></div>
@@ -1284,12 +1286,21 @@
 
     <!-- PDFs -->
     <div class="page" id="page-pdfs">
-      <div class="page-header"><h1>📄 Base de Conhecimento</h1><p>Documentos e links que o Agente de IA consulta durante as conversas</p></div>
+      <div class="page-header"><h1>📚 Base de Conhecimento</h1><p>PDFs e links que o Agente IA consulta automaticamente durante as conversas com leads</p></div>
+
+      <!-- Banner explicativo -->
+      <div style="background:linear-gradient(135deg,rgba(163,230,53,.08),rgba(163,230,53,.03));border:1px solid rgba(163,230,53,.2);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start;">
+        <span style="font-size:24px;flex-shrink:0;">🤖</span>
+        <div>
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#e6edf3;">Como funciona</div>
+          <div style="font-size:13px;color:#8b949e;line-height:1.6;">O agente consulta esta base automaticamente quando precisar de informações específicas. Adicione <b style="color:#a3e635;">PDFs</b> (tabelas, leis, jurisprudência) e <b style="color:#a3e635;">links da web</b> (artigos, páginas do gov.br, portais). Tudo fica disponível em tempo real.</div>
+        </div>
+      </div>
 
       <!-- CARD: Adicionar por URL/Link -->
       <div class="card">
-        <h3>🌐 Adicionar Link da Web</h3>
-        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">O agente vai extrair e indexar o conteúdo da página automaticamente.</p>
+        <h3>🌐 Adicionar Link / URL da Web</h3>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Cole qualquer URL pública — o agente vai extrair e indexar o conteúdo automaticamente.</p>
         <div class="field-group">
           <label>URL da página</label>
           <input type="url" id="url-link" placeholder="https://exemplo.com/artigo-inss" style="font-family:monospace;font-size:13px;" />
@@ -1893,6 +1904,7 @@
     el.classList.add('active');
     if (name === 'leads') loadLeads();
     if (name === 'crm') { loadCRM(); setTimeout(checkReminders, 500); }
+    if (name === 'pdfs') loadPDFList();
     if (name === 'clientes') { loadClients(); loadTokenUsageAdmin(); }
     if (name === 'faturamento') {
       loadBilling();
@@ -2401,14 +2413,14 @@
       style="border-left-color:${color};position:relative;"
       draggable="true"
       ondragstart="dragCard(event,this)"
-      onclick="openLeadModal(${lead.id})">
+      onclick="openLeadModal('${lead.id}')">
       <div id="qtp-${lead.id}" class="quick-task-pop" onclick="event.stopPropagation()">
         <div class="quick-task-pop-title">⚡ Adicionar tarefa rápida</div>
-        <input type="text" id="qtp-desc-${lead.id}" placeholder="Descreva a tarefa..." onkeydown="if(event.key==='Enter')saveQuickTask(${lead.id})" />
+        <input type="text" id="qtp-desc-${lead.id}" placeholder="Descreva a tarefa..." onkeydown="if(event.key==='Enter')saveQuickTask('${lead.id}')" />
         <input type="date" id="qtp-date-${lead.id}" style="margin-bottom:0;" />
         <div class="quick-task-pop-actions" style="margin-top:8px;">
-          <button class="quick-task-pop-save" onclick="saveQuickTask(${lead.id})">✅ Salvar</button>
-          <button class="quick-task-pop-cancel" onclick="closeQuickTask(${lead.id})">Cancelar</button>
+          <button class="quick-task-pop-save" onclick="saveQuickTask('${lead.id}')">✅ Salvar</button>
+          <button class="quick-task-pop-cancel" onclick="closeQuickTask('${lead.id}')">Cancelar</button>
         </div>
       </div>
       <div class="crm-card-inner">
@@ -2424,9 +2436,9 @@
         </div>` : ''}
       </div>
       <div class="crm-card-footer">
-        <span class="crm-card-tasks ${taskClass}" onclick="event.stopPropagation();openQuickTask(${lead.id})" title="Clique para adicionar tarefa">${taskText}</span>
+        <span class="crm-card-tasks ${taskClass}" onclick="event.stopPropagation();openQuickTask('${lead.id}')" title="Clique para adicionar tarefa">${taskText}</span>
         <div style="display:flex;align-items:center;gap:6px;">
-          <button class="crm-card-add-task" onclick="event.stopPropagation();openQuickTask(${lead.id})" title="Adicionar tarefa">＋ tarefa</button>
+          <button class="crm-card-add-task" onclick="event.stopPropagation();openQuickTask('${lead.id}')" title="Adicionar tarefa">＋ tarefa</button>
           <span class="crm-card-date">${lead.atualizado_em ? timeAgo(lead.atualizado_em) : '—'}</span>
         </div>
       </div>
@@ -2508,7 +2520,7 @@
     const st = document.getElementById('crm-save-status');
     st.textContent = 'Salvando...'; st.style.color = '#888';
     const flxVal = document.getElementById('crm-fluxo-id').value;
-    await db.from('leads').update({
+    const { error: saveErr } = await db.from('leads').update({
       nome: document.getElementById('crm-nome').value,
       celular: document.getElementById('crm-celular').value,
       email: document.getElementById('crm-email').value,
@@ -2520,6 +2532,7 @@
       resumo: document.getElementById('crm-resumo').value,
       atualizado_em: new Date().toISOString()
     }).eq('id', id);
+    if (saveErr) { st.textContent = '❌ ' + saveErr.message; st.style.color = '#ef4444'; return; }
     st.textContent = '✅ Salvo!'; st.style.color = '#16a34a';
     setTimeout(() => st.textContent = '', 3000);
     // Atualiza local e re-renderiza card
@@ -2623,24 +2636,60 @@
   }
 
   // ---- Novo lead manual ----
-  function openNewLeadModal() { document.getElementById('modal-novo-lead').classList.add('open'); }
-  function closeNewLeadModal() { document.getElementById('modal-novo-lead').classList.remove('open'); }
+  function openNewLeadModal() {
+    ['nl-nome','nl-numero','nl-email','nl-tese','nl-assunto','nl-aniversario'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = '';
+    });
+    const errEl = document.getElementById('nl-error');
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+    const btn = document.getElementById('btn-create-lead');
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Criar lead'; }
+    document.getElementById('modal-novo-lead').classList.add('open');
+  }
+  function closeNewLeadModal() {
+    document.getElementById('modal-novo-lead').classList.remove('open');
+    const errEl = document.getElementById('nl-error');
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+  }
 
   // ---- Novo funil ----
-  function openNewFunilModal() { document.getElementById('modal-novo-funil').classList.add('open'); }
+  function openNewFunilModal() {
+    document.getElementById('nf-nome').value = '';
+    document.getElementById('nf-descricao').value = '';
+    document.getElementById('nf-error').style.display = 'none';
+    const capEl = document.getElementById('nf-capacity');
+    const btn   = document.getElementById('btn-create-funil');
+    const atual = crmFluxos.length;
+    if (capEl) capEl.textContent = `${atual} de ${MAX_FUNIS} funis criados`;
+    if (btn) {
+      btn.disabled = atual >= MAX_FUNIS;
+      btn.textContent = atual >= MAX_FUNIS ? `Limite atingido (${MAX_FUNIS}/${MAX_FUNIS})` : '✅ Criar funil';
+    }
+    document.getElementById('modal-novo-funil').classList.add('open');
+  }
   function closeNewFunilModal() {
     document.getElementById('modal-novo-funil').classList.remove('open');
     document.getElementById('nf-nome').value = '';
     document.getElementById('nf-descricao').value = '';
     document.getElementById('nf-error').style.display = 'none';
   }
+  const MAX_FUNIS = 5;
+
   async function createNewFunil() {
-    const nome = document.getElementById('nf-nome').value.trim();
-    const desc = document.getElementById('nf-descricao').value.trim();
+    const nome  = document.getElementById('nf-nome').value.trim();
+    const desc  = document.getElementById('nf-descricao').value.trim();
     const errEl = document.getElementById('nf-error');
+    const btn   = document.getElementById('btn-create-funil');
     if (!nome) { errEl.textContent = 'Informe o nome do funil.'; errEl.style.display='block'; return; }
+    // Limit: max 5 pipelines
+    if (crmFluxos.length >= MAX_FUNIS) {
+      errEl.textContent = `Limite de ${MAX_FUNIS} funis atingido. Exclua um funil para criar outro.`;
+      errEl.style.display='block'; return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Criando...'; }
     const { data: { user } } = await db.auth.getUser();
     const { error } = await db.from('fluxos').insert({ nome, descricao: desc || null, user_id: user.id });
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Criar funil'; }
     if (error) { errEl.textContent = 'Erro: ' + error.message; errEl.style.display='block'; return; }
     closeNewFunilModal();
     await loadCRM();
@@ -2654,20 +2703,34 @@
   }
 
   async function createManualLead() {
-    const numero = document.getElementById('nl-numero').value.replace(/\D/g,'');
-    const nome   = document.getElementById('nl-nome').value.trim();
-    const email  = document.getElementById('nl-email').value.trim();
-    const tese   = document.getElementById('nl-tese').value.trim();
+    const numero  = document.getElementById('nl-numero').value.replace(/\D/g,'');
+    const nome    = document.getElementById('nl-nome').value.trim();
+    const email   = document.getElementById('nl-email').value.trim();
+    const tese    = document.getElementById('nl-tese').value.trim();
     const assunto = document.getElementById('nl-assunto').value.trim();
     const aniversario = document.getElementById('nl-aniversario').value || null;
-    if (!numero) { alert('Informe o número de WhatsApp'); return; }
+    const errEl   = document.getElementById('nl-error');
+    const btn     = document.getElementById('btn-create-lead');
+    if (errEl) { errEl.textContent = ''; errEl.style.display = 'none'; }
+    if (!numero) {
+      if (errEl) { errEl.textContent = 'Informe o número de WhatsApp.'; errEl.style.display = 'block'; }
+      else alert('Informe o número de WhatsApp');
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Criando...'; }
     const { data: { user } } = await db.auth.getUser();
-    await db.from('leads').insert({
+    const { error } = await db.from('leads').insert({
       numero_whatsapp: numero, nome, email, tese, assunto,
       data_aniversario: aniversario,
       user_id: user.id, stage: 'novo_contato',
       atualizado_em: new Date().toISOString()
     });
+    if (btn) { btn.disabled = false; btn.textContent = '✅ Criar lead'; }
+    if (error) {
+      if (errEl) { errEl.textContent = 'Erro: ' + error.message; errEl.style.display = 'block'; }
+      else alert('Erro ao criar lead: ' + error.message);
+      return;
+    }
     closeNewLeadModal();
     ['nl-nome','nl-numero','nl-email','nl-tese','nl-assunto','nl-aniversario'].forEach(id => {
       const el = document.getElementById(id); if(el) el.value = '';
@@ -3072,9 +3135,10 @@
     if (currentProfile?.role !== 'admin') return;
     const el = document.getElementById('clients-table');
     el.innerHTML = '<p class="loading">Carregando...</p>';
-    const profiles = await adminFetch('GET');
-    if (!Array.isArray(profiles)) {
-      el.innerHTML = '<p class="error-msg">Erro ao carregar clientes: ' + (profiles?.error || '') + '</p>'; return;
+    const res = await adminFetch('GET');
+    const profiles = res?.users || (Array.isArray(res) ? res : null);
+    if (!profiles) {
+      el.innerHTML = '<p class="error-msg">Erro ao carregar clientes: ' + (res?.error || 'resposta inválida') + '</p>'; return;
     }
     if (!profiles.length) {
       el.innerHTML = '<p class="empty-state">Nenhum cliente cadastrado ainda.</p>'; return;
@@ -3808,7 +3872,7 @@
       sec.list.map(t => {
         const leadName = t.leads?.nome || t.leads?.numero_whatsapp || '—';
         const dStr = new Date(t.data_vencimento+'T00:00:00').toLocaleDateString('pt-BR', {day:'2-digit',month:'short'});
-        return `<div class="reminder-item" onclick="openLeadFromReminder(${t.lead_id})">
+        return `<div class="reminder-item" onclick="openLeadFromReminder('${t.lead_id}')">
           <span class="reminder-dot ${sec.cls}"></span>
           <div class="reminder-item-body">
             <div class="reminder-item-desc">${escapeHtml(t.descricao || '—')}</div>
