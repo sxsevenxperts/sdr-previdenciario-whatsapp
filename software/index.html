@@ -711,6 +711,12 @@
     .quick-task-pop-save   { background:linear-gradient(135deg,#a3e635,#78c013); color:#071a00; border:none; padding:7px 14px; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer; }
     .quick-task-pop-cancel { background:rgba(255,255,255,.05); color:#8b949e; border:1px solid rgba(255,255,255,.08); padding:7px 10px; border-radius:7px; font-size:12px; cursor:pointer; }
     .crm-col-alert { display:inline-flex; align-items:center; justify-content:center; min-width:16px; height:16px; background:#ef4444; border-radius:20px; font-size:9px; font-weight:800; color:#fff; padding:0 4px; margin-left:4px; vertical-align:middle; }
+    /* ── Column drag-to-reorder ───────────────────────────────── */
+    .crm-col-drag-handle { cursor:grab; color:rgba(255,255,255,.18); font-size:15px; padding:0 5px 0 2px; user-select:none; transition:color .15s; line-height:1; flex-shrink:0; }
+    .crm-col:hover .crm-col-drag-handle { color:rgba(255,255,255,.45); }
+    .crm-col-drag-handle:active { cursor:grabbing; }
+    .crm-col.col-dragging { opacity:0.35; }
+    .crm-col.col-dragover { outline:2px dashed #a3e635 !important; outline-offset:-3px; background:rgba(163,230,53,.04) !important; }
 
     /* ── Free client badge ────────────────────────────────────── */
     .badge-free { background:rgba(163,230,53,.1); color:#a3e635; border:1px solid rgba(163,230,53,.2); font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; letter-spacing:.3px; }
@@ -2681,15 +2687,18 @@
         return acc + (l.lead_tarefas||[]).filter(t => !t.concluida && t.data_vencimento && new Date(t.data_vencimento+'T00:00:00') < hoje).length;
       }, 0);
       const alertBadge = stageOverdue > 0 ? `<span class="crm-col-alert" title="${stageOverdue} tarefa${stageOverdue>1?'s':''} atrasada${stageOverdue>1?'s':''}">${stageOverdue}</span>` : '';
-      return `<div class="crm-col" data-stage="${stage.id}" style="border-top:3px solid ${stage.color};">
+      return `<div class="crm-col" data-stage="${stage.id}" style="border-top:3px solid ${stage.color};"
+        draggable="true" ondragstart="colDragStart(event,this)" ondragover="colDragOver(event,this)"
+        ondrop="colDrop(event,this)" ondragend="colDragEnd(event,this)">
         <div class="crm-col-header">
+          <span class="crm-col-drag-handle" title="Arrastar para reordenar">⠿</span>
           <span class="crm-col-title">${stage.label}${alertBadge}</span>
           <span class="crm-col-count">${cols.length}</span>
         </div>
         <div class="crm-cards" data-stage="${stage.id}"
-          ondragover="event.preventDefault();this.classList.add('dragover')"
+          ondragover="if(!colDragSrcId){event.preventDefault();this.classList.add('dragover')}"
           ondragleave="this.classList.remove('dragover')"
-          ondrop="dropCard(event,this)">
+          ondrop="if(!colDragSrcId)dropCard(event,this)">
           ${cols.map(l => renderCard(l, stage.color)).join('')}
         </div>
       </div>`;
@@ -2803,6 +2812,7 @@
   // ---- Drag & Drop ----
   let dragLeadId = null;
   function dragCard(event, el) {
+    event.stopPropagation(); // Prevent bubbling to crm-col colDragStart
     dragLeadId = el.dataset.leadId;
     event.dataTransfer.effectAllowed = 'move';
   }
@@ -2825,6 +2835,50 @@
     await db.from('leads').update({ stage, atualizado_em: new Date().toISOString() }).eq('id', leadId);
     const l = crmLeads.find(x => String(x.id) === String(leadId));
     if (l) l.stage = stage;
+  }
+
+  // ---- Column Drag-to-Reorder ----
+  let colDragSrcId = null;
+  function colDragStart(event, el) {
+    // Ignore if the drag originated from a card inside this column
+    if (event.target && event.target.closest && event.target.closest('.crm-card')) return;
+    dragLeadId = null;
+    colDragSrcId = el.dataset.stage;
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', colDragSrcId);
+    setTimeout(() => el.classList.add('col-dragging'), 0);
+  }
+  function colDragOver(event, el) {
+    if (!colDragSrcId) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.dataTransfer.dropEffect = 'move';
+    if (el.dataset.stage === colDragSrcId) return;
+    document.querySelectorAll('.crm-col.col-dragover').forEach(c => c.classList.remove('col-dragover'));
+    el.classList.add('col-dragover');
+  }
+  function colDragEnd(event, el) {
+    colDragSrcId = null;
+    document.querySelectorAll('.crm-col').forEach(c => c.classList.remove('col-dragging', 'col-dragover'));
+  }
+  async function colDrop(event, el) {
+    event.preventDefault();
+    event.stopPropagation();
+    const dstId = el.dataset.stage;
+    if (!colDragSrcId || dstId === colDragSrcId) { colDragSrcId = null; return; }
+    const srcIdx = crmStages.findIndex(s => s.id === colDragSrcId);
+    const dstIdx = crmStages.findIndex(s => s.id === dstId);
+    colDragSrcId = null;
+    document.querySelectorAll('.crm-col').forEach(c => c.classList.remove('col-dragging', 'col-dragover'));
+    if (srcIdx < 0 || dstIdx < 0) return;
+    const [moved] = crmStages.splice(srcIdx, 1);
+    crmStages.splice(dstIdx, 0, moved);
+    const { data: { user } } = await db.auth.getUser();
+    await db.from('agente_config').upsert(
+      { user_id: user.id, chave: 'crm_stages', valor: JSON.stringify(crmStages) },
+      { onConflict: 'user_id,chave' }
+    );
+    renderKanban(crmLeads);
   }
 
   // ---- Modal de detalhes ----
