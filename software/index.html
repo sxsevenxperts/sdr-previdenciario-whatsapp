@@ -717,6 +717,8 @@
     .crm-col-drag-handle:active { cursor:grabbing; }
     .crm-col.col-dragging { opacity:0.35; }
     .crm-col.col-dragover { outline:2px dashed #a3e635 !important; outline-offset:-3px; background:rgba(163,230,53,.04) !important; }
+    .crm-col-title { cursor:default; }
+    .crm-col-title-edit { background:transparent; border:none; border-bottom:1.5px solid #a3e635; color:#e6edf3; font-size:12px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; width:100%; max-width:140px; outline:none; padding:0 0 1px; font-family:inherit; }
 
     /* ── Free client badge ────────────────────────────────────── */
     .badge-free { background:rgba(163,230,53,.1); color:#a3e635; border:1px solid rgba(163,230,53,.2); font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; letter-spacing:.3px; }
@@ -2692,7 +2694,7 @@
         ondrop="colDrop(event,this)" ondragend="colDragEnd(event,this)">
         <div class="crm-col-header">
           <span class="crm-col-drag-handle" title="Arrastar para reordenar">⠿</span>
-          <span class="crm-col-title">${stage.label}${alertBadge}</span>
+          <span class="crm-col-title" ondblclick="colEditStart(event,'${stage.id}')" title="Duplo clique para renomear">${stage.label}${alertBadge}</span>
           <span class="crm-col-count">${cols.length}</span>
         </div>
         <div class="crm-cards" data-stage="${stage.id}"
@@ -2880,6 +2882,51 @@
     );
     renderKanban(crmLeads);
   }
+
+  // ---- Column Rename (inline) ----
+  function colEditStart(event, stageId) {
+    event.stopPropagation();
+    const stage = crmStages.find(s => s.id === stageId);
+    if (!stage) return;
+    const col = document.querySelector(`.crm-col[data-stage="${stageId}"]`);
+    if (!col) return;
+    const titleSpan = col.querySelector('.crm-col-title');
+    if (!titleSpan || titleSpan.querySelector('input')) return; // already editing
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'crm-col-title-edit';
+    input.value = stage.label;
+    input.setAttribute('data-saving', '0');
+    input.addEventListener('keydown', e => {
+      e.stopPropagation();
+      if (e.key === 'Enter')  { e.preventDefault(); colEditSave(stageId, input); }
+      if (e.key === 'Escape') { renderKanban(crmLeads); }
+    });
+    input.addEventListener('blur', () => colEditSave(stageId, input));
+    input.addEventListener('click', e => e.stopPropagation());
+    input.addEventListener('dblclick', e => e.stopPropagation());
+    titleSpan.innerHTML = '';
+    titleSpan.appendChild(input);
+    input.focus();
+    input.select();
+  }
+  async function colEditSave(stageId, input) {
+    if (input.dataset.saving === '1') return;
+    input.dataset.saving = '1';
+    const nome = (input.value || '').trim();
+    const stage = crmStages.find(s => s.id === stageId);
+    if (!stage) { renderKanban(crmLeads); return; }
+    if (!nome) { renderKanban(crmLeads); return; }
+    if (nome === stage.label) { renderKanban(crmLeads); return; }
+    stage.label = nome;
+    const { data: { user } } = await db.auth.getUser();
+    await db.from('agente_config').upsert(
+      { user_id: user.id, chave: 'crm_stages', valor: JSON.stringify(crmStages) },
+      { onConflict: 'user_id,chave' }
+    );
+    renderKanban(crmLeads);
+  }
+
 
   // ---- Modal de detalhes ----
   async function openLeadModal(leadId) {
