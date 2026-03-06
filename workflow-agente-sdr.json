@@ -480,7 +480,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const respostaAgente = $input.first().json.output || '';\nconst configData = $('Monta system prompt com config').first().json;\nconst dadosMsg = configData;\nconst config = configData.config;\nconst userId = configData.userId;\nconst evoInstance = configData.evoInstance;\nconst responderEmAudio = configData.responderEmAudio;\n\nlet dadosQualificacao = null;\nlet qualificado = null;\n\ntry {\n  const match = respostaAgente.match(/```json([\\s\\S]*?)```/);\n  if (match) {\n    dadosQualificacao = JSON.parse(match[1].trim());\n    qualificado = dadosQualificacao.qualificado === true;\n  }\n} catch(e) {}\n\nconst textoParaLead = respostaAgente.replace(/```json[\\s\\S]*?```/g, '').trim();\n\nlet relatorio = null;\nif (qualificado && dadosQualificacao) {\n  const agora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\n  relatorio = `🟢 *LEAD QUALIFICADO*\\n\\n`\n    + `👤 *Nome:* ${dadosQualificacao.nome || 'Não informado'}\\n`\n    + `📱 *Celular:* ${dadosQualificacao.celular || dadosMsg.numero}\\n`\n    + `🎯 *Interesse:* ${dadosQualificacao.tese || 'Não identificado'}\\n`\n    + `📋 *Resumo:* ${dadosQualificacao.resumo || 'Ver histórico'}\\n`\n    + `🕐 *Atendimento:* ${agora}`;\n}\n\nreturn [{ json: { numero: dadosMsg.numero, textoParaLead, qualificado, dadosQualificacao, relatorio, numeroDestino: config?.numero_destino, grupoDestino: config?.grupo_destino || '', userId, evoInstance, responderEmAudio } }];"
+        "jsCode": "const respostaAgente = $input.first().json.output || '';\nconst configData = $('Monta system prompt com config').first().json;\nconst dadosMsg = configData;\nconst config = configData.config;\nconst userId = configData.userId;\nconst evoInstance = configData.evoInstance;\nconst responderEmAudio = configData.responderEmAudio;\n\nlet dadosQualificacao = null;\nlet qualificado = null;\n\ntry {\n  const match = respostaAgente.match(/```json([\\s\\S]*?)```/);\n  if (match) {\n    dadosQualificacao = JSON.parse(match[1].trim());\n    qualificado = dadosQualificacao.qualificado === true;\n  }\n} catch(e) {}\n\nconst textoParaLead = respostaAgente.replace(/```json[\\s\\S]*?```/g, '').trim();\n\nlet relatorio = null;\nif (qualificado && dadosQualificacao) {\n  const agora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\n  relatorio = `🟢 *LEAD QUALIFICADO*\\n\\n`\n    + `👤 *Nome:* ${dadosQualificacao.nome || 'Não informado'}\\n`\n    + `📱 *Celular:* ${dadosQualificacao.celular || dadosMsg.numero}\\n`\n    + `🎯 *Interesse:* ${dadosQualificacao.tese || 'Não identificado'}\\n`\n    + `📋 *Resumo:* ${dadosQualificacao.resumo || 'Ver histórico'}\\n`\n    + `🕐 *Atendimento:* ${agora}`;\n}\n\n// Notif destination config\nconst notifDestino = config?.notif_destino || 'ambos';\n// If only sending to número, zero out grupo so \"Tem grupo configurado?\" returns false\nconst grupoDestinoFinal = (notifDestino === 'numero') ? '' : (config?.grupo_destino || '');\n\nreturn [{ json: { numero: dadosMsg.numero, textoParaLead, qualificado, dadosQualificacao, relatorio, numeroDestino: config?.numero_destino, grupoDestino: grupoDestinoFinal, notifDestino, userId, evoInstance, responderEmAudio } }];"
       },
       "id": "node-processa-resposta",
       "name": "Processa resposta e qualificação",
@@ -1074,6 +1074,32 @@
         400
       ],
       "notes": "Upsert mínimo: garante que lead existe com stage=novo_contato para leads novos. Smart stage logic impede rebaixamento de leads existentes."
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond-notif-numero",
+              "leftValue": "={{ $('Processa resposta e qualificação').first().json.notifDestino }}",
+              "rightValue": "grupo",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node-check-notif-numero",
+      "name": "Deve notificar número?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        4620,
+        760
+      ]
     }
   ],
   "connections": {
@@ -1414,7 +1440,7 @@
       "main": [
         [
           {
-            "node": "Envia relatório ao responsável",
+            "node": "Deve notificar número?",
             "type": "main",
             "index": 0
           },
@@ -1595,6 +1621,18 @@
             "index": 0
           }
         ]
+      ]
+    },
+    "Deve notificar número?": {
+      "main": [
+        [
+          {
+            "node": "Envia relatório ao responsável",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
       ]
     }
   },
