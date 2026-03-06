@@ -2,27 +2,30 @@
  * Edge Function: hotmart-webhook
  * Recebe eventos de pagamento da Hotmart e gerencia o ciclo de vida dos clientes.
  *
- * Ativação: PURCHASE_APPROVED, PURCHASE_COMPLETE, PURCHASE_REACTIVATED, SUBSCRIPTION_REACTIVATED
- *   → cria usuário, instância EVO, agente_config padrão, envia e-mail de boas-vindas
+ * ATIVAÇÃO: PURCHASE_APPROVED, PURCHASE_COMPLETE, PURCHASE_REACTIVATED, SUBSCRIPTION_REACTIVATED
+ *   → cria usuário novo (com convite por email) OU reativa conta existente
  *
- * Desativação: SUBSCRIPTION_CANCELLATION, PURCHASE_CANCELED, PURCHASE_REFUNDED, PURCHASE_CHARGEBACK
+ * DESATIVAÇÃO: SUBSCRIPTION_CANCELLATION, PURCHASE_CANCELED, PURCHASE_REFUNDED, PURCHASE_CHARGEBACK
  *   → define active=false e status da assinatura como cancelado
  *
- * Endpoint público (verify_jwt: false) — validado pelo token Hotmart no header.
+ * Endpoint público (verify_jwt: false).
+ * Segurança: token secreto configurável via variável HOTMART_WEBHOOK_SECRET (opcional).
+ * O token pode ser passado como query param ?token=xxx ou header X-Hotmart-Webhook-Token.
  */
 
-import { serve } from "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
-const SUPABASE_URL        = Deno.env.get("SUPABASE_URL")!;
-const SERVICE_ROLE_KEY    = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const EVOLUTION_API_URL   = Deno.env.get("EVOLUTION_API_URL")!;   // ex: https://evo.sevenxperts.solutions
-const EVOLUTION_API_KEY   = Deno.env.get("EVOLUTION_API_KEY")!;   // ex: 2ae3Y0xQFNxIcng27ufbAaHzioCDfReN
-const HOTMART_SECRET      = Deno.env.get("HOTMART_WEBHOOK_SECRET") ?? ""; // opcional: token de segurança
+const SUPABASE_URL      = Deno.env.get("SUPABASE_URL")!;
+const SERVICE_ROLE_KEY  = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") ?? "";
+const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY") ?? "";
+const HOTMART_SECRET    = Deno.env.get("HOTMART_WEBHOOK_SECRET") ?? "";
+const PANEL_URL         = Deno.env.get("PANEL_URL") ?? "https://expertia.sevenxperts.solutions/";
 
 const adminDb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-// Eventos que ativam/reativam o cliente
+// ── Eventos Hotmart ───────────────────────────────────────────────────────
 const EVENTS_ACTIVATE = [
   "PURCHASE_APPROVED",
   "PURCHASE_COMPLETE",
@@ -30,7 +33,6 @@ const EVENTS_ACTIVATE = [
   "SUBSCRIPTION_REACTIVATED",
 ];
 
-// Eventos que desativam o cliente
 const EVENTS_DEACTIVATE = [
   "SUBSCRIPTION_CANCELLATION",
   "PURCHASE_CANCELED",
@@ -38,45 +40,45 @@ const EVENTS_DEACTIVATE = [
   "PURCHASE_CHARGEBACK",
 ];
 
-// Defaults do agente (mesmos valores do painel)
+// ── Agente padrão genérico (espelho do manage-clients) ────────────────────
 const AGENTE_DEFAULTS: Record<string, string> = {
-  objetivo: "Qualificar leads de Direito Previdenciário e encaminhar ao advogado responsável para avaliação do caso.",
+  objetivo:
+    "Qualificar leads interessados nos produtos e serviços da empresa e encaminhar ao responsável comercial para dar continuidade.",
   prompt_sistema: [
-    "Você é um assistente especializado em triagem de casos de Direito Previdenciário.",
-    "Seu papel é conversar de forma humanizada, empática e objetiva com pessoas que buscam ajuda jurídica previdenciária, qualificá-las e, quando aplicável, encaminhar o caso para um advogado.",
+    "Você é um assistente de vendas especializado em qualificação de leads.",
+    "Seu papel é conversar de forma humanizada, empática e objetiva com pessoas que entraram em contato, qualificá-las e, quando aplicável, encaminhar para o responsável comercial.",
     "",
-    "Você NÃO é advogado e NÃO dá consultoria jurídica. Você apenas coleta informações para que o advogado responsável possa avaliar o caso.",
+    "Você NÃO fecha vendas e NÃO faz promessas de preço. Você apenas coleta informações para que o time comercial possa dar continuidade.",
     "",
     "FLUXO DA CONVERSA:",
     "",
     "Etapa 1 — Recepção:",
-    'Cumprimente o lead pelo nome (se disponível):',
-    '"Olá! Sou o assistente jurídico do escritório. Vou fazer algumas perguntas rápidas para entender melhor a sua situação e verificar se podemos te ajudar. Pode ser?"',
+    'Cumprimente o lead pelo nome (se disponível): "Olá! Sou o assistente da empresa. Vou fazer algumas perguntas rápidas para entender melhor o que você precisa e verificar como podemos te ajudar. Pode ser?"',
     "",
     "Etapa 2 — Coleta de informações (faça UMA pergunta por vez):",
     '1. "Qual é o seu nome completo?"',
-    '2. "Você contribuiu para o INSS em algum momento da sua vida, ou é dependente de alguém que contribuiu?"',
-    '3. "Qual é a sua situação atual? Por exemplo: benefício negado, cancelado, aposentadoria que ainda não pediu, pensão por morte, auxílio-doença, BPC/LOAS, ou outro?"',
-    '4. "Você já tentou dar entrada no benefício? Se sim, o que aconteceu?"',
-    '5. "Você tem documentos como carteira de trabalho, extrato do CNIS, carta de indeferimento do INSS ou outros?"',
-    '6. "Qual o seu número de celular com DDD para o advogado entrar em contato?"',
+    '2. "Qual produto ou serviço te interessou?"',
+    '3. "Pode me contar um pouco mais sobre a sua necessidade ou situação atual?"',
+    '4. "Você tem algum prazo ou urgência para resolver isso?"',
+    '5. "Você é o responsável pela decisão de compra ou há outras pessoas envolvidas?"',
+    '6. "Qual o seu número de celular com DDD para o nosso time entrar em contato?"',
     "",
-    "DESQUALIFICAÇÃO IMEDIATA (encerre com empatia se):",
-    "- Caso é trabalhista puro, sem vínculo com INSS",
-    "- Caso já está em andamento com outro advogado",
+    "DESQUALIFICAÇÃO IMEDIATA (encerre com educação se):",
+    "- Pessoa não tem interesse real no produto ou serviço",
+    "- Já é cliente e o assunto é suporte (redirecione para o canal correto)",
     "- Pessoa não quer fornecer informações básicas",
-    "- Caso já foi julgado com trânsito em julgado sem possibilidade de revisão",
+    "- Fora do perfil de cliente atendido pela empresa",
     "",
     "BUSCA NA WEB:",
-    "Se necessário para identificar a tese jurídica, use a ferramenta de busca.",
-    "Priorize fontes: gov.br, previdencia.gov.br, JusBrasil, STJ, TRF.",
+    "Se necessário para tirar dúvidas sobre produtos ou serviços, use a ferramenta de busca.",
+    "Priorize informações do site oficial da empresa.",
     "",
     "FORMATO DE SAÍDA OBRIGATÓRIO:",
     "Ao concluir a triagem, inclua NO FINAL da sua última mensagem o JSON abaixo:",
     "",
     "Para lead qualificado:",
     "```json",
-    '{"qualificado":true,"nome":"Nome Completo","celular":"DDD+número","tese":"Tese jurídica identificada","resumo":"Resumo completo da conversa"}',
+    '{"qualificado":true,"nome":"Nome Completo","celular":"DDD+número","tese":"Produto/Serviço de interesse identificado","resumo":"Resumo completo da conversa"}',
     "```",
     "",
     "Para lead não qualificado:",
@@ -85,105 +87,119 @@ const AGENTE_DEFAULTS: Record<string, string> = {
     "```",
   ].join("\n"),
   tonalidade:
-    'Empático, claro e objetivo. Use linguagem simples, sem jargão jurídico. Seja especialmente gentil com idosos ou pessoas em situação vulnerável. Se o lead fizer uma pergunta jurídica específica, responda de forma genérica e direcione: "Essa é uma excelente pergunta para o advogado aprofundar com você!"',
+    'Empático, claro e objetivo. Use linguagem simples e acessível. Seja especialmente atencioso com pessoas que ainda estão descobrindo o produto. Se o lead fizer uma pergunta técnica específica, responda de forma genérica e direcione: "Essa é uma excelente pergunta para o nosso especialista aprofundar com você!"',
   instrucoes_comunicacao:
-    "- Faça uma pergunta por vez. Aguarde a resposta antes de continuar.\n- Nunca prometa resultado ou vitória no processo.\n- Nunca dê consultoria jurídica.\n- Limite a conversa ao máximo de 10 trocas de mensagens antes de concluir a triagem.\n- Se o lead demorar mais de 24h para responder, envie um lembrete gentil uma única vez.\n- Se o lead enviar um arquivo (foto, PDF), confirme o recebimento e registre no caso.",
+    "- Faça uma pergunta por vez. Aguarde a resposta antes de continuar.\n- Nunca prometa desconto, prazo ou resultado sem confirmação do time.\n- Nunca feche negócio ou passe valores sem autorização.\n- Limite a conversa ao máximo de 10 trocas de mensagens antes de concluir a triagem.\n- Se o lead demorar mais de 24h para responder, envie um lembrete gentil uma única vez.\n- Se o lead enviar um arquivo (foto, PDF), confirme o recebimento e registre.",
   criterios_qualificacao:
-    "1. Vínculo INSS — Contribuiu ao INSS ou é dependente de quem contribuiu\n2. Benefício identificável — Existe um benefício previdenciário aplicável ao caso\n3. Indeferimento ou pendência — Benefício foi negado, cancelado ou ainda não foi requerido\n4. Tese jurídica — É possível identificar uma tese/fundamento legal para o caso\n5. Documentação mínima — Possui ao menos algum documento ou sabe como obtê-lo",
+    "1. Interesse real — Demonstrou interesse genuíno no produto ou serviço\n2. Necessidade identificada — Tem uma necessidade ou problema que a empresa pode resolver\n3. Capacidade de compra — Possui orçamento ou capacidade de investimento\n4. Tomador de decisão — É o responsável pela decisão ou influencia diretamente\n5. Disposição para avançar — Mostrou disposição em dar próximos passos",
   msg_qualificado:
-    "Ótimo! Com base no que você me contou, acredito que o nosso advogado pode te ajudar. Vou encaminhar as informações do seu caso para ele agora. Em breve ele entrará em contato com você. Alguma dúvida ou informação adicional que queira que eu repasse?",
+    "Ótimo! Com base no que você me contou, acredito que podemos te ajudar. Vou encaminhar as informações para o nosso time agora. Em breve alguém entrará em contato com você. Alguma dúvida ou informação adicional que queira que eu repasse?",
   msg_desqualificado:
-    "Obrigado por entrar em contato! Infelizmente, com base nas informações que você compartilhou, não identificamos uma situação que se encaixe nos casos que atendemos no momento. Caso sua situação mude ou surja algum documento novo, fique à vontade para nos contatar novamente. Desejamos tudo de bom para você!",
+    "Obrigado por entrar em contato! Com base nas informações que você compartilhou, no momento não identificamos o encaixe ideal com os nossos produtos ou serviços. Caso sua situação mude, fique à vontade para nos contatar novamente. Desejamos tudo de bom para você!",
   numero_destino: "",
 };
 
-/** Gera nome de instância único a partir do nome/email do comprador */
+// ── Helpers ───────────────────────────────────────────────────────────────
+
 function generateInstanceName(name: string, email: string): string {
   const normalize = (s: string) =>
-    s
-      .toLowerCase()
-      .normalize("NFD")
+    s.toLowerCase().normalize("NFD")
       .replace(/\p{Mn}/gu, "")
       .replace(/[^a-z0-9]/g, "")
       .substring(0, 12);
-
   const base = normalize(name) || normalize(email.split("@")[0]);
   const validBase = base.length >= 3 ? base : "cliente";
   const suffix = Math.floor(1000 + Math.random() * 9000);
   return validBase + suffix;
 }
 
-/** Cria instância na Evolution API */
 async function createEvoInstance(instanceName: string): Promise<void> {
-  const res = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: EVOLUTION_API_KEY,
-    },
-    body: JSON.stringify({
-      instanceName,
-      qrcode: false,
-      integration: "WHATSAPP-BAILEYS",
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    console.error("EVO create error:", res.status, body);
-    // Não lançamos erro — instância pode ser configurada depois pelo admin
+  if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) return;
+  try {
+    const res = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY },
+      body: JSON.stringify({ instanceName, qrcode: false, integration: "WHATSAPP-BAILEYS" }),
+    });
+    if (!res.ok) console.error("EVO create error:", res.status, await res.text());
+  } catch (e: any) {
+    console.error("EVO create exception:", e.message);
   }
 }
 
-/** Insere agente_config padrão para o usuário */
 async function insertAgenteConfigDefaults(userId: string): Promise<void> {
-  const rows = Object.entries(AGENTE_DEFAULTS).map(([chave, valor]) => ({
-    user_id: userId,
-    chave,
-    valor,
-  }));
+  const rows = Object.entries(AGENTE_DEFAULTS).map(([chave, valor]) => ({ user_id: userId, chave, valor }));
   await adminDb.from("agente_config").upsert(rows, { onConflict: "user_id,chave", ignoreDuplicates: true });
 }
 
-/** Ativa (cria ou reativa) um cliente a partir dos dados da Hotmart */
-async function activateClient(buyerName: string, buyerEmail: string, productName: string): Promise<void> {
-  // Verifica se usuário já existe
-  const { data: { users: existingUsers } } = await adminDb.auth.admin.listUsers();
-  const existing = (existingUsers ?? []).find((u: any) => u.email === buyerEmail);
+/** Busca usuário pelo email diretamente na tabela auth.users (service role) */
+async function findUserByEmail(email: string): Promise<string | null> {
+  const { data } = await adminDb
+    .schema("auth")
+    .from("users")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+  return (data as any)?.id ?? null;
+}
 
-  if (existing) {
+// ── Ações principais ─────────────────────────────────────────────────────
+
+async function activateClient(
+  buyerName: string,
+  buyerEmail: string,
+  productName: string,
+  tokensIniciais: number,
+): Promise<{ action: string; userId: string }> {
+
+  const existingId = await findUserByEmail(buyerEmail);
+
+  if (existingId) {
     // Reativa conta existente
-    const userId = existing.id;
-    await adminDb.from("profiles").update({ active: true }).eq("id", userId);
-    await adminDb
-      .from("assinaturas")
-      .update({ status: "ativo", atualizado_em: new Date().toISOString() })
-      .eq("user_id", userId);
+    await adminDb.from("profiles").update({ active: true }).eq("id", existingId);
+    await adminDb.from("assinaturas")
+      .upsert(
+        { user_id: existingId, plano: productName, valor: 497, status: "ativo" },
+        { onConflict: "user_id" },
+      );
+    // Adiciona tokens ao saldo existente
+    const { data: tc } = await adminDb.from("tokens_creditos")
+      .select("saldo_tokens, total_comprado")
+      .eq("user_id", existingId)
+      .maybeSingle();
+    await adminDb.from("tokens_creditos").upsert({
+      user_id: existingId,
+      saldo_tokens: (tc?.saldo_tokens ?? 0) + tokensIniciais,
+      tokens_usados_mes: 0,
+      total_comprado: (tc?.total_comprado ?? 0) + tokensIniciais,
+      mes_referencia: new Date().toISOString().slice(0, 7),
+    }, { onConflict: "user_id" });
 
-    console.log("Cliente reativado:", buyerEmail, userId);
-    return;
+    console.log("Cliente reativado:", buyerEmail, existingId);
+    return { action: "reactivated", userId: existingId };
   }
 
-  // Novo cliente → cria conta completa
+  // ── Novo cliente ──────────────────────────────────────────────────────
   const instanceName = generateInstanceName(buyerName, buyerEmail);
 
-  // 1. Cria instância EVO (não-bloqueante)
+  // 1. Instância EVO (não-bloqueante)
   await createEvoInstance(instanceName);
 
-  // 2. Cria usuário no Supabase Auth
-  const tempPassword = crypto.randomUUID(); // senha temporária; usuário vai redefinir
-  const { data: created, error: createErr } = await adminDb.auth.admin.createUser({
-    email: buyerEmail,
-    password: tempPassword,
-    email_confirm: true,
-    user_metadata: { display_name: buyerName, role: "client" },
-  });
+  // 2. Convida usuário via Supabase Auth (envia e-mail de definição de senha)
+  const { data: invited, error: inviteErr } = await adminDb.auth.admin.inviteUserByEmail(
+    buyerEmail,
+    {
+      data: { display_name: buyerName, role: "client" },
+      redirectTo: PANEL_URL,
+    },
+  );
 
-  if (createErr || !created.user) {
-    console.error("Erro ao criar usuário:", createErr?.message);
-    return;
+  if (inviteErr || !invited.user) {
+    console.error("Erro ao convidar usuário:", inviteErr?.message);
+    throw new Error("Falha ao criar conta: " + (inviteErr?.message ?? "desconhecido"));
   }
 
-  const userId = created.user.id;
+  const userId = invited.user.id;
 
   // 3. Profile
   await adminDb.from("profiles").upsert({
@@ -197,54 +213,45 @@ async function activateClient(buyerName: string, buyerEmail: string, productName
   // 4. Assinatura
   await adminDb.from("assinaturas").insert({
     user_id: userId,
-    plano: productName || "SDR Agente Único",
-    valor: 497.0,
+    plano: productName || "SDR Agente",
+    valor: 497,
     status: "ativo",
   });
 
-  // 5. Créditos iniciais
+  // 5. Tokens iniciais
   await adminDb.from("tokens_creditos").upsert({
     user_id: userId,
-    saldo_tokens: 500000,
+    saldo_tokens: tokensIniciais,
     tokens_usados_mes: 0,
-    total_comprado: 500000,
+    total_comprado: tokensIniciais,
     mes_referencia: new Date().toISOString().slice(0, 7),
-  });
+  }, { onConflict: "user_id" });
 
-  // 6. Agente config padrão
+  // 6. Configurações padrão do agente
   await insertAgenteConfigDefaults(userId);
 
-  // 7. Envia e-mail de redefinição de senha (usuário define sua própria senha)
-  await adminDb.auth.admin.generateLink({
-    type: "recovery",
-    email: buyerEmail,
-    options: { redirectTo: `https://xpertia.sevenxperts.solutions/` },
-  });
-
-  console.log("Cliente criado:", buyerEmail, userId, "instância:", instanceName);
+  console.log("Cliente criado via Hotmart:", buyerEmail, userId, "instância:", instanceName);
+  return { action: "created", userId };
 }
 
-/** Desativa um cliente */
-async function deactivateClient(buyerEmail: string): Promise<void> {
-  const { data: { users } } = await adminDb.auth.admin.listUsers();
-  const found = (users ?? []).find((u: any) => u.email === buyerEmail);
-  if (!found) {
+async function deactivateClient(buyerEmail: string): Promise<{ action: string; userId: string | null }> {
+  const userId = await findUserByEmail(buyerEmail);
+  if (!userId) {
     console.warn("Usuário não encontrado para desativar:", buyerEmail);
-    return;
+    return { action: "not_found", userId: null };
   }
-
-  const userId = found.id;
   await adminDb.from("profiles").update({ active: false }).eq("id", userId);
-  await adminDb
-    .from("assinaturas")
-    .update({ status: "cancelado", atualizado_em: new Date().toISOString() })
+  await adminDb.from("assinaturas")
+    .update({ status: "cancelado" })
     .eq("user_id", userId);
 
   console.log("Cliente desativado:", buyerEmail, userId);
+  return { action: "deactivated", userId };
 }
 
-serve(async (req) => {
-  // CORS preflight (caso alguma ferramenta teste via browser)
+// ── Serve ─────────────────────────────────────────────────────────────────
+
+Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", {
       headers: {
@@ -255,46 +262,65 @@ serve(async (req) => {
   }
 
   try {
-    // Validação opcional do token secreto da Hotmart
+    // ── Validação do token secreto (opcional) ──────────────────────────
     if (HOTMART_SECRET) {
-      const receivedToken = req.headers.get("x-hotmart-webhook-token") ?? "";
-      if (receivedToken !== HOTMART_SECRET) {
-        console.warn("Token Hotmart inválido");
+      const url     = new URL(req.url);
+      const qToken  = url.searchParams.get("token") ?? "";
+      const hToken  = req.headers.get("x-hotmart-webhook-token") ?? "";
+      if (qToken !== HOTMART_SECRET && hToken !== HOTMART_SECRET) {
+        console.warn("Token Hotmart inválido. Recebido:", qToken || hToken);
         return new Response("Unauthorized", { status: 401 });
       }
     }
 
-    const payload = await req.json();
+    const payload    = await req.json();
     const event: string = payload?.event ?? "";
-    const buyer = payload?.data?.buyer ?? {};
-    const product = payload?.data?.product ?? {};
+    const buyer      = payload?.data?.buyer ?? {};
+    const product    = payload?.data?.product ?? {};
+
+    // Tokens a conceder (pode ser configurado futuramente via payload ou env)
+    const TOKENS_INICIAIS = 5_000_000; // 5M tokens — plano base
 
     const buyerName  = buyer?.name  ?? "Cliente";
     const buyerEmail = (buyer?.email ?? "").toLowerCase().trim();
 
     if (!buyerEmail) {
-      console.warn("Payload sem email do comprador:", JSON.stringify(payload));
-      return new Response(JSON.stringify({ ok: false, reason: "sem email" }), { status: 200 });
+      console.warn("Payload sem email do comprador");
+      return new Response(JSON.stringify({ ok: true, reason: "sem_email" }), { status: 200 });
     }
 
-    console.log("Hotmart event:", event, "| email:", buyerEmail);
+    console.log(`Hotmart event: ${event} | email: ${buyerEmail}`);
 
     if (EVENTS_ACTIVATE.includes(event)) {
-      await activateClient(buyerName, buyerEmail, product?.name ?? "SDR Agente Único");
-      return new Response(JSON.stringify({ ok: true, action: "activated" }), { status: 200 });
+      const result = await activateClient(
+        buyerName,
+        buyerEmail,
+        product?.name ?? "SDR Agente",
+        TOKENS_INICIAIS,
+      );
+      return new Response(JSON.stringify({ ok: true, ...result }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     if (EVENTS_DEACTIVATE.includes(event)) {
-      await deactivateClient(buyerEmail);
-      return new Response(JSON.stringify({ ok: true, action: "deactivated" }), { status: 200 });
+      const result = await deactivateClient(buyerEmail);
+      return new Response(JSON.stringify({ ok: true, ...result }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
-    // Evento não tratado — retorna 200 para Hotmart não retentar
+    // Evento não tratado — responde 200 para Hotmart não retentar
     console.log("Evento ignorado:", event);
-    return new Response(JSON.stringify({ ok: true, action: "ignored" }), { status: 200 });
+    return new Response(JSON.stringify({ ok: true, action: "ignored", event }), { status: 200 });
 
   } catch (err: any) {
     console.error("hotmart-webhook error:", err.message);
-    return new Response(JSON.stringify({ ok: false, error: err.message }), { status: 500 });
+    return new Response(JSON.stringify({ ok: false, error: err.message }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 });

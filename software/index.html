@@ -1799,6 +1799,72 @@
         </div>
         <div id="token-usage-admin-table"><p class="loading">Carregando...</p></div>
       </div>
+
+      <!-- ── HOTMART WEBHOOK CONFIG ─────────────────────────────────────── -->
+      <div class="card" id="card-hotmart-config">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,76,0,.15);border:1px solid rgba(255,76,0,.3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">H</div>
+          <div>
+            <h3 style="margin:0;font-size:15px;">Integração Hotmart</h3>
+            <p style="margin:2px 0 0;font-size:12px;color:#8b949e;">Clientes são criados automaticamente após compra aprovada</p>
+          </div>
+        </div>
+
+        <!-- URL do Webhook -->
+        <div style="margin-bottom:18px;">
+          <label style="font-size:12px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">URL do Webhook</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="hotmart-webhook-url" readonly
+              value="https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/hotmart-webhook"
+              style="flex:1;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:9px 12px;font-size:12px;font-family:monospace;color:#e6edf3;outline:none;cursor:text;" />
+            <button class="btn-secondary" style="padding:8px 14px;font-size:12px;flex-shrink:0;" onclick="copyHotmartUrl()">Copiar</button>
+          </div>
+          <p style="margin:5px 0 0;font-size:11px;color:#6e7681;">Cole esta URL no painel da Hotmart em <strong>Ferramentas → Webhooks</strong>.</p>
+        </div>
+
+        <!-- Token secreto -->
+        <div style="margin-bottom:18px;">
+          <label style="font-size:12px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px;">Token Secreto (opcional)</label>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input id="hotmart-secret-display" type="text" placeholder="Não configurado"
+              style="flex:1;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:9px 12px;font-size:12px;font-family:monospace;color:#e6edf3;outline:none;" readonly />
+            <button class="btn-secondary" style="padding:8px 14px;font-size:12px;flex-shrink:0;" onclick="copyHotmartSecret()">Copiar</button>
+          </div>
+          <p style="margin:5px 0 0;font-size:11px;color:#6e7681;">
+            Configure a variável <code style="background:#161b22;padding:1px 5px;border-radius:3px;font-size:11px;">HOTMART_WEBHOOK_SECRET</code> no
+            <a href="https://supabase.com/dashboard/project/vyvdrbkcrvklcaombjqu/functions" target="_blank" style="color:#a3e635;text-decoration:none;">Supabase → Edge Functions → Secrets</a>
+            e cole o mesmo valor no campo de token da Hotmart.
+          </p>
+        </div>
+
+        <!-- Eventos a configurar -->
+        <div style="margin-bottom:18px;">
+          <label style="font-size:12px;font-weight:600;color:#8b949e;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:8px;">Eventos para Ativar na Hotmart</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+            <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;font-size:11px;font-family:monospace;color:#a3e635;">PURCHASE_APPROVED</div>
+            <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;font-size:11px;font-family:monospace;color:#a3e635;">PURCHASE_COMPLETE</div>
+            <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;font-size:11px;font-family:monospace;color:#a3e635;">PURCHASE_REACTIVATED</div>
+            <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;font-size:11px;font-family:monospace;color:#a3e635;">SUBSCRIPTION_REACTIVATED</div>
+            <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;font-size:11px;font-family:monospace;color:#ef4444;">SUBSCRIPTION_CANCELLATION</div>
+            <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;font-size:11px;font-family:monospace;color:#ef4444;">PURCHASE_CANCELED</div>
+            <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;font-size:11px;font-family:monospace;color:#ef4444;">PURCHASE_REFUNDED</div>
+            <div style="background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:7px 10px;font-size:11px;font-family:monospace;color:#ef4444;">PURCHASE_CHARGEBACK</div>
+          </div>
+          <p style="margin:6px 0 0;font-size:11px;color:#6e7681;"><span style="color:#a3e635;">Verde</span> = ativa conta &nbsp;|&nbsp; <span style="color:#ef4444;">Vermelho</span> = desativa conta</p>
+        </div>
+
+        <!-- O que acontece automaticamente -->
+        <div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:12px 14px;">
+          <div style="font-size:12px;font-weight:600;color:#8b949e;margin-bottom:8px;">O que acontece na compra aprovada:</div>
+          <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:#8b949e;line-height:1.5;">
+            <div><span style="color:#a3e635;font-weight:700;">1.</span> Conta criada e e-mail de acesso enviado ao cliente</div>
+            <div><span style="color:#a3e635;font-weight:700;">2.</span> Instância WhatsApp (Evolution API) configurada</div>
+            <div><span style="color:#a3e635;font-weight:700;">3.</span> <span id="hotmart-tokens-display">5.000.000</span> tokens de crédito adicionados</div>
+            <div><span style="color:#a3e635;font-weight:700;">4.</span> Configurações padrão do agente aplicadas</div>
+            <div><span style="color:#a3e635;font-weight:700;">5.</span> Assinatura registrada como <strong>ativa</strong></div>
+          </div>
+        </div>
+      </div>
     </div>
 
   </div>
@@ -2005,6 +2071,23 @@
   let waStatusInterval = null;
   let qrCountdownInterval = null;
   let currentProfile = null; // { id, role, display_name, evo_instance, active }
+
+  // ── Toast notification ──────────────────────────────────────────────────
+  function showToast(msg, type = 'success') {
+    let t = document.getElementById('_toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = '_toast';
+      t.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:9999;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;color:#fff;box-shadow:0 4px 16px rgba(0,0,0,.4);transition:opacity .3s;pointer-events:none;';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.background = type === 'error' ? '#ef4444' : '#a3e635';
+    t.style.color = type === 'error' ? '#fff' : '#0d1117';
+    t.style.opacity = '1';
+    clearTimeout(t._to);
+    t._to = setTimeout(() => { t.style.opacity = '0'; }, 2500);
+  }
 
   // getEvoInstance removido — o proxy evo-proxy resolve a instância automaticamente pelo JWT
 
@@ -4570,6 +4653,17 @@
   // =====================
   // USO DE TOKENS (admin)
   // =====================
+  // ── Hotmart helpers ─────────────────────────────────────────────────────
+  function copyHotmartUrl() {
+    const url = 'https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/hotmart-webhook';
+    navigator.clipboard.writeText(url).then(() => showToast('URL copiada!'));
+  }
+  function copyHotmartSecret() {
+    const val = document.getElementById('hotmart-secret-display')?.value || '';
+    if (!val || val === 'Não configurado') { showToast('Nenhum token configurado.'); return; }
+    navigator.clipboard.writeText(val).then(() => showToast('Token copiado!'));
+  }
+
   async function loadTokenUsageAdmin() {
     if (currentProfile?.role !== 'admin') return;
     const el = document.getElementById('token-usage-admin-table');
