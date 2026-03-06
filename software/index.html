@@ -618,6 +618,14 @@
     .crm-funnel-tab.active .funnel-count { background:rgba(163,230,53,.15); color:#a3e635; }
     .crm-funnel-add { width:34px; height:34px; border-radius:8px; display:flex; align-items:center; justify-content:center; background:transparent; border:1.5px dashed rgba(255,255,255,.1); color:#525a65; cursor:pointer; font-size:18px; transition:all .15s; flex-shrink:0; }
     .crm-funnel-add:hover { border-color:rgba(163,230,53,.3); color:#a3e635; background:rgba(163,230,53,.05); }
+    /* Move-to-funil quick action */
+    .crm-card-move { background:transparent; border:none; cursor:pointer; font-size:12px; padding:2px 6px; border-radius:5px; color:#525a65; transition:all .15s; line-height:1; flex-shrink:0; }
+    .crm-card-move:hover { background:rgba(255,255,255,.08); color:#a3e635; }
+    .crm-move-popup { position:fixed; background:#161b22; border:1px solid rgba(255,255,255,.12); border-radius:10px; padding:6px; z-index:99999; min-width:190px; box-shadow:0 8px 32px rgba(0,0,0,.6); }
+    .crm-move-popup-title { font-size:10px; font-weight:700; color:#525a65; padding:4px 10px 8px; text-transform:uppercase; letter-spacing:.06em; }
+    .crm-move-popup-item { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:6px; cursor:pointer; font-size:13px; color:#8b949e; transition:all .12s; white-space:nowrap; }
+    .crm-move-popup-item:hover { background:rgba(163,230,53,.08); color:#a3e635; }
+    .crm-move-popup-item.current-funil { color:#a3e635; font-weight:600; }
     /* Richer cards */
     .crm-card { background:#161b22 !important; border-radius:12px !important; padding:0 !important; margin-bottom:10px !important; cursor:grab; border:1px solid rgba(255,255,255,.06) !important; border-left:4px solid #e5e7eb !important; transition:all .18s !important; user-select:none; box-shadow:0 1px 3px rgba(0,0,0,.3) !important; overflow:hidden; }
     .crm-card:hover { border-color:rgba(255,255,255,.12) !important; border-left-color:inherit !important; box-shadow:0 4px 16px rgba(0,0,0,.4) !important; transform:translateY(-1px); }
@@ -2761,6 +2769,7 @@
         <span class="crm-card-tasks ${taskClass}" onclick="event.stopPropagation();openQuickTask('${lead.id}')" title="Clique para adicionar tarefa">${taskText}</span>
         <div style="display:flex;align-items:center;gap:6px;">
           <button class="crm-card-add-task" onclick="event.stopPropagation();openQuickTask('${lead.id}')" title="Adicionar tarefa">＋ tarefa</button>
+          ${crmFluxos.length > 0 ? `<button class="crm-card-move" onclick="event.stopPropagation();openMoveToFunilPopup('${lead.id}',event)" title="Mover para outro funil">🔀</button>` : ''}
           ${scoreHTML(score)}
           <span class="crm-card-date">${lead.atualizado_em ? timeAgo(lead.atualizado_em) : '—'}</span>
         </div>
@@ -3005,6 +3014,64 @@
     document.getElementById('nf-error').style.display = 'none';
   }
   const MAX_FUNIS = 5;
+
+  // ---- Mover lead entre funis (quick popup) ----
+  function openMoveToFunilPopup(leadId, event) {
+    closeMoveToFunilPopup();
+    const lead = crmLeads.find(l => l.id === leadId);
+    if (!lead) return;
+    const options = [
+      { id: '', label: '— Sem funil —' },
+      ...crmFluxos.map(f => ({ id: f.id, label: f.nome }))
+    ];
+    const popup = document.createElement('div');
+    popup.className = 'crm-move-popup';
+    popup.id = 'crm-move-popup';
+    popup.innerHTML = `<div class="crm-move-popup-title">Mover para funil</div>` +
+      options.map(o => {
+        const isCurrent = (lead.fluxo_id || '') === o.id;
+        return `<div class="crm-move-popup-item ${isCurrent ? 'current-funil' : ''}"
+          onclick="moveLeadToFunil('${leadId}','${o.id}')">
+          ${o.id ? '🔀' : '✖️'} ${escapeHtml(o.label)}${isCurrent ? ' ✓' : ''}
+        </div>`;
+      }).join('');
+    document.body.appendChild(popup);
+    // Posiciona próximo ao botão
+    const btn = event.currentTarget || event.target;
+    const rect = btn.getBoundingClientRect ? btn.getBoundingClientRect() : { bottom: event.clientY, left: event.clientX, top: event.clientY };
+    let top = rect.bottom + 4;
+    let left = rect.left;
+    if (left + 210 > window.innerWidth) left = window.innerWidth - 215;
+    if (top + 220 > window.innerHeight) top = rect.top - 224;
+    popup.style.top = top + 'px';
+    popup.style.left = left + 'px';
+    setTimeout(() => document.addEventListener('click', closeMoveToFunilPopup, { once: true }), 80);
+  }
+  function closeMoveToFunilPopup() {
+    const p = document.getElementById('crm-move-popup');
+    if (p) p.remove();
+  }
+  async function moveLeadToFunil(leadId, funilId) {
+    closeMoveToFunilPopup();
+    const lead = crmLeads.find(l => l.id === leadId);
+    if (!lead) return;
+    const newFluxoId = funilId || null;
+    if ((lead.fluxo_id || null) === newFluxoId) return; // sem mudança
+    const { error } = await db.from('leads').update({ fluxo_id: newFluxoId, atualizado_em: new Date().toISOString() }).eq('id', leadId);
+    if (error) { alert('Erro ao mover lead: ' + error.message); return; }
+    lead.fluxo_id = newFluxoId;
+    // Se filtrando por funil e o lead saiu, remove o card da view
+    if (crmFluxoFilter !== 'all' && lead.fluxo_id !== crmFluxoFilter) {
+      const cardEl = document.querySelector(`.crm-card[data-lead-id="${leadId}"]`);
+      if (cardEl) cardEl.remove();
+    } else {
+      // Atualiza o card com novo badge de funil
+      const cardEl = document.querySelector(`.crm-card[data-lead-id="${leadId}"]`);
+      if (cardEl) cardEl.outerHTML = renderCard(lead);
+    }
+    // Atualiza contadores das tabs de funil
+    await loadCRMFluxos();
+  }
 
   async function createNewFunil() {
     const nome  = document.getElementById('nf-nome').value.trim();
