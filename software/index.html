@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>XPERT.IA — Painel</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
     :root {
       --bg:       #0d1117;
@@ -696,6 +697,39 @@
     .modal-box { border:1px solid rgba(255,255,255,.08) !important; box-shadow:0 24px 64px rgba(0,0,0,.5), 0 0 0 1px rgba(163,230,53,.05) !important; }
     .crm-modal-tabs { border-color:rgba(255,255,255,.07) !important; }
     .crm-tab { font-size:12px !important; letter-spacing:.2px; }
+
+    /* ── Analytics Dashboard ─────────────────────────────────── */
+    .dash-filter-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#161b22; border:1px solid #30363d; border-radius:12px; padding:14px 18px; margin-bottom:20px; }
+    .dash-filter-bar select, .dash-filter-bar input[type=date] { background:#0d1117; border:1px solid #30363d; border-radius:8px; color:#e6edf3; padding:7px 12px; font-size:13px; cursor:pointer; }
+    .dash-filter-bar input[type=date] { color-scheme:dark; }
+    .dash-filter-bar .custom-dates { display:flex; align-items:center; gap:8px; }
+    .dash-filter-bar label { font-size:12px; color:#8b949e; font-weight:600; letter-spacing:.4px; text-transform:uppercase; }
+    .btn-dash-apply { background:#a3e635; color:#0d1117; border:none; border-radius:8px; padding:7px 18px; font-size:13px; font-weight:700; cursor:pointer; }
+    .btn-dash-apply:hover { background:#84cc16; }
+    .dash-kpi-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; margin-bottom:20px; }
+    .dash-kpi { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:18px; position:relative; overflow:hidden; }
+    .dash-kpi::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--kpi-color,#30363d); border-radius:12px 12px 0 0; }
+    .dash-kpi.kpi-total    { --kpi-color:#8b949e; }
+    .dash-kpi.kpi-atend    { --kpi-color:#60a5fa; }
+    .dash-kpi.kpi-concl    { --kpi-color:#a78bfa; }
+    .dash-kpi.kpi-ganho    { --kpi-color:#a3e635; }
+    .dash-kpi.kpi-perda    { --kpi-color:#f87171; }
+    .dash-kpi.kpi-taxa     { --kpi-color:#fb923c; }
+    .dash-kpi-label { font-size:11px; color:#8b949e; text-transform:uppercase; letter-spacing:.5px; font-weight:600; margin-bottom:8px; }
+    .dash-kpi-value { font-size:32px; font-weight:800; color:#e6edf3; line-height:1; }
+    .dash-kpi-sub { font-size:11px; color:#6e7681; margin-top:6px; }
+    .dash-chart-card { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:20px; margin-bottom:20px; }
+    .dash-chart-card h3 { font-size:14px; font-weight:700; color:#e6edf3; margin:0 0 16px 0; }
+    .dash-funis-table { width:100%; border-collapse:collapse; font-size:13px; }
+    .dash-funis-table th { text-align:left; padding:8px 12px; color:#8b949e; font-size:11px; text-transform:uppercase; letter-spacing:.4px; border-bottom:1px solid #30363d; }
+    .dash-funis-table td { padding:10px 12px; border-bottom:1px solid #21262d; color:#e6edf3; }
+    .dash-funis-table tr:last-child td { border-bottom:none; }
+    .dash-funis-table .badge-g { background:rgba(163,230,53,.15); color:#a3e635; border-radius:6px; padding:2px 8px; font-size:11px; font-weight:700; }
+    .dash-funis-table .badge-r { background:rgba(248,113,113,.15); color:#f87171; border-radius:6px; padding:2px 8px; font-size:11px; font-weight:700; }
+    .dash-funis-table .badge-b { background:rgba(96,165,250,.15); color:#60a5fa; border-radius:6px; padding:2px 8px; font-size:11px; font-weight:700; }
+    .dash-prog-bar { height:6px; border-radius:3px; background:#21262d; margin-top:4px; overflow:hidden; }
+    .dash-prog-fill { height:100%; border-radius:3px; background:#a3e635; transition:width .4s; }
+    .dash-empty { text-align:center; color:#8b949e; padding:40px; }
   </style>
   <link rel="stylesheet" href="https://unpkg.com/drawflow/dist/drawflow.min.css" />
 </head>
@@ -756,6 +790,9 @@
         <span class="icon">📚</span> Base de Conhecimento
       </div>
       <div class="nav-section">Resultados</div>
+      <div class="nav-item" onclick="showPage('analytics', this)">
+        <span class="icon">📈</span> Analytics
+      </div>
       <div class="nav-item" onclick="showPage('leads', this)">
         <span class="icon">👥</span> Leads
       </div>
@@ -1353,6 +1390,83 @@
       </div>
     </div>
 
+    <!-- ANALYTICS -->
+    <div class="page" id="page-analytics">
+      <div class="page-header">
+        <h1>📈 Analytics</h1>
+        <p>Métricas de performance e conversão segmentadas por período</p>
+      </div>
+
+      <!-- Filtro de período -->
+      <div class="dash-filter-bar">
+        <label>Período</label>
+        <select id="dash-periodo" onchange="onDashPeriodoChange()">
+          <option value="today">Hoje</option>
+          <option value="7d">Últimos 7 dias</option>
+          <option value="30d" selected>Últimos 30 dias</option>
+          <option value="mes">Este mês</option>
+          <option value="mes_ant">Mês anterior</option>
+          <option value="custom">Personalizado</option>
+        </select>
+        <div class="custom-dates" id="dash-custom-dates" style="display:none;">
+          <label>De</label>
+          <input type="date" id="dash-ini" />
+          <label>Até</label>
+          <input type="date" id="dash-fim" />
+        </div>
+        <button class="btn-dash-apply" onclick="loadDashboard()">Aplicar</button>
+        <span style="margin-left:auto;font-size:12px;color:#8b949e;" id="dash-period-label"></span>
+      </div>
+
+      <!-- KPIs -->
+      <div class="dash-kpi-grid">
+        <div class="dash-kpi kpi-total">
+          <div class="dash-kpi-label">Fluxos Iniciados</div>
+          <div class="dash-kpi-value" id="dk-total">—</div>
+          <div class="dash-kpi-sub">total no período</div>
+        </div>
+        <div class="dash-kpi kpi-atend">
+          <div class="dash-kpi-label">Em Atendimento</div>
+          <div class="dash-kpi-value" id="dk-atend">—</div>
+          <div class="dash-kpi-sub">ativos agora</div>
+        </div>
+        <div class="dash-kpi kpi-concl">
+          <div class="dash-kpi-label">Concluídos</div>
+          <div class="dash-kpi-value" id="dk-concl">—</div>
+          <div class="dash-kpi-sub">finalizaram o fluxo</div>
+        </div>
+        <div class="dash-kpi kpi-ganho">
+          <div class="dash-kpi-label">Ganhos</div>
+          <div class="dash-kpi-value" id="dk-ganho">—</div>
+          <div class="dash-kpi-sub">convertidos + qualificados</div>
+        </div>
+        <div class="dash-kpi kpi-perda">
+          <div class="dash-kpi-label">Perda</div>
+          <div class="dash-kpi-value" id="dk-perda">—</div>
+          <div class="dash-kpi-sub">perdidos + desqualificados</div>
+        </div>
+        <div class="dash-kpi kpi-taxa">
+          <div class="dash-kpi-label">Taxa de Conversão</div>
+          <div class="dash-kpi-value" id="dk-taxa">—</div>
+          <div class="dash-kpi-sub">ganhos / total</div>
+        </div>
+      </div>
+
+      <!-- Gráfico de evolução -->
+      <div class="dash-chart-card">
+        <h3>📊 Evolução no período</h3>
+        <div style="position:relative;height:260px;">
+          <canvas id="dash-chart"></canvas>
+        </div>
+      </div>
+
+      <!-- Breakdown por funil -->
+      <div class="dash-chart-card">
+        <h3>🔀 Performance por Funil</h3>
+        <div id="dash-funis-wrap"><p class="dash-empty">Carregando...</p></div>
+      </div>
+    </div>
+
     <!-- FATURAMENTO -->
     <div class="page" id="page-faturamento">
       <div class="page-header"><h1>💳 Faturamento</h1><p>Gerencie sua assinatura e histórico de pagamentos</p></div>
@@ -1905,6 +2019,7 @@
     if (name === 'leads') loadLeads();
     if (name === 'crm') { loadCRM(); setTimeout(checkReminders, 500); }
     if (name === 'pdfs') loadPDFList();
+    if (name === 'analytics') loadDashboard();
     if (name === 'clientes') { loadClients(); loadTokenUsageAdmin(); }
     if (name === 'faturamento') {
       loadBilling();
@@ -2987,6 +3102,203 @@
       <td style="max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.tese || l.resumo || '—'}</td>
       <td><span class="badge ${l.qualificado ? 'badge-green' : 'badge-red'}">${l.qualificado ? '✅ Qualificado' : '❌ Não qualificado'}</span></td>
     </tr>`).join('')}</tbody></table>`;
+  }
+
+  // =====================
+  // ANALYTICS DASHBOARD
+  // =====================
+  let dashChartInstance = null;
+
+  function onDashPeriodoChange() {
+    const val = document.getElementById('dash-periodo').value;
+    document.getElementById('dash-custom-dates').style.display = val === 'custom' ? 'flex' : 'none';
+  }
+
+  function getDashDateRange() {
+    const val = document.getElementById('dash-periodo').value;
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+    if (val === 'today') {
+      const s = fmt(now);
+      return { ini: s + 'T00:00:00', fim: s + 'T23:59:59', label: 'Hoje' };
+    }
+    if (val === '7d') {
+      const s = new Date(now); s.setDate(s.getDate()-6);
+      return { ini: fmt(s) + 'T00:00:00', fim: fmt(now) + 'T23:59:59', label: 'Últimos 7 dias' };
+    }
+    if (val === '30d') {
+      const s = new Date(now); s.setDate(s.getDate()-29);
+      return { ini: fmt(s) + 'T00:00:00', fim: fmt(now) + 'T23:59:59', label: 'Últimos 30 dias' };
+    }
+    if (val === 'mes') {
+      const s = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { ini: fmt(s) + 'T00:00:00', fim: fmt(now) + 'T23:59:59', label: 'Este mês' };
+    }
+    if (val === 'mes_ant') {
+      const s = new Date(now.getFullYear(), now.getMonth()-1, 1);
+      const e = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { ini: fmt(s) + 'T00:00:00', fim: fmt(e) + 'T23:59:59', label: 'Mês anterior' };
+    }
+    if (val === 'custom') {
+      const ini = document.getElementById('dash-ini').value;
+      const fim = document.getElementById('dash-fim').value;
+      if (!ini || !fim) { alert('Informe data inicial e final.'); return null; }
+      return { ini: ini + 'T00:00:00', fim: fim + 'T23:59:59', label: `${ini} → ${fim}` };
+    }
+    return { ini: null, fim: null, label: 'Todo o período' };
+  }
+
+  async function loadDashboard() {
+    const range = getDashDateRange();
+    if (!range) return;
+
+    // Label do período
+    const labelEl = document.getElementById('dash-period-label');
+    if (labelEl) labelEl.textContent = range.label;
+
+    // Reseta KPIs
+    ['dk-total','dk-atend','dk-concl','dk-ganho','dk-perda','dk-taxa'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.textContent = '…';
+    });
+
+    // Query leads no período
+    let q = db.from('leads').select('id, stage, fluxo_id, created_at');
+    if (range.ini) q = q.gte('created_at', range.ini);
+    if (range.fim) q = q.lte('created_at', range.fim);
+
+    const { data: leads, error } = await q;
+    if (error) { console.error(error); return; }
+    if (!leads || leads.length === 0) {
+      ['dk-total','dk-atend','dk-concl','dk-ganho','dk-perda','dk-taxa'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.textContent = '0';
+      });
+      document.getElementById('dk-taxa').textContent = '0%';
+      document.getElementById('dash-funis-wrap').innerHTML = '<p class="dash-empty">Nenhum lead no período selecionado.</p>';
+      if (dashChartInstance) { dashChartInstance.destroy(); dashChartInstance = null; }
+      return;
+    }
+
+    // ── Contagens por stage ──
+    const total  = leads.length;
+    const atend  = leads.filter(l => ['novo_contato','em_atendimento'].includes(l.stage)).length;
+    const ganho  = leads.filter(l => ['convertido','qualificado'].includes(l.stage)).length;
+    const perda  = leads.filter(l => ['perdido','nao_qualificado'].includes(l.stage)).length;
+    const concl  = ganho + perda;
+    const taxa   = total > 0 ? Math.round(ganho / total * 100) : 0;
+
+    document.getElementById('dk-total').textContent = total;
+    document.getElementById('dk-atend').textContent = atend;
+    document.getElementById('dk-concl').textContent = concl;
+    document.getElementById('dk-ganho').textContent = ganho;
+    document.getElementById('dk-perda').textContent = perda;
+    document.getElementById('dk-taxa').textContent  = taxa + '%';
+
+    // ── Gráfico: evolução por dia ──
+    renderDashChart(leads, range);
+
+    // ── Breakdown por funil ──
+    renderDashFunis(leads);
+  }
+
+  function renderDashChart(leads, range) {
+    // Agrupa por data
+    const byDay = {};
+    leads.forEach(l => {
+      const day = (l.created_at || '').slice(0, 10);
+      if (!byDay[day]) byDay[day] = { total: 0, ganho: 0, perda: 0, atend: 0 };
+      byDay[day].total++;
+      if (['convertido','qualificado'].includes(l.stage))     byDay[day].ganho++;
+      else if (['perdido','nao_qualificado'].includes(l.stage)) byDay[day].perda++;
+      else                                                      byDay[day].atend++;
+    });
+    const days = Object.keys(byDay).sort();
+
+    // Labels curtos
+    const labels = days.map(d => {
+      const [,m,dd] = d.split('-');
+      return `${dd}/${m}`;
+    });
+
+    const ctx = document.getElementById('dash-chart').getContext('2d');
+    if (dashChartInstance) dashChartInstance.destroy();
+
+    dashChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Ganhos',       data: days.map(d => byDay[d].ganho), backgroundColor: 'rgba(163,230,53,0.8)',  borderRadius: 4, stack: 'a' },
+          { label: 'Perda',        data: days.map(d => byDay[d].perda), backgroundColor: 'rgba(248,113,113,0.8)', borderRadius: 4, stack: 'a' },
+          { label: 'Em Atend.',    data: days.map(d => byDay[d].atend), backgroundColor: 'rgba(96,165,250,0.6)',  borderRadius: 4, stack: 'a' },
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#8b949e', font: { size: 12 } } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          x: { stacked: true, ticks: { color: '#6e7681', font: { size: 11 } }, grid: { color: '#21262d' } },
+          y: { stacked: true, beginAtZero: true, ticks: { color: '#6e7681', font: { size: 11 }, precision: 0 }, grid: { color: '#21262d' } }
+        }
+      }
+    });
+  }
+
+  function renderDashFunis(leads) {
+    const wrap = document.getElementById('dash-funis-wrap');
+    if (!wrap) return;
+
+    // Agrupa por fluxo_id
+    const byFunil = {};
+    leads.forEach(l => {
+      const key = l.fluxo_id || '__sem_funil__';
+      if (!byFunil[key]) byFunil[key] = { total: 0, atend: 0, ganho: 0, perda: 0 };
+      byFunil[key].total++;
+      if (['convertido','qualificado'].includes(l.stage))       byFunil[key].ganho++;
+      else if (['perdido','nao_qualificado'].includes(l.stage)) byFunil[key].perda++;
+      else                                                       byFunil[key].atend++;
+    });
+
+    // Mapa de nomes dos funis (usa crmFluxos se disponível)
+    const nomeFunil = id => {
+      if (id === '__sem_funil__') return '— Sem funil —';
+      const f = (crmFluxos || []).find(x => x.id === id);
+      return f ? f.nome : id;
+    };
+
+    const rows = Object.entries(byFunil)
+      .sort((a,b) => b[1].total - a[1].total)
+      .map(([id, d]) => {
+        const taxa = d.total > 0 ? Math.round(d.ganho / d.total * 100) : 0;
+        return `<tr>
+          <td><strong>${escapeHtml(nomeFunil(id))}</strong></td>
+          <td style="text-align:center">${d.total}</td>
+          <td style="text-align:center"><span class="badge-b">${d.atend}</span></td>
+          <td style="text-align:center"><span class="badge-g">${d.ganho}</span></td>
+          <td style="text-align:center"><span class="badge-r">${d.perda}</span></td>
+          <td style="min-width:100px">
+            <div style="font-size:12px;font-weight:700;color:${taxa>=50?'#a3e635':'#f87171'}">${taxa}%</div>
+            <div class="dash-prog-bar"><div class="dash-prog-fill" style="width:${taxa}%;background:${taxa>=50?'#a3e635':'#f87171'}"></div></div>
+          </td>
+        </tr>`;
+      }).join('');
+
+    wrap.innerHTML = `<table class="dash-funis-table">
+      <thead><tr>
+        <th>Funil</th>
+        <th style="text-align:center">Total</th>
+        <th style="text-align:center">Em Atend.</th>
+        <th style="text-align:center">Ganhos</th>
+        <th style="text-align:center">Perda</th>
+        <th>Conversão</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
   }
 
   // =====================
