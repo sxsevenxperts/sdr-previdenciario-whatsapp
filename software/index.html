@@ -720,6 +720,12 @@
     .crm-col-title { cursor:default; }
     .crm-col-title-edit { background:transparent; border:none; border-bottom:1.5px solid #a3e635; color:#e6edf3; font-size:12px; font-weight:700; letter-spacing:.3px; text-transform:uppercase; width:100%; max-width:140px; outline:none; padding:0 0 1px; font-family:inherit; }
 
+    /* ── Notif destination radio options ─────────────────────── */
+    .notif-opt { display:flex; align-items:flex-start; gap:10px; cursor:pointer; padding:10px 14px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.07); border-radius:9px; transition:all .15s; }
+    .notif-opt:hover { border-color:rgba(163,230,53,.25); background:rgba(163,230,53,.04); }
+    .notif-opt:has(input:checked) { border-color:rgba(163,230,53,.35); background:rgba(163,230,53,.07); }
+    .notif-opt-title { font-size:13px; color:#e6edf3; font-weight:600; }
+    .notif-opt-desc { font-size:12px; color:#6e7681; margin-top:2px; }
     /* ── Web URL reference tags ──────────────────────────────── */
     .web-url-item { display:flex; align-items:center; gap:10px; background:rgba(163,230,53,.06); border:1px solid rgba(163,230,53,.15); border-radius:9px; padding:9px 12px; }
     .web-url-item a { color:#a3e635; font-size:12px; font-family:monospace; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:280px; text-decoration:none; flex:1; }
@@ -1370,13 +1376,42 @@
           <span class="qual-ch-badge auto">Automático</span>
         </div>
 
-        <!-- Flow visual -->
-        <div class="qual-flow">
-          <div class="qf-step origin">🤖 Lead qualificado</div>
-          <div class="qf-arrow">→</div>
-          <div class="qf-step always">📱 Número pessoal <span class="qf-tag always">sempre</span></div>
-          <div class="qf-plus">+</div>
-          <div class="qf-step cond" id="qf-grupo-step">👥 Grupo WhatsApp <span class="qf-tag cond">se membro</span></div>
+        <!-- Quando notificar -->
+        <div style="display:flex;align-items:center;gap:10px;background:rgba(74,222,128,.07);border:1px solid rgba(74,222,128,.18);border-radius:9px;padding:10px 14px;margin-bottom:18px;">
+          <span style="font-size:16px;">🕐</span>
+          <div>
+            <span style="font-size:13px;font-weight:700;color:#e6edf3;">Quando enviar: </span>
+            <span style="font-size:13px;color:#4ade80;font-weight:600;">somente quando o lead for qualificado</span>
+          </div>
+        </div>
+
+        <!-- Para quem notificar -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:13px;font-weight:600;color:#c9d1d9;margin-bottom:10px;">Para quem enviar o relatório:</div>
+          <div style="display:flex;flex-direction:column;gap:7px;" id="notif-destino-options">
+            <label class="notif-opt" id="notif-opt-numero">
+              <input type="radio" name="notif_destino" value="numero" onchange="saveNotifDestino(this)" style="accent-color:#a3e635;flex-shrink:0;">
+              <div>
+                <div class="notif-opt-title">📱 Apenas número do responsável</div>
+                <div class="notif-opt-desc">Somente o número configurado abaixo recebe o relatório</div>
+              </div>
+            </label>
+            <label class="notif-opt" id="notif-opt-grupo">
+              <input type="radio" name="notif_destino" value="grupo" onchange="saveNotifDestino(this)" style="accent-color:#a3e635;flex-shrink:0;">
+              <div>
+                <div class="notif-opt-title">👥 Apenas grupo WhatsApp</div>
+                <div class="notif-opt-desc">Somente o grupo recebe (se o lead for membro)</div>
+              </div>
+            </label>
+            <label class="notif-opt" id="notif-opt-ambos">
+              <input type="radio" name="notif_destino" value="ambos" onchange="saveNotifDestino(this)" style="accent-color:#a3e635;flex-shrink:0;" checked>
+              <div>
+                <div class="notif-opt-title">✅ Ambos <span style="background:rgba(163,230,53,.15);color:#a3e635;font-size:10px;padding:1px 7px;border-radius:4px;margin-left:4px;">Padrão</span></div>
+                <div class="notif-opt-desc">Número do responsável + grupo WhatsApp (se o lead for membro)</div>
+              </div>
+            </label>
+          </div>
+          <span class="save-status" id="notif-destino-status" style="margin-top:8px;display:block;"></span>
         </div>
 
         <!-- Destinos -->
@@ -3595,6 +3630,26 @@
         el.value = row.valor;
       }
     });
+    // Restore notif_destino radio
+    const notifRow = data.find(r => r.chave === 'notif_destino');
+    if (notifRow?.valor) {
+      const radio = document.querySelector(`input[name="notif_destino"][value="${notifRow.valor}"]`);
+      if (radio) radio.checked = true;
+    }
+  }
+
+  async function saveNotifDestino(radio) {
+    const val = radio?.value || document.querySelector('input[name="notif_destino"]:checked')?.value || 'ambos';
+    const status = document.getElementById('notif-destino-status');
+    const { data: { user } } = await db.auth.getUser();
+    const { error } = await db.from('agente_config').upsert(
+      { user_id: user.id, chave: 'notif_destino', valor: val },
+      { onConflict: 'user_id,chave' }
+    );
+    if (status) {
+      status.textContent = error ? '❌ Erro ao salvar' : '✅ Salvo';
+      setTimeout(() => { status.textContent = ''; }, 2000);
+    }
   }
 
   function restaurarPadrao() {
