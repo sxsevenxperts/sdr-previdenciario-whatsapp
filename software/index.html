@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>XPERT.IA — Painel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <style>
@@ -21,7 +24,7 @@
       --lime-bg:  #1a2e00;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
 
     /* ── Inputs escuros globais ───────────────────────────────────────── */
     input:not([type=checkbox]):not([type=radio]),
@@ -730,6 +733,45 @@
     .dash-prog-bar { height:6px; border-radius:3px; background:#21262d; margin-top:4px; overflow:hidden; }
     .dash-prog-fill { height:100%; border-radius:3px; background:#a3e635; transition:width .4s; }
     .dash-empty { text-align:center; color:#8b949e; padding:40px; }
+
+    /* ── Lead Scoring ─────────────────────────────────────────── */
+    .score-badge {
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:34px; height:22px; border-radius:5px;
+      font-size:11px; font-weight:700; padding:0 6px;
+      letter-spacing:.3px; flex-shrink:0;
+    }
+    .score-badge.score-hot  { background:rgba(239,68,68,.15);   color:#f87171; border:1px solid rgba(239,68,68,.3); }
+    .score-badge.score-high { background:rgba(163,230,53,.12);  color:#a3e635; border:1px solid rgba(163,230,53,.25); }
+    .score-badge.score-mid  { background:rgba(251,191,36,.12);  color:#fbbf24; border:1px solid rgba(251,191,36,.25); }
+    .score-badge.score-low  { background:rgba(139,148,158,.1);  color:#8b949e; border:1px solid rgba(139,148,158,.2); }
+
+    .scoring-rule-row { border-bottom:1px solid var(--border2); }
+    .scoring-rule-row:last-child { border-bottom:none; }
+    .scoring-rule-row td { padding:10px 8px; vertical-align:middle; }
+    .scoring-pts-input {
+      width:64px; text-align:right; padding:5px 8px;
+      background:var(--bg-card2); border:1px solid var(--border); border-radius:6px;
+      color:var(--text); font-size:13px; font-weight:600;
+    }
+    .scoring-pts-input:focus { outline:none; border-color:#a3e635; }
+    .scoring-rule-toggle {
+      width:36px; height:20px; background:#21262d; border-radius:10px;
+      border:1px solid var(--border); cursor:pointer; position:relative;
+      appearance:none; transition:background .2s;
+    }
+    .scoring-rule-toggle:checked { background:#a3e635; border-color:#a3e635; }
+    .scoring-rule-toggle::after {
+      content:''; position:absolute; width:14px; height:14px; border-radius:50%;
+      background:#fff; top:2px; left:2px; transition:left .2s;
+    }
+    .scoring-rule-toggle:checked::after { left:18px; }
+    .scoring-lead-row {
+      display:flex; align-items:center; gap:10px;
+      padding:8px 10px; border-radius:8px; background:var(--bg-card2);
+    }
+    .scoring-lead-name { flex:1; font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .scoring-lead-stage { font-size:11px; color:var(--text2); }
   </style>
   <link rel="stylesheet" href="https://unpkg.com/drawflow/dist/drawflow.min.css" />
 </head>
@@ -738,7 +780,7 @@
 <!-- LOGIN -->
 <div id="login-page">
   <div class="login-box">
-    <h1>🤖 XPERT.IA</h1>
+    <h1>XPERT.IA</h1>
     <p>Painel de administração do agente IA</p>
     <div class="form-group">
       <label>E-mail</label>
@@ -757,56 +799,59 @@
 <div id="dashboard-page">
   <div class="sidebar">
     <div class="logo">
-      <h2>🤖 XPERT.IA</h2>
+      <h2>XPERT.IA</h2>
       <p>Painel de Administração</p>
     </div>
     <div style="padding: 8px 0; flex: 1;">
       <div class="nav-section">Principal</div>
       <div class="nav-item active" onclick="showPage('overview', this)">
-        <span class="icon">📊</span> Visão Geral
+        <span class="icon"></span> Visão Geral
       </div>
       <div class="nav-section">WhatsApp</div>
       <div class="nav-item" onclick="showPage('whatsapp', this)" id="nav-whatsapp">
-        <span class="icon">📱</span> Conexão QR Code
+        <span class="icon"></span> Conexão QR Code
         <span class="badge-dot offline" id="nav-wa-dot"></span>
       </div>
       <div class="nav-item" onclick="showPage('batepapo', this)">
-        <span class="icon">💬</span> Bate-Papo ao Vivo
+        <span class="icon"></span> Bate-Papo ao Vivo
       </div>
       <div class="nav-item" onclick="showPage('crm', this)">
-        <span class="icon">🗂️</span> CRM — Pipeline
+        <span class="icon"></span> CRM — Pipeline
       </div>
       <div class="nav-section">Configuração</div>
       <div class="nav-item" onclick="showPage('agente', this)">
-        <span class="icon">🤖</span> Agente & Prompt
+        <span class="icon"></span> Agente & Prompt
       </div>
       <div class="nav-item" onclick="showPage('comunicacao', this)">
-        <span class="icon">🗣️</span> Comunicação
+        <span class="icon"></span> Comunicação
       </div>
       <div class="nav-item" onclick="showPage('qualificacao', this)">
-        <span class="icon">✅</span> Qualificação
+        <span class="icon"></span> Qualificação
       </div>
       <div class="nav-item" onclick="showPage('pdfs', this)">
-        <span class="icon">📚</span> Base de Conhecimento
+        <span class="icon"></span> Base de Conhecimento
       </div>
       <div class="nav-section">Resultados</div>
       <div class="nav-item" onclick="showPage('analytics', this)">
-        <span class="icon">📈</span> Analytics
+        <span class="icon"></span> Analytics
       </div>
       <div class="nav-item" onclick="showPage('leads', this)">
-        <span class="icon">👥</span> Leads
+        <span class="icon"></span> Leads
       </div>
       <div class="nav-section">Ferramentas</div>
+      <div class="nav-item" onclick="showPage('scoring', this)">
+        <span class="icon"></span> Lead Scoring
+      </div>
       <div class="nav-item" onclick="showPage('fluxos', this)">
-        <span class="icon">🔀</span> Designer de Fluxos
+        <span class="icon"></span> Designer de Fluxos
       </div>
       <div class="nav-section">Conta</div>
       <div class="nav-item" onclick="showPage('faturamento', this)">
-        <span class="icon">💳</span> Faturamento
+        <span class="icon"></span> Faturamento
       </div>
       <div class="nav-section admin-only" id="admin-nav-section">Super Admin</div>
       <div class="nav-item admin-only" id="admin-nav-clientes" onclick="showPage('clientes', this)">
-        <span class="icon">🏢</span> Clientes
+        <span class="icon"></span> Clientes
       </div>
     </div>
     <div class="sidebar-bottom">
@@ -845,7 +890,7 @@
         </div>
       </div>
       <div class="card">
-        <h3>📋 Últimos Leads</h3>
+        <h3>Últimos Leads</h3>
         <div id="overview-leads"><p class="loading">Carregando...</p></div>
       </div>
     </div>
@@ -853,18 +898,18 @@
     <!-- WHATSAPP -->
     <div class="page" id="page-whatsapp">
       <div class="page-header">
-        <h1>📱 Conexão WhatsApp via QR Code</h1>
+        <h1>Conexão WhatsApp via QR Code</h1>
         <p>Conecte seu WhatsApp escaneando o QR Code</p>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
         <div class="card">
-          <h3>📶 Status da Conexão</h3>
+          <h3>Status da Conexão</h3>
           <div id="wa-status-bar" class="wa-status-bar disconnected">
             <span class="wa-status-dot"></span>
             <span id="wa-status-text">Verificando...</span>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;">
-            <button class="btn-save" onclick="checkWAStatus()" style="padding:10px 20px;">🔄 Verificar Status</button>
+            <button class="btn-save" onclick="checkWAStatus()" style="padding:10px 20px;">Verificar Status</button>
             <button class="btn-wa-disconnect" id="btn-desconectar" onclick="disconnectWA()" style="display:none;">⏹ Desconectar</button>
           </div>
           <div style="margin-top:20px;padding:16px;background:#1c2128;border-radius:10px;font-size:13px;color:#8b949e;">
@@ -876,28 +921,28 @@
           </div>
         </div>
         <div class="card">
-          <h3>📷 QR Code de Conexão</h3>
+          <h3>QR Code de Conexão</h3>
           <div class="qr-container">
             <div class="qr-placeholder" id="qr-placeholder">
-              <span class="qr-icon">📲</span>
+              
               <span style="font-size:13px;font-weight:600;">Clique em "Gerar QR Code"</span>
               <span style="font-size:12px;">para conectar o WhatsApp</span>
             </div>
             <img id="qr-image" style="display:none;width:240px;height:240px;border-radius:12px;border:8px solid #fff;box-shadow:0 4px 20px rgba(0,0,0,0.12);" src="" alt="QR Code" />
             <div class="qr-timer" id="qr-timer" style="display:none;">QR expira em <span id="qr-countdown">60</span>s</div>
             <button class="btn-wa-connect" id="btn-gerar-qr" onclick="generateQR()">
-              <span>📷</span> Gerar QR Code
+              Gerar QR Code
             </button>
           </div>
         </div>
       </div>
       <div class="card">
-        <h3>📖 Como Conectar</h3>
+        <h3>Como Conectar</h3>
         <div class="qr-steps">
           <div class="qr-step"><div class="qr-step-num">1</div><div>Clique em <strong>"Gerar QR Code"</strong> acima para criar um novo código</div></div>
           <div class="qr-step"><div class="qr-step-num">2</div><div>No seu celular, abra o <strong>WhatsApp</strong> e vá em <strong>Configurações → Dispositivos conectados</strong></div></div>
           <div class="qr-step"><div class="qr-step-num">3</div><div>Toque em <strong>"Conectar um dispositivo"</strong> e aponte a câmera para o QR Code</div></div>
-          <div class="qr-step"><div class="qr-step-num">4</div><div>Aguarde a confirmação — o status acima ficará <strong style="color:#16a34a;">🟢 Conectado</strong></div></div>
+          <div class="qr-step"><div class="qr-step-num">4</div><div>Aguarde a confirmação — o status acima ficará <strong style="color:#16a34a;">Conectado</strong></div></div>
           <div class="qr-step"><div class="qr-step-num">5</div><div>O agente XPERT.IA começará a responder mensagens automaticamente pelo número conectado</div></div>
         </div>
       </div>
@@ -907,12 +952,12 @@
     <div class="page" id="page-batepapo">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
         <div>
-          <h1>💬 Bate-Papo ao Vivo</h1>
+          <h1>Bate-Papo ao Vivo</h1>
           <p>Acompanhe as conversas em tempo real</p>
         </div>
         <div style="display:flex;align-items:center;gap:10px;">
           <span class="auto-refresh-badge"><span class="auto-refresh-dot"></span> Ao vivo</span>
-          <button class="btn-secondary" onclick="loadConversations()" style="padding:8px 14px;font-size:13px;">🔄 Atualizar</button>
+          <button class="btn-secondary" onclick="loadConversations()" style="padding:8px 14px;font-size:13px;">Atualizar</button>
         </div>
       </div>
       <div class="chat-layout">
@@ -925,7 +970,7 @@
           <input class="chat-search" type="text" placeholder="🔍 Buscar número..." id="chat-search" oninput="filterConversations(this.value)" />
           <div class="conv-list" id="conv-list">
             <div class="empty-state" style="padding:32px 16px;">
-              <div style="font-size:32px;margin-bottom:8px;">📭</div>
+              <div style="font-size:32px;margin-bottom:8px;">—</div>
               <div style="font-size:13px;">Nenhuma conversa ativa</div>
             </div>
           </div>
@@ -933,7 +978,7 @@
         <!-- Área do chat -->
         <div class="chat-main" id="chat-main">
           <div class="chat-empty" id="chat-placeholder">
-            <div class="icon">💬</div>
+            <div class="icon"></div>
             <strong>Selecione uma conversa</strong>
             <span style="font-size:13px;">Clique em uma conversa à esquerda para ver as mensagens</span>
           </div>
@@ -947,7 +992,7 @@
               <div class="chat-header-actions">
                 <span id="chat-status-badge" class="badge badge-yellow" style="font-size:12px;"></span>
                 <button id="btn-toggle-agente" class="btn-secondary" style="padding:7px 14px;font-size:12px;" onclick="toggleAgente()">⏸ Pausar Agente</button>
-                <button class="btn-secondary" style="padding:7px 14px;font-size:12px;" onclick="clearSession()">🗑 Reiniciar</button>
+                <button class="btn-secondary" style="padding:7px 14px;font-size:12px;" onclick="clearSession()">Reiniciar</button>
               </div>
             </div>
             <div id="agente-pausado-banner" style="display:none;background:#fef9c3;border-bottom:1px solid #fef08a;padding:8px 20px;font-size:13px;font-weight:600;color:#92400e;">
@@ -958,7 +1003,7 @@
               <textarea class="chat-input" id="chat-input" placeholder="Digite uma mensagem para enviar direto ao WhatsApp..." rows="1"
                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendManualMessage();}"
                 oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-              <button class="btn-send" id="btn-send" onclick="sendManualMessage()" title="Enviar">➤</button>
+              <button class="btn-send" id="btn-send" onclick="sendManualMessage()" title="Enviar">Enviar</button>
             </div>
           </div>
         </div>
@@ -967,20 +1012,20 @@
 
     <!-- AGENTE -->
     <div class="page" id="page-agente">
-      <div class="page-header"><h1>🤖 Agente & Prompt</h1><p>Configure as instruções e personalidade do agente</p></div>
+      <div class="page-header"><h1>Agente & Prompt</h1><p>Configure as instruções e personalidade do agente</p></div>
       <div class="card">
-        <h3>🎯 Objetivo</h3>
+        <h3>Objetivo</h3>
         <div class="field-group"><label>Qual é o objetivo do agente?</label>
           <textarea id="cfg-objetivo" placeholder="Ex: Qualificar leads interessados em nossos produtos/serviços e encaminhar ao responsável comercial."></textarea></div>
       </div>
       <div class="card">
-        <h3>📝 Prompt Principal</h3>
+        <h3>Prompt Principal</h3>
         <div class="field-group"><label>Instruções detalhadas do agente</label>
           <textarea id="cfg-prompt_sistema" style="min-height:200px" placeholder="Você é um assistente de vendas especializado em qualificar leads para nossa empresa..."></textarea></div>
       </div>
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <button class="btn-save" onclick="saveConfigs(['objetivo','prompt_sistema'])">💾 Salvar</button>
-        <button class="btn-secondary" onclick="restaurarPadrao()">🔄 Restaurar Padrão</button>
+        <button class="btn-save" onclick="saveConfigs(['objetivo','prompt_sistema'])">Salvar</button>
+        <button class="btn-secondary" onclick="restaurarPadrao()">Restaurar Padrão</button>
         <span class="save-status" id="save-agente"></span>
       </div>
     </div>
@@ -990,24 +1035,24 @@
       <!-- Header row -->
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
         <div>
-          <h1 style="font-size:20px;font-weight:800;color:#e6edf3;margin:0 0 4px;letter-spacing:-.3px;">🗂️ CRM — Pipeline de Leads</h1>
+          <h1 style="font-size:20px;font-weight:800;color:#e6edf3;margin:0 0 4px;letter-spacing:-.3px;">CRM — Pipeline de Leads</h1>
           <p style="font-size:13px;color:#6e7681;margin:0;">Acompanhe cada lead do primeiro contato até a conversão</p>
         </div>
         <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
-          <button class="btn-secondary" style="padding:9px 14px;font-size:13px;" onclick="loadCRM()" title="Atualizar CRM">🔄</button>
+          <button class="btn-secondary" style="padding:9px 14px;font-size:13px;" onclick="loadCRM()" title="Atualizar CRM">Atualizar</button>
           <button class="crm-bell-btn" id="crm-bell-btn" onclick="toggleReminderPanel()" title="Lembretes de tarefas">
-            🔔
+            <!--bell-->
             <span class="crm-bell-badge" id="crm-bell-badge"></span>
           </button>
-          <button class="btn-secondary" style="padding:9px 16px;font-size:13px;" onclick="openStagesModal()">⚙️ Colunas</button>
-          <button class="btn-save" style="padding:9px 18px;font-size:13px;" onclick="openNewLeadModal()">➕ Novo Lead</button>
+          <button class="btn-secondary" style="padding:9px 16px;font-size:13px;" onclick="openStagesModal()">Colunas</button>
+          <button class="btn-save" style="padding:9px 18px;font-size:13px;" onclick="openNewLeadModal()">Novo Lead</button>
         </div>
       </div>
       <!-- Funnel tab nav -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px;flex-wrap:wrap;">
         <div class="crm-funnel-nav" id="crm-funnel-nav">
           <button class="crm-funnel-tab active" data-fluxo="all" onclick="filterCRMByFluxo('all',this)">
-            <span>📊</span> Todos <span class="funnel-count" id="crm-all-count">0</span>
+            Todos <span class="funnel-count" id="crm-all-count">0</span>
           </button>
           <span id="crm-funil-buttons"></span>
         </div>
@@ -1024,7 +1069,7 @@
     <div class="crm-reminder-panel" id="crm-reminder-panel">
       <div class="crm-reminder-hdr">
         <div class="crm-reminder-hdr-left">
-          <h3>🔔 Lembretes de Tarefas</h3>
+          <h3>Lembretes de Tarefas</h3>
           <p id="crm-reminder-subtitle">Verificando...</p>
         </div>
         <button onclick="closeReminderPanel()" style="background:none;border:none;font-size:18px;cursor:pointer;color:#6e7681;padding:0;flex-shrink:0;">✕</button>
@@ -1038,14 +1083,17 @@
     <div class="modal-backdrop" id="modal-crm-lead" onclick="if(event.target===this)closeCRMModal()">
       <div class="modal-box crm-modal-box">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0;">
-          <h2 id="crm-modal-title" style="font-size:16px;font-weight:700;">Lead</h2>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <h2 id="crm-modal-title" style="font-size:16px;font-weight:700;">Lead</h2>
+            <span id="crm-modal-score" class="score-badge score-low" style="display:none;"></span>
+          </div>
           <button onclick="closeCRMModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6e7681;padding:0;">✕</button>
         </div>
         <div class="crm-modal-tabs">
-          <div class="crm-tab active" onclick="switchCRMTab('dados',this)">📋 Dados</div>
-          <div class="crm-tab" onclick="switchCRMTab('tarefas',this)">☑️ Tarefas</div>
-          <div class="crm-tab" onclick="switchCRMTab('notas',this)">📝 Notas</div>
-          <div class="crm-tab" onclick="switchCRMTab('conversa',this)">💬 Conversa</div>
+          <div class="crm-tab active" onclick="switchCRMTab('dados',this)">Dados</div>
+          <div class="crm-tab" onclick="switchCRMTab('tarefas',this)">Tarefas</div>
+          <div class="crm-tab" onclick="switchCRMTab('notas',this)">Notas</div>
+          <div class="crm-tab" onclick="switchCRMTab('conversa',this)">Conversa</div>
         </div>
         <!-- TAB DADOS -->
         <div class="crm-tab-content active" id="crm-tab-dados">
@@ -1062,13 +1110,13 @@
               <select id="crm-stage">
                 <option value="novo_contato">🆕 Novo Contato</option>
                 <option value="em_atendimento">💬 Em Atendimento</option>
-                <option value="qualificado">✅ Qualificado</option>
+                <option value="qualificado">Qualificado</option>
                 <option value="nao_qualificado">❌ Não Qualificado</option>
                 <option value="convertido">🎉 Convertido</option>
                 <option value="perdido">🚪 Perdido</option>
               </select>
             </div>
-            <div class="field-group" style="margin:0;"><label>🔀 Funil / Fluxo</label>
+            <div class="field-group" style="margin:0;"><label>Funil / Fluxo</label>
               <select id="crm-fluxo-id">
                 <option value="">— Sem funil —</option>
               </select>
@@ -1076,7 +1124,7 @@
           </div>
           <div class="field-group" style="margin-top:14px 0 0;"><label>Resumo da triagem</label><textarea id="crm-resumo" style="min-height:70px" placeholder="Resumo gerado pelo agente"></textarea></div>
           <div class="modal-actions" style="margin-top:16px;">
-            <button class="btn-save" onclick="saveLeadDetails()">💾 Salvar dados</button>
+            <button class="btn-save" onclick="saveLeadDetails()">Salvar dados</button>
             <span class="save-status" id="crm-save-status"></span>
           </div>
         </div>
@@ -1086,7 +1134,7 @@
           <div style="display:flex;gap:8px;align-items:flex-end;border-top:1px solid #f1f5f9;padding-top:14px;margin-top:4px;">
             <div class="field-group" style="flex:1;margin:0;"><label>Nova tarefa</label><input type="text" id="nova-tarefa-desc" placeholder="Ex: Ligar para confirmar documentos" /></div>
             <div class="field-group" style="margin:0;width:140px;"><label>Vencimento</label><input type="date" id="nova-tarefa-data" /></div>
-            <button class="btn-add-tarefa" onclick="addTarefa()" style="margin-bottom:0;flex-shrink:0;">➕ Adicionar</button>
+            <button class="btn-add-tarefa" onclick="addTarefa()" style="margin-bottom:0;flex-shrink:0;">Adicionar</button>
           </div>
         </div>
         <!-- TAB NOTAS -->
@@ -1094,7 +1142,7 @@
           <div class="field-group"><label>Anotações sobre o lead</label>
             <textarea id="crm-notas" style="min-height:180px" placeholder="Qualquer observação relevante: informações adicionais, preferências, contexto do caso..."></textarea>
           </div>
-          <button class="btn-save" onclick="saveLeadNotas()">💾 Salvar notas</button>
+          <button class="btn-save" onclick="saveLeadNotas()">Salvar notas</button>
           <span class="save-status" id="crm-notas-status"></span>
         </div>
         <!-- TAB CONVERSA -->
@@ -1103,7 +1151,7 @@
             <strong>💬 Entrar na conversa</strong> abre o Bate-Papo com este lead e <strong>pausa o agente automaticamente</strong>. Você assume o controle diretamente. Quando quiser que o agente retome, clique em "▶️ Retomar agente" no Bate-Papo — ele saberá exatamente onde parou e continuará o atendimento.
           </div>
           <button class="btn-entrar-conversa" onclick="entrarNaConversa()">
-            💬 Entrar na conversa (pausa o agente)
+            Entrar na conversa (pausa o agente)
           </button>
         </div>
       </div>
@@ -1112,7 +1160,7 @@
     <!-- MODAL CRM: NOVO LEAD MANUAL -->
     <div class="modal-backdrop" id="modal-novo-lead" onclick="if(event.target===this)closeNewLeadModal()">
       <div class="modal-box" style="width:500px;">
-        <h2>➕ Novo Lead Manual</h2>
+        <h2>Novo Lead Manual</h2>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
           <div class="field-group" style="margin:0;"><label>Nome completo</label><input type="text" id="nl-nome" placeholder="Nome do contato" /></div>
           <div class="field-group" style="margin:0;"><label>WhatsApp <small style="color:#a3e635;">(DDI+DDD+número)</small></label><input type="text" id="nl-numero" placeholder="5511999999999" /></div>
@@ -1123,7 +1171,7 @@
         </div>
         <div id="nl-error" style="display:none;color:#f87171;font-size:13px;margin-top:10px;"></div>
         <div class="modal-actions" style="margin-top:12px;">
-          <button class="btn-save" id="btn-create-lead" onclick="createManualLead()">✅ Criar lead</button>
+          <button class="btn-save" id="btn-create-lead" onclick="createManualLead()">Criar lead</button>
           <button class="btn-secondary" onclick="closeNewLeadModal()">Cancelar</button>
         </div>
       </div>
@@ -1133,7 +1181,7 @@
     <div class="modal-backdrop" id="modal-novo-funil" onclick="if(event.target===this)closeNewFunilModal()">
       <div class="modal-box" style="width:420px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h2 style="font-size:16px;font-weight:700;margin:0;">🔀 Criar Novo Funil</h2>
+          <h2 style="font-size:16px;font-weight:700;margin:0;">Criar Novo Funil</h2>
           <button onclick="closeNewFunilModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6e7681;padding:0;">✕</button>
         </div>
         <div style="font-size:13px;color:#8b949e;margin-bottom:16px;line-height:1.5;">Um funil é um fluxo de automação que organiza os leads em um kanban dedicado. Você pode criar funis para diferentes campanhas, produtos ou equipes.</div>
@@ -1141,7 +1189,7 @@
         <div class="field-group"><label>Descrição <span style="color:#6e7681;font-weight:400;">(opcional)</span></label><input type="text" id="nf-descricao" placeholder="Finalidade deste funil" /></div>
         <div style="font-size:12px;color:#6e7681;margin-bottom:10px;" id="nf-capacity"></div>
         <div class="modal-actions" style="margin-top:8px;">
-          <button class="btn-save" id="btn-create-funil" onclick="createNewFunil()">✅ Criar funil</button>
+          <button class="btn-save" id="btn-create-funil" onclick="createNewFunil()">Criar funil</button>
           <button class="btn-secondary" onclick="closeNewFunilModal()">Cancelar</button>
         </div>
         <div id="nf-error" class="error-msg" style="margin-top:10px;display:none;"></div>
@@ -1152,15 +1200,15 @@
     <div class="modal-backdrop" id="modal-gerenciar-colunas" onclick="if(event.target===this)closeStagesModal()">
       <div class="modal-box" style="width:480px;position:relative;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <h2 style="font-size:16px;font-weight:700;">⚙️ Gerenciar Colunas</h2>
+          <h2 style="font-size:16px;font-weight:700;">Gerenciar Colunas</h2>
           <button onclick="closeStagesModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#6e7681;padding:0;">✕</button>
         </div>
         <p style="font-size:12px;color:#999;margin-bottom:8px;">Arraste para reordenar · Clique na bolinha para trocar a cor · Edite o nome diretamente</p>
         <div class="stages-list" id="stages-list"></div>
         <div id="color-palette-popup" class="color-palette" style="display:none;"></div>
         <div style="display:flex;gap:10px;margin-top:8px;border-top:1px solid #f1f5f9;padding-top:14px;">
-          <button class="btn-secondary" onclick="addNewStage()" style="flex:1;padding:10px;">➕ Nova coluna</button>
-          <button class="btn-save" onclick="saveCRMStages()" style="flex:1;padding:10px;">💾 Salvar</button>
+          <button class="btn-secondary" onclick="addNewStage()" style="flex:1;padding:10px;">Nova coluna</button>
+          <button class="btn-save" onclick="saveCRMStages()" style="flex:1;padding:10px;">Salvar</button>
         </div>
         <span class="save-status" id="stages-save-status" style="display:block;text-align:center;margin-top:8px;min-height:18px;"></span>
       </div>
@@ -1168,26 +1216,26 @@
 
     <!-- COMUNICAÇÃO -->
     <div class="page" id="page-comunicacao">
-      <div class="page-header"><h1>🗣️ Comunicação</h1><p>Defina como o agente deve se comunicar</p></div>
+      <div class="page-header"><h1>Comunicação</h1><p>Defina como o agente deve se comunicar</p></div>
       <div class="card">
-        <h3>🎭 Tonalidade de Voz</h3>
+        <h3>Tonalidade de Voz</h3>
         <div class="field-group"><label>Como o agente deve falar?</label>
           <textarea id="cfg-tonalidade" placeholder="Ex: Empático, claro e objetivo. Use linguagem simples e acessível."></textarea></div>
       </div>
       <div class="card">
-        <h3>📏 Regras de Comunicação</h3>
+        <h3>Regras de Comunicação</h3>
         <div class="field-group"><label>Instruções específicas de como conduzir a conversa</label>
           <textarea id="cfg-instrucoes_comunicacao" placeholder="Ex: Faça uma pergunta por vez. Nunca prometa resultado. Máximo 10 trocas."></textarea></div>
       </div>
       <div class="card">
-        <h3>📱 Mensagens de Encerramento</h3>
+        <h3>Mensagens de Encerramento</h3>
         <div class="field-group"><label>Mensagem quando lead é QUALIFICADO</label>
           <textarea id="cfg-msg_qualificado" placeholder="Ex: Ótimo! Vou encaminhar suas informações ao responsável. Em breve ele entrará em contato."></textarea></div>
         <div class="field-group"><label>Mensagem quando lead NÃO é qualificado</label>
           <textarea id="cfg-msg_desqualificado" placeholder="Ex: Obrigado pelo contato! No momento não identificamos um caso que atendemos."></textarea></div>
       </div>
       <div class="card">
-        <h3>🔊 Resposta em Áudio</h3>
+        <h3>Resposta em Áudio</h3>
         <div class="toggle-row">
           <div class="toggle-info">
             <div class="toggle-label">Responder em áudio no WhatsApp</div>
@@ -1199,10 +1247,10 @@
           </label>
         </div>
         <div style="margin-top:8px;padding:10px 14px;background:#f0fdf4;border-radius:8px;font-size:12px;color:#166534;">
-          💡 <strong>Custo:</strong> ~R$0,003 por mensagem de áudio enviada (OpenAI TTS). Transcrição de áudio recebido: ~R$0,003 por áudio de 30s (Whisper).
+          <strong>Custo:</strong> ~R$0,003 por mensagem de áudio enviada (OpenAI TTS). Transcrição de áudio recebido: ~R$0,003 por áudio de 30s (Whisper).
         </div>
       </div>
-      <button class="btn-save" onclick="saveConfigs(['tonalidade','instrucoes_comunicacao','msg_qualificado','msg_desqualificado','responder_em_audio'])">💾 Salvar</button>
+      <button class="btn-save" onclick="saveConfigs(['tonalidade','instrucoes_comunicacao','msg_qualificado','msg_desqualificado','responder_em_audio'])">Salvar</button>
       <span class="save-status" id="save-comunicacao"></span>
     </div>
 
@@ -1211,24 +1259,24 @@
       <div class="qual-hdr">
         <div class="qual-hdr-left">
           <div class="qual-eyebrow">Configurações do Agente</div>
-          <h1>✅ Qualificação de Leads</h1>
+          <h1>Qualificação de Leads</h1>
           <p>Defina os critérios de triagem e configure para onde o agente envia os relatórios quando um lead é qualificado</p>
         </div>
         <div class="qual-hdr-right">
           <span class="save-status" id="save-qualificacao"></span>
-          <button class="btn-save" onclick="saveConfigs(['criterios_qualificacao','numero_destino','grupo_destino'])">💾 Salvar configurações</button>
+          <button class="btn-save" onclick="saveConfigs(['criterios_qualificacao','numero_destino','grupo_destino'])">Salvar configurações</button>
         </div>
       </div>
 
       <!-- Card critérios -->
       <div class="card qual-card">
         <div class="qual-ch">
-          <div class="qual-ch-icon lime">📋</div>
+          <div class="qual-ch-icon lime">◈</div>
           <div>
             <p class="qual-ch-title">Critérios de Qualificação</p>
             <p class="qual-ch-sub">O agente verifica estes pontos antes de classificar um lead como qualificado</p>
           </div>
-          <span class="qual-ch-badge ai">✨ Analisado por IA</span>
+          <span class="qual-ch-badge ai">Analisado por IA</span>
         </div>
         <div class="qual-body">
           <div class="field-group" style="margin-bottom:0">
@@ -1236,7 +1284,7 @@
             <textarea id="cfg-criterios_qualificacao" style="min-height:140px;resize:vertical;" placeholder="1. Tem interesse genuíno no produto ou serviço&#10;2. Possui orçamento ou capacidade de compra&#10;3. É o tomador de decisão ou influencia a compra&#10;4. Tem urgência ou necessidade identificada&#10;5. Está disposto a avançar no processo de compra"></textarea>
           </div>
           <div class="qual-hint">
-            <span class="hi">💡</span>
+            <span class="hi">›</span>
             <span>O agente precisará confirmar <strong>pelo menos 3 critérios</strong> para classificar o lead como qualificado. Seja específico para aumentar a precisão da triagem automática.</span>
           </div>
         </div>
@@ -1245,12 +1293,12 @@
       <!-- Card roteamento -->
       <div class="card qual-card">
         <div class="qual-ch">
-          <div class="qual-ch-icon green">📲</div>
+          <div class="qual-ch-icon green">◉</div>
           <div>
             <p class="qual-ch-title">Roteamento de Notificações</p>
             <p class="qual-ch-sub">Para onde o agente envia o relatório quando um lead é qualificado</p>
           </div>
-          <span class="qual-ch-badge auto">⚡ Automático</span>
+          <span class="qual-ch-badge auto">Automático</span>
         </div>
 
         <!-- Flow visual -->
@@ -1277,7 +1325,7 @@
             <div class="field-group" style="margin:0">
               <label>WhatsApp · DDI + DDD + número (sem espaços)</label>
               <div class="inp-wrap">
-                <span class="inp-prefix">📞</span>
+                
                 <input type="tel" id="cfg-numero_destino" placeholder="5511999999999" oninput="updateFlowVisual()" />
               </div>
             </div>
@@ -1303,7 +1351,7 @@
             <div class="field-group" style="margin-bottom:0">
               <label>JID do grupo</label>
               <div class="inp-wrap">
-                <span class="inp-prefix">👥</span>
+                
                 <input type="text" id="cfg-grupo_destino" placeholder="120363XXXXXXXXXX@g.us" class="inp-mono" oninput="updateFlowVisual()" />
               </div>
             </div>
@@ -1323,7 +1371,7 @@
 
     <!-- PDFs -->
     <div class="page" id="page-pdfs">
-      <div class="page-header"><h1>📚 Base de Conhecimento</h1><p>PDFs e links que o Agente IA consulta automaticamente durante as conversas com leads</p></div>
+      <div class="page-header"><h1>Base de Conhecimento</h1><p>PDFs e links que o Agente IA consulta automaticamente durante as conversas com leads</p></div>
 
       <!-- Banner explicativo -->
       <div style="background:linear-gradient(135deg,rgba(163,230,53,.08),rgba(163,230,53,.03));border:1px solid rgba(163,230,53,.2);border-radius:12px;padding:14px 18px;margin-bottom:20px;display:flex;gap:14px;align-items:flex-start;">
@@ -1336,7 +1384,7 @@
 
       <!-- CARD: Adicionar por URL/Link -->
       <div class="card">
-        <h3>🌐 Adicionar Link / URL da Web</h3>
+        <h3>Adicionar Link / URL da Web</h3>
         <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Cole qualquer URL pública — o agente vai extrair e indexar o conteúdo automaticamente.</p>
         <div class="field-group">
           <label>URL da página</label>
@@ -1347,14 +1395,14 @@
           <input type="text" id="url-nome" placeholder="Ex: Tabela de Salários de Benefício 2025" />
         </div>
         <div style="display:flex;align-items:center;gap:12px;margin-top:4px;">
-          <button class="btn-save" id="btn-add-url" onclick="addURLKnowledge()" style="padding:10px 20px;">🌐 Indexar link</button>
+          <button class="btn-save" id="btn-add-url" onclick="addURLKnowledge()" style="padding:10px 20px;">Indexar link</button>
           <span class="save-status" id="url-status"></span>
         </div>
       </div>
 
       <!-- CARD: Upload PDF -->
       <div class="card">
-        <h3>⬆️ Enviar novo PDF</h3>
+        <h3>Enviar novo PDF</h3>
         <div class="field-group"><label>Nome do documento</label>
           <input type="text" id="pdf-nome" placeholder="Ex: Catálogo de Produtos 2024, Manual de Procedimentos" /></div>
         <div class="field-group"><label>Categoria</label>
@@ -1364,27 +1412,27 @@
           </select></div>
         <div class="field-group"><label>Arquivo</label>
           <div class="upload-area" onclick="document.getElementById('pdf-file').click()">
-            <div style="font-size:36px">📁</div>
+            <div style="font-size:24px;opacity:.4">↑</div>
             <p id="pdf-filename">Clique para selecionar um PDF</p>
             <input type="file" id="pdf-file" accept=".pdf" onchange="updateFilename(this)" />
           </div></div>
         <div class="progress-bar" id="upload-progress"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-        <button class="upload-btn" id="btn-upload-pdf" onclick="uploadPDF()">⬆️ Enviar para o agente</button>
+        <button class="upload-btn" id="btn-upload-pdf" onclick="uploadPDF()">Enviar para o agente</button>
         <span class="save-status" id="upload-status"></span>
       </div>
       <div class="card">
-        <h3>📚 Documentos na base</h3>
+        <h3>Documentos na base</h3>
         <div id="pdf-list"><p class="loading">Carregando...</p></div>
       </div>
     </div>
 
     <!-- LEADS -->
     <div class="page" id="page-leads">
-      <div class="page-header"><h1>👥 Leads</h1><p>Histórico de todos os atendimentos</p></div>
+      <div class="page-header"><h1>Leads</h1><p>Histórico de todos os atendimentos</p></div>
       <div class="card" style="overflow-x:auto">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="margin:0">📋 Todos os atendimentos</h3>
-          <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadLeads()">🔄 Atualizar</button>
+          <h3 style="margin:0">Todos os atendimentos</h3>
+          <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadLeads()">Atualizar</button>
         </div>
         <div id="leads-table"><p class="loading">Carregando...</p></div>
       </div>
@@ -1393,7 +1441,7 @@
     <!-- ANALYTICS -->
     <div class="page" id="page-analytics">
       <div class="page-header">
-        <h1>📈 Analytics</h1>
+        <h1>Analytics</h1>
         <p>Métricas de performance e conversão segmentadas por período</p>
       </div>
 
@@ -1454,7 +1502,7 @@
 
       <!-- Gráfico de evolução -->
       <div class="dash-chart-card">
-        <h3>📊 Evolução no período</h3>
+        <h3>Evolução no período</h3>
         <div style="position:relative;height:260px;">
           <canvas id="dash-chart"></canvas>
         </div>
@@ -1462,23 +1510,23 @@
 
       <!-- Breakdown por funil -->
       <div class="dash-chart-card">
-        <h3>🔀 Performance por Funil</h3>
+        <h3>Performance por Funil</h3>
         <div id="dash-funis-wrap"><p class="dash-empty">Carregando...</p></div>
       </div>
     </div>
 
     <!-- FATURAMENTO -->
     <div class="page" id="page-faturamento">
-      <div class="page-header"><h1>💳 Faturamento</h1><p>Gerencie sua assinatura e histórico de pagamentos</p></div>
+      <div class="page-header"><h1>Faturamento</h1><p>Gerencie sua assinatura e histórico de pagamentos</p></div>
 
       <!-- Hero da assinatura -->
       <div class="billing-hero" id="billing-hero">
         <div>
-          <h2>🤖 XPERT.IA — Plano Mensal</h2>
+          <h2>XPERT.IA — Plano Mensal</h2>
           <p>O único agente IA que <strong>ouve áudios, pesquisa na web e recebe arquivos</strong> no WhatsApp</p>
           <div id="billing-status-badge" class="billing-status-badge trial">⏳ Período de teste</div>
           <div style="margin-top:12px;font-size:13px;opacity:.8;">
-            ✅ &nbsp;IA WhatsApp 24/7 &nbsp;|&nbsp; ✅ &nbsp;5M tokens/mês &nbsp;|&nbsp; 🔊 &nbsp;Áudio &nbsp;|&nbsp; 🌐 &nbsp;Pesquisa Web &nbsp;|&nbsp; 📎 &nbsp;Arquivos
+            IA WhatsApp 24/7 &nbsp;|&nbsp; 5M tokens/mês &nbsp;|&nbsp; Áudio &nbsp;|&nbsp; Pesquisa Web &nbsp;|&nbsp; 📎 &nbsp;Arquivos
           </div>
         </div>
         <div style="text-align:right">
@@ -1509,7 +1557,7 @@
       <!-- SALDO DE CRÉDITOS -->
       <div class="credits-balance" id="credits-balance-card">
         <div>
-          <h3>💰 Saldo de Tokens</h3>
+          <h3>Saldo de Tokens</h3>
           <div class="tokens-value" id="saldo-tokens-display">—</div>
           <div class="tokens-sub">tokens disponíveis para atendimento</div>
         </div>
@@ -1526,14 +1574,14 @@
       </div>
 
       <!-- COMPRAR TOKENS EXTRAS -->
-      <div class="pricing-section-title">⚡ Comprar Tokens Extras</div>
+      <div class="pricing-section-title">Comprar Tokens Extras</div>
       <p style="font-size:13px;color:#6e7681;margin-bottom:16px;margin-top:-8px;">
         Seu plano já inclui <strong>5M tokens/mês</strong>. Precisa atender mais leads? Adicione tokens extras a qualquer momento.
       </p>
       <div class="pricing-grid">
         <!-- Mini -->
         <div class="pricing-card">
-          <div class="pkg-name">➕ Mini</div>
+          <div class="pkg-name">Mini</div>
           <div class="pkg-leads">+135 leads extras</div>
           <div class="pkg-price"><sup>R$</sup>97</div>
           <div class="pkg-tokens">+5 milhões de tokens</div>
@@ -1546,8 +1594,8 @@
         </div>
         <!-- Médio -->
         <div class="pricing-card popular">
-          <div class="pop-badge">⭐ Mais Popular</div>
-          <div class="pkg-name">➕➕ Médio</div>
+          <div class="pop-badge">Mais Popular</div>
+          <div class="pkg-name">Médio</div>
           <div class="pkg-leads">+270 leads extras</div>
           <div class="pkg-price"><sup>R$</sup>177</div>
           <div class="pkg-tokens">+10 milhões de tokens</div>
@@ -1561,7 +1609,7 @@
         </div>
         <!-- Grande -->
         <div class="pricing-card">
-          <div class="pkg-name">🚀 Grande</div>
+          <div class="pkg-name">Grande</div>
           <div class="pkg-leads">+540 leads extras</div>
           <div class="pkg-price"><sup>R$</sup>297</div>
           <div class="pkg-tokens">+20 milhões de tokens</div>
@@ -1575,7 +1623,7 @@
         </div>
         <!-- Ilimitado -->
         <div class="pricing-card">
-          <div class="pkg-name">💼 Max</div>
+          <div class="pkg-name">Max</div>
           <div class="pkg-leads">+1.350 leads extras</div>
           <div class="pkg-price"><sup>R$</sup>597</div>
           <div class="pkg-tokens">+50 milhões de tokens</div>
@@ -1591,21 +1639,21 @@
 
       <!-- Pedidos pendentes do cliente -->
       <div class="card" id="pedidos-cliente-card" style="margin-bottom:20px;">
-        <h3>📦 Meus Pedidos</h3>
+        <h3>Meus Pedidos</h3>
         <div id="pedidos-cliente-table"><p class="loading">Carregando...</p></div>
       </div>
 
       <!-- Histórico de cobranças (cliente) -->
       <div class="card" id="billing-history-card">
-        <h3>🧾 Histórico de Cobranças</h3>
+        <h3>Histórico de Cobranças</h3>
         <div id="billing-history-table"><p class="loading">Carregando...</p></div>
       </div>
 
       <!-- Admin: pedidos de créditos -->
       <div class="card admin-only" id="admin-pedidos-card" style="margin-bottom:20px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="margin:0">📦 Pedidos de Créditos</h3>
-          <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadAdminPedidos()">🔄 Atualizar</button>
+          <h3 style="margin:0">Pedidos de Créditos</h3>
+          <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadAdminPedidos()">Atualizar</button>
         </div>
         <div id="admin-pedidos-table"><p class="loading">Carregando...</p></div>
       </div>
@@ -1613,37 +1661,110 @@
       <!-- Admin: gerenciar assinaturas de todos os clientes -->
       <div class="card admin-only" id="billing-admin-card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="margin:0">🏢 Assinaturas dos Clientes</h3>
-          <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadAdminBilling()">🔄 Atualizar</button>
+          <h3 style="margin:0">Assinaturas dos Clientes</h3>
+          <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadAdminBilling()">Atualizar</button>
         </div>
         <div id="admin-billing-table"><p class="loading">Carregando...</p></div>
       </div>
     </div>
 
+    <!-- LEAD SCORING -->
+    <div class="page" id="page-scoring">
+      <div class="page-header">
+        <h1>Lead Scoring</h1>
+        <p>Configure critérios para pontuar cada lead automaticamente. O score é calculado toda vez que um lead é visualizado.</p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start;">
+
+        <!-- Criteria table -->
+        <div class="card" style="padding:24px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <div>
+              <h3 style="font-size:15px;font-weight:700;margin-bottom:4px;">Critérios de Pontuação</h3>
+              <p style="font-size:12px;color:var(--text2);">Ative ou desative cada critério e defina os pontos atribuídos.</p>
+            </div>
+            <button class="btn-save" onclick="saveScoringRules()" style="padding:10px 22px;">Salvar critérios</button>
+          </div>
+
+          <table style="width:100%;border-collapse:collapse;font-size:13px;" id="scoring-rules-table">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border);">
+                <th style="text-align:left;padding:10px 8px;color:var(--text2);font-weight:600;">Ativo</th>
+                <th style="text-align:left;padding:10px 8px;color:var(--text2);font-weight:600;">Critério</th>
+                <th style="text-align:left;padding:10px 8px;color:var(--text2);font-weight:600;">Descrição</th>
+                <th style="text-align:right;padding:10px 8px;color:var(--text2);font-weight:600;width:90px;">Pontos</th>
+              </tr>
+            </thead>
+            <tbody id="scoring-rules-body">
+              <tr><td colspan="4" style="text-align:center;padding:24px;color:var(--text2);">Carregando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Preview panel -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- Score legend -->
+          <div class="card" style="padding:20px;">
+            <h3 style="font-size:14px;font-weight:700;margin-bottom:14px;">Escala de Score</h3>
+            <div style="display:flex;flex-direction:column;gap:10px;font-size:13px;">
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="score-badge score-hot">90+</span>
+                <span style="color:var(--text2);">Lead quente — alto potencial</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="score-badge score-high">70–89</span>
+                <span style="color:var(--text2);">Score alto — bom potencial</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="score-badge score-mid">40–69</span>
+                <span style="color:var(--text2);">Score médio — nutrir lead</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="score-badge score-low">0–39</span>
+                <span style="color:var(--text2);">Score baixo — qualificar primeiro</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Top leads by score -->
+          <div class="card" style="padding:20px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <h3 style="font-size:14px;font-weight:700;">Top Leads</h3>
+              <button class="btn-secondary" onclick="loadScoring()" style="padding:6px 12px;font-size:12px;">Atualizar</button>
+            </div>
+            <div id="scoring-top-leads" style="display:flex;flex-direction:column;gap:8px;">
+              <p style="color:var(--text2);font-size:13px;">—</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- DESIGNER DE FLUXOS -->
     <div class="page" id="page-fluxos">
-      <div class="page-header"><h1>🔀 Designer de Fluxos</h1><p>Crie e salve fluxos visuais de conversa para o seu agente</p></div>
+      <div class="page-header"><h1>Designer de Fluxos</h1><p>Crie e salve fluxos visuais de conversa para o seu agente</p></div>
 
       <div class="flow-toolbar">
         <input type="text" id="flow-name-input" placeholder="Nome do fluxo..." />
-        <button class="btn-save" onclick="saveFlow()">💾 Salvar</button>
-        <button class="btn-secondary" onclick="newFlow()">➕ Novo</button>
-        <button class="btn-secondary" onclick="clearCanvas()">🗑️ Limpar tela</button>
-        <button class="btn-secondary" onclick="exportFlow()">📤 Exportar JSON</button>
+        <button class="btn-save" onclick="saveFlow()">Salvar</button>
+        <button class="btn-secondary" onclick="newFlow()">Novo</button>
+        <button class="btn-secondary" onclick="clearCanvas()">Limpar tela</button>
+        <button class="btn-secondary" onclick="exportFlow()">Exportar JSON</button>
       </div>
 
       <div class="flow-layout">
         <!-- Paleta de nós -->
         <div class="flow-palette">
           <h4>Nós disponíveis</h4>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'inicio')">🟢 Início</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'mensagem')">💬 Mensagem Agente IA</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'pergunta')">❓ Pergunta</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'condicao')">🔀 Condição</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'qualificado')">✅ Qualificado</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'desqualificado')">❌ Desqualificado</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'fim')">🔴 Fim</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'followup')">📤 Disparo / Follow-up</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'inicio')">Início</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'mensagem')">Mensagem Agente IA</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'pergunta')">Pergunta</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'condicao')">Condição</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'qualificado')">Qualificado</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'desqualificado')">Desqualificado</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'fim')">Fim</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'followup')">Disparo / Follow-up</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'aguardar')">⏳ Aguardar</div>
 
           <h4 style="margin-top:16px">Fluxos salvos</h4>
@@ -1661,20 +1782,20 @@
     <!-- CLIENTES (admin only) -->
     <div class="page" id="page-clientes">
       <div class="page-header">
-        <h1>🏢 Clientes</h1>
+        <h1>Clientes</h1>
         <p>Gerencie as contas dos seus clientes</p>
       </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="margin:0">📋 Contas cadastradas</h3>
-          <button class="btn-save" onclick="openCreateClientModal()">➕ Novo Cliente</button>
+          <h3 style="margin:0">Contas cadastradas</h3>
+          <button class="btn-save" onclick="openCreateClientModal()">Novo Cliente</button>
         </div>
         <div id="clients-table"><p class="loading">Carregando...</p></div>
       </div>
       <div class="card">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="margin:0">🤖 Uso de Tokens GPT (este mês)</h3>
-          <button class="btn-secondary" style="padding:7px 14px;font-size:13px" onclick="loadTokenUsageAdmin()">🔄 Atualizar</button>
+          <h3 style="margin:0">Uso de Tokens GPT (este mês)</h3>
+          <button class="btn-secondary" style="padding:7px 14px;font-size:13px" onclick="loadTokenUsageAdmin()">Atualizar</button>
         </div>
         <div id="token-usage-admin-table"><p class="loading">Carregando...</p></div>
       </div>
@@ -1687,11 +1808,11 @@
 <div class="token-alert-backdrop" id="token-alert-popup">
   <div class="token-alert-box">
     <div class="token-alert-header" id="token-alert-header">
-      <span class="token-alert-icon" id="token-alert-icon">⚠️</span>
+      <span class="token-alert-icon" id="token-alert-icon">!</span>
       <h2 id="token-alert-title">Seus tokens estão acabando!</h2>
       <p id="token-alert-subtitle">O agente pode parar de atender novos leads em breve.</p>
       <div class="token-alert-saldo">
-        <span>🔢</span>
+        
         <span id="token-alert-saldo-txt">—</span>
         <span>tokens restantes</span>
       </div>
@@ -1716,10 +1837,10 @@
 
       <!-- Pacote recomendado -->
       <div class="token-alert-pkg">
-        <div class="pop-label">⭐ RECOMENDADO PARA VOCÊ</div>
+        <div class="pop-label">RECOMENDADO PARA VOCÊ</div>
         <div class="token-alert-pkg-row">
           <div>
-            <div class="token-alert-pkg-name">➕➕ Médio</div>
+            <div class="token-alert-pkg-name">Médio</div>
             <div style="font-size:12px;color:#8b949e;margin-top:2px;">+270 atendimentos extras</div>
           </div>
           <div style="text-align:right;">
@@ -1736,7 +1857,7 @@
       </div>
 
       <button class="btn-token-alert-buy" onclick="buyFromAlert()">
-        ⚡ Quero adicionar tokens agora
+        Quero adicionar tokens agora
       </button>
       <button class="btn-token-alert-later" onclick="dismissTokenAlert()">
         Lembrar mais tarde
@@ -1748,7 +1869,7 @@
 <!-- MODAL COMPRAR CRÉDITOS -->
 <div class="modal-backdrop" id="modal-buy-credits" onclick="if(event.target===this)closeBuyModal()">
   <div class="modal-box">
-    <h2 id="buy-modal-title">🛒 Comprar Créditos</h2>
+    <h2 id="buy-modal-title">Comprar Créditos</h2>
     <div class="buy-modal-pkg-info">
       <div class="buy-modal-pkg-row">
         <span id="buy-pkg-name" style="font-weight:700;font-size:16px;"></span>
@@ -1757,12 +1878,12 @@
       <div class="buy-modal-pkg-grid">
         <div id="buy-pkg-leads"></div>
         <div id="buy-pkg-tokens"></div>
-        <div>🤖 IA ativa 24/7</div>
-        <div>📊 Relatórios completos</div>
+        <div>IA ativa 24/7</div>
+        <div>Relatórios completos</div>
       </div>
     </div>
     <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
-      <div style="font-weight:700;font-size:13px;color:#16a34a;margin-bottom:6px;">📲 Como pagar</div>
+      <div style="font-weight:700;font-size:13px;color:#16a34a;margin-bottom:6px;">Como pagar</div>
       <div style="font-size:12px;color:#374151;line-height:1.7;">
         1. Clique em <strong>Confirmar Pedido</strong> abaixo<br>
         2. Aguarde o contato do administrador com a chave PIX<br>
@@ -1770,7 +1891,7 @@
       </div>
     </div>
     <div class="modal-actions">
-      <button class="btn-save" id="btn-confirm-buy" onclick="confirmBuy()">✅ Confirmar Pedido</button>
+      <button class="btn-save" id="btn-confirm-buy" onclick="confirmBuy()">Confirmar Pedido</button>
       <button class="btn-secondary" onclick="closeBuyModal()">Cancelar</button>
     </div>
     <div id="buy-modal-error" class="error-msg" style="margin-top:10px;"></div>
@@ -1780,7 +1901,7 @@
 <!-- MODAL ADICIONAR CRÉDITOS (admin) -->
 <div class="modal-backdrop" id="modal-add-credits" onclick="if(event.target===this)closeAddCreditsModal()">
   <div class="modal-box">
-    <h2>💰 Adicionar Créditos ao Cliente</h2>
+    <h2>Adicionar Créditos ao Cliente</h2>
     <div class="field-group">
       <label>Cliente</label>
       <div id="add-credits-client-name" style="font-weight:700;font-size:15px;padding:8px 0;"></div>
@@ -1795,7 +1916,7 @@
       <input type="text" id="add-credits-obs" placeholder="Ex: Pacote Pro — $68" />
     </div>
     <div class="modal-actions">
-      <button class="btn-save" id="btn-confirm-add-credits" onclick="confirmAddCredits()">✅ Adicionar Créditos</button>
+      <button class="btn-save" id="btn-confirm-add-credits" onclick="confirmAddCredits()">Adicionar Créditos</button>
       <button class="btn-secondary" onclick="closeAddCreditsModal()">Cancelar</button>
     </div>
     <div id="add-credits-error" class="error-msg" style="margin-top:10px;"></div>
@@ -1805,7 +1926,7 @@
 <!-- MODAL CRIAR CLIENTE -->
 <div class="modal-backdrop" id="modal-backdrop" onclick="if(event.target===this)closeModal()">
   <div class="modal-box">
-    <h2>➕ Criar Novo Cliente</h2>
+    <h2>Criar Novo Cliente</h2>
     <div class="field-group">
       <label>Nome do cliente</label>
       <input type="text" id="new-client-name" placeholder="Ex: Escritório Pereira" />
@@ -1821,7 +1942,7 @@
     <div class="field-group" style="background:rgba(163,230,53,.05);border:1px solid rgba(163,230,53,.2);border-radius:10px;padding:12px 14px;margin-bottom:4px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
         <div>
-          <div style="font-size:13px;font-weight:700;color:#a3e635;margin-bottom:3px;">🎁 Plano Gratuito</div>
+          <div style="font-size:13px;font-weight:700;color:#a3e635;margin-bottom:3px;">Plano Gratuito</div>
           <div style="font-size:12px;color:#6e7681;">Cria a conta sem cobrança, sem tokens iniciais. Ideal para testes ou parceiros.</div>
         </div>
         <label style="position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;">
@@ -1834,10 +1955,10 @@
       </div>
     </div>
     <div class="field-group" style="background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px 14px;margin-top:4px;">
-      <span style="font-size:12px;color:#6e7681;">⚡ A instância WhatsApp será criada automaticamente a partir do nome do cliente.</span>
+      <span style="font-size:12px;color:#6e7681;">A instância WhatsApp será criada automaticamente a partir do nome do cliente.</span>
     </div>
     <div class="modal-actions">
-      <button class="btn-save" id="btn-create-client" onclick="criarCliente()">✅ Criar conta</button>
+      <button class="btn-save" id="btn-create-client" onclick="criarCliente()">Criar conta</button>
       <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
     </div>
     <div id="create-client-error" class="error-msg" style="margin-top:10px;text-align:left;"></div>
@@ -2020,6 +2141,7 @@
     if (name === 'crm') { loadCRM(); setTimeout(checkReminders, 500); }
     if (name === 'pdfs') loadPDFList();
     if (name === 'analytics') loadDashboard();
+    if (name === 'scoring') loadScoring();
     if (name === 'clientes') { loadClients(); loadTokenUsageAdmin(); }
     if (name === 'faturamento') {
       loadBilling();
@@ -2393,6 +2515,7 @@
   async function loadCRM() {
     const board = document.getElementById('crm-board');
     board.innerHTML = '<div style="padding:40px;color:#6e7681;font-size:14px;">Carregando...</div>';
+    if (!scoringRules) scoringRules = await loadScoringRulesFromDB();
     await loadCRMStages();
     // Carrega fluxos e monta filtros
     await loadCRMFluxos();
@@ -2515,6 +2638,7 @@
 
     const stg   = lead.stage || crmStages[0]?.id || 'novo_contato';
     const color = stageColor || crmStages.find(s => s.id === stg)?.color || '#e5e7eb';
+    const score = calcLeadScore(lead, scoringRules || DEFAULT_SCORING_RULES);
     const fluxo = lead.fluxo_id ? crmFluxos.find(f => f.id === lead.fluxo_id) : null;
     const phone = lead.celular || lead.numero_whatsapp || '';
     const phoneDisplay = phone.replace(/^55(\d{2})(\d{4,5})(\d{4})$/, '($1) $2-$3') || phone;
@@ -2554,6 +2678,7 @@
         <span class="crm-card-tasks ${taskClass}" onclick="event.stopPropagation();openQuickTask('${lead.id}')" title="Clique para adicionar tarefa">${taskText}</span>
         <div style="display:flex;align-items:center;gap:6px;">
           <button class="crm-card-add-task" onclick="event.stopPropagation();openQuickTask('${lead.id}')" title="Adicionar tarefa">＋ tarefa</button>
+          ${scoreHTML(score)}
           <span class="crm-card-date">${lead.atualizado_em ? timeAgo(lead.atualizado_em) : '—'}</span>
         </div>
       </div>
@@ -2594,6 +2719,14 @@
     document.getElementById('crm-lead-id').value = leadId;
     document.getElementById('crm-lead-numero').value = lead.numero_whatsapp || '';
     document.getElementById('crm-modal-title').textContent = lead.nome || lead.numero_whatsapp || 'Lead';
+    // Score badge in modal header
+    const _sbEl = document.getElementById('crm-modal-score');
+    if (_sbEl) {
+      const _sc = calcLeadScore(lead, scoringRules || DEFAULT_SCORING_RULES);
+      _sbEl.textContent = _sc;
+      _sbEl.className = `score-badge ${scoreBadgeClass(_sc)}`;
+      _sbEl.style.display = 'inline-flex';
+    }
     document.getElementById('crm-nome').value = lead.nome || '';
     document.getElementById('crm-celular').value = lead.celular || '';
     document.getElementById('crm-email').value = lead.email || '';
@@ -3084,6 +3217,7 @@
   }
 
   async function loadLeads() {
+    if (!scoringRules) scoringRules = await loadScoringRulesFromDB();
     const { data } = await db.from('leads').select('*').order('criado_em', { ascending: false });
     const el = document.getElementById('leads-table');
     if (!data || !data.length) {
@@ -3093,15 +3227,392 @@
   }
 
   function renderLeadsTable(data) {
+    const rules = scoringRules || DEFAULT_SCORING_RULES;
     return `<table><thead><tr>
-      <th>Data</th><th>Nome</th><th>Celular</th><th>Tese</th><th>Status</th>
-    </tr></thead><tbody>${data.map(l => `<tr>
-      <td>${l.criado_em ? new Date(l.criado_em).toLocaleString('pt-BR') : '—'}</td>
-      <td>${l.nome || l.numero_whatsapp || '—'}</td>
-      <td>${l.celular || '—'}</td>
-      <td style="max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.tese || l.resumo || '—'}</td>
-      <td><span class="badge ${l.qualificado ? 'badge-green' : 'badge-red'}">${l.qualificado ? '✅ Qualificado' : '❌ Não qualificado'}</span></td>
-    </tr>`).join('')}</tbody></table>`;
+      <th>Data</th><th>Nome</th><th>Celular</th><th>Produto/Serviço</th><th>Status</th><th style="text-align:right;">Score</th>
+    </tr></thead><tbody>${data.map(l => {
+      const sc = calcLeadScore(l, rules);
+      return `<tr>
+        <td>${l.criado_em ? new Date(l.criado_em).toLocaleString('pt-BR') : '—'}</td>
+        <td>${l.nome || l.numero_whatsapp || '—'}</td>
+        <td>${l.celular || '—'}</td>
+        <td style="max-width:240px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${l.tese || l.resumo || '—'}</td>
+        <td><span class="badge ${l.qualificado ? 'badge-green' : 'badge-red'}">${l.qualificado ? 'Qualificado' : 'Não qualificado'}</span></td>
+        <td style="text-align:right;">${scoreHTML(sc)}</td>
+      </tr>`;
+    }).join('')}</tbody></table>`;
+  }
+
+  // =====================
+  // ANALYTICS DASHBOARD
+  // =====================
+  let dashChartInstance = null;
+
+  function onDashPeriodoChange() {
+    const val = document.getElementById('dash-periodo').value;
+    document.getElementById('dash-custom-dates').style.display = val === 'custom' ? 'flex' : 'none';
+  }
+
+  function getDashDateRange() {
+    const val = document.getElementById('dash-periodo').value;
+    const now = new Date();
+    const pad = n => String(n).padStart(2,'0');
+    const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+    if (val === 'today') {
+      const s = fmt(now);
+      return { ini: s + 'T00:00:00', fim: s + 'T23:59:59', label: 'Hoje' };
+    }
+    if (val === '7d') {
+      const s = new Date(now); s.setDate(s.getDate()-6);
+      return { ini: fmt(s) + 'T00:00:00', fim: fmt(now) + 'T23:59:59', label: 'Últimos 7 dias' };
+    }
+    if (val === '30d') {
+      const s = new Date(now); s.setDate(s.getDate()-29);
+      return { ini: fmt(s) + 'T00:00:00', fim: fmt(now) + 'T23:59:59', label: 'Últimos 30 dias' };
+    }
+    if (val === 'mes') {
+      const s = new Date(now.getFullYear(), now.getMonth(), 1);
+      return { ini: fmt(s) + 'T00:00:00', fim: fmt(now) + 'T23:59:59', label: 'Este mês' };
+    }
+    if (val === 'mes_ant') {
+      const s = new Date(now.getFullYear(), now.getMonth()-1, 1);
+      const e = new Date(now.getFullYear(), now.getMonth(), 0);
+      return { ini: fmt(s) + 'T00:00:00', fim: fmt(e) + 'T23:59:59', label: 'Mês anterior' };
+    }
+    if (val === 'custom') {
+      const ini = document.getElementById('dash-ini').value;
+      const fim = document.getElementById('dash-fim').value;
+      if (!ini || !fim) { alert('Informe data inicial e final.'); return null; }
+      return { ini: ini + 'T00:00:00', fim: fim + 'T23:59:59', label: `${ini} → ${fim}` };
+    }
+    return { ini: null, fim: null, label: 'Todo o período' };
+  }
+
+  async function loadDashboard() {
+    const range = getDashDateRange();
+    if (!range) return;
+
+    // Label do período
+    const labelEl = document.getElementById('dash-period-label');
+    if (labelEl) labelEl.textContent = range.label;
+
+    // Reseta KPIs
+    ['dk-total','dk-atend','dk-concl','dk-ganho','dk-perda','dk-taxa'].forEach(id => {
+      const el = document.getElementById(id); if (el) el.textContent = '…';
+    });
+
+    // Query leads no período
+    let q = db.from('leads').select('id, stage, fluxo_id, created_at');
+    if (range.ini) q = q.gte('created_at', range.ini);
+    if (range.fim) q = q.lte('created_at', range.fim);
+
+    const { data: leads, error } = await q;
+    if (error) { console.error(error); return; }
+    if (!leads || leads.length === 0) {
+      ['dk-total','dk-atend','dk-concl','dk-ganho','dk-perda','dk-taxa'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.textContent = '0';
+      });
+      document.getElementById('dk-taxa').textContent = '0%';
+      document.getElementById('dash-funis-wrap').innerHTML = '<p class="dash-empty">Nenhum lead no período selecionado.</p>';
+      if (dashChartInstance) { dashChartInstance.destroy(); dashChartInstance = null; }
+      return;
+    }
+
+    // ── Contagens por stage ──
+    const total  = leads.length;
+    const atend  = leads.filter(l => ['novo_contato','em_atendimento'].includes(l.stage)).length;
+    const ganho  = leads.filter(l => ['convertido','qualificado'].includes(l.stage)).length;
+    const perda  = leads.filter(l => ['perdido','nao_qualificado'].includes(l.stage)).length;
+    const concl  = ganho + perda;
+    const taxa   = total > 0 ? Math.round(ganho / total * 100) : 0;
+
+    document.getElementById('dk-total').textContent = total;
+    document.getElementById('dk-atend').textContent = atend;
+    document.getElementById('dk-concl').textContent = concl;
+    document.getElementById('dk-ganho').textContent = ganho;
+    document.getElementById('dk-perda').textContent = perda;
+    document.getElementById('dk-taxa').textContent  = taxa + '%';
+
+    // ── Gráfico: evolução por dia ──
+    renderDashChart(leads, range);
+
+    // ── Breakdown por funil ──
+    renderDashFunis(leads);
+  }
+
+  function renderDashChart(leads, range) {
+    // Agrupa por data
+    const byDay = {};
+    leads.forEach(l => {
+      const day = (l.created_at || '').slice(0, 10);
+      if (!byDay[day]) byDay[day] = { total: 0, ganho: 0, perda: 0, atend: 0 };
+      byDay[day].total++;
+      if (['convertido','qualificado'].includes(l.stage))     byDay[day].ganho++;
+      else if (['perdido','nao_qualificado'].includes(l.stage)) byDay[day].perda++;
+      else                                                      byDay[day].atend++;
+    });
+    const days = Object.keys(byDay).sort();
+
+    // Labels curtos
+    const labels = days.map(d => {
+      const [,m,dd] = d.split('-');
+      return `${dd}/${m}`;
+    });
+
+    const ctx = document.getElementById('dash-chart').getContext('2d');
+    if (dashChartInstance) dashChartInstance.destroy();
+
+    dashChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label: 'Ganhos',       data: days.map(d => byDay[d].ganho), backgroundColor: 'rgba(163,230,53,0.8)',  borderRadius: 4, stack: 'a' },
+          { label: 'Perda',        data: days.map(d => byDay[d].perda), backgroundColor: 'rgba(248,113,113,0.8)', borderRadius: 4, stack: 'a' },
+          { label: 'Em Atend.',    data: days.map(d => byDay[d].atend), backgroundColor: 'rgba(96,165,250,0.6)',  borderRadius: 4, stack: 'a' },
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#8b949e', font: { size: 12 } } },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          x: { stacked: true, ticks: { color: '#6e7681', font: { size: 11 } }, grid: { color: '#21262d' } },
+          y: { stacked: true, beginAtZero: true, ticks: { color: '#6e7681', font: { size: 11 }, precision: 0 }, grid: { color: '#21262d' } }
+        }
+      }
+    });
+  }
+
+  function renderDashFunis(leads) {
+    const wrap = document.getElementById('dash-funis-wrap');
+    if (!wrap) return;
+
+    // Agrupa por fluxo_id
+    const byFunil = {};
+    leads.forEach(l => {
+      const key = l.fluxo_id || '__sem_funil__';
+      if (!byFunil[key]) byFunil[key] = { total: 0, atend: 0, ganho: 0, perda: 0 };
+      byFunil[key].total++;
+      if (['convertido','qualificado'].includes(l.stage))       byFunil[key].ganho++;
+      else if (['perdido','nao_qualificado'].includes(l.stage)) byFunil[key].perda++;
+      else                                                       byFunil[key].atend++;
+    });
+
+    // Mapa de nomes dos funis (usa crmFluxos se disponível)
+    const nomeFunil = id => {
+      if (id === '__sem_funil__') return '— Sem funil —';
+      const f = (crmFluxos || []).find(x => x.id === id);
+      return f ? f.nome : id;
+    };
+
+    const rows = Object.entries(byFunil)
+      .sort((a,b) => b[1].total - a[1].total)
+      .map(([id, d]) => {
+        const taxa = d.total > 0 ? Math.round(d.ganho / d.total * 100) : 0;
+        return `<tr>
+          <td><strong>${escapeHtml(nomeFunil(id))}</strong></td>
+          <td style="text-align:center">${d.total}</td>
+          <td style="text-align:center"><span class="badge-b">${d.atend}</span></td>
+          <td style="text-align:center"><span class="badge-g">${d.ganho}</span></td>
+          <td style="text-align:center"><span class="badge-r">${d.perda}</span></td>
+          <td style="min-width:100px">
+            <div style="font-size:12px;font-weight:700;color:${taxa>=50?'#a3e635':'#f87171'}">${taxa}%</div>
+            <div class="dash-prog-bar"><div class="dash-prog-fill" style="width:${taxa}%;background:${taxa>=50?'#a3e635':'#f87171'}"></div></div>
+          </td>
+        </tr>`;
+      }).join('');
+
+    wrap.innerHTML = `<table class="dash-funis-table">
+      <thead><tr>
+        <th>Funil</th>
+        <th style="text-align:center">Total</th>
+        <th style="text-align:center">Em Atend.</th>
+        <th style="text-align:center">Ganhos</th>
+        <th style="text-align:center">Perda</th>
+        <th>Conversão</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+  }
+
+  // =====================
+  // LEAD SCORING
+  // =====================
+
+  // Default scoring rules — can be overridden per user via agente_config key 'scoring_rules'
+  const DEFAULT_SCORING_RULES = [
+    { id:'stage_qualificado',    label:'Stage: Qualificado',           desc:'Lead marcado como qualificado pelo agente',         pts:30, active:true  },
+    { id:'stage_convertido',     label:'Stage: Convertido',            desc:'Lead convertido em cliente (movido manualmente)',    pts:50, active:true  },
+    { id:'stage_em_atendimento', label:'Stage: Em Atendimento',        desc:'Lead está em conversa ativa com o agente',          pts:10, active:true  },
+    { id:'tem_nome',             label:'Tem nome preenchido',          desc:'Campo nome não está vazio',                         pts:10, active:true  },
+    { id:'tem_celular',          label:'Tem celular cadastrado',       desc:'Campo celular não está vazio',                      pts:10, active:true  },
+    { id:'tem_produto',          label:'Produto / Serviço identificado', desc:'Campo produto/serviço (tese) preenchido',         pts:15, active:true  },
+    { id:'tem_resumo',           label:'Tem resumo da conversa',       desc:'O agente gerou um resumo da qualificação',          pts:10, active:true  },
+    { id:'tem_aniversario',      label:'Data de aniversário salva',    desc:'Campo data de aniversário preenchido',              pts:5,  active:false },
+    { id:'tem_notas',            label:'Tem notas do responsável',     desc:'Campo notas preenchido pelo responsável',           pts:5,  active:false },
+    { id:'resposta_recente',     label:'Mensagem recente (< 24h)',     desc:'Última interação foi nas últimas 24 horas',         pts:10, active:true  },
+  ];
+
+  let scoringRules = null; // loaded from agente_config or default
+
+  // Calculate score 0–100 for a single lead
+  function calcLeadScore(lead, rules) {
+    if (!rules || !rules.length) return 0;
+    let total = 0;
+    const stageScoreMap = {
+      qualificado:    'stage_qualificado',
+      convertido:     'stage_convertido',
+      em_atendimento: 'stage_em_atendimento',
+    };
+    for (const rule of rules) {
+      if (!rule.active) continue;
+      let match = false;
+      switch (rule.id) {
+        case 'stage_qualificado':    match = lead.stage === 'qualificado';    break;
+        case 'stage_convertido':     match = lead.stage === 'convertido';     break;
+        case 'stage_em_atendimento': match = lead.stage === 'em_atendimento'; break;
+        case 'tem_nome':      match = !!(lead.nome   && lead.nome.trim());    break;
+        case 'tem_celular':   match = !!(lead.celular && lead.celular.trim()); break;
+        case 'tem_produto':   match = !!(lead.tese   && lead.tese.trim());    break;
+        case 'tem_resumo':    match = !!(lead.resumo && lead.resumo.trim());  break;
+        case 'tem_aniversario': match = !!(lead.data_aniversario);            break;
+        case 'tem_notas':     match = !!(lead.notas  && lead.notas.trim());   break;
+        case 'resposta_recente':
+          if (lead.atualizado_em) {
+            const diff = Date.now() - new Date(lead.atualizado_em).getTime();
+            match = diff < 24 * 3600 * 1000;
+          }
+          break;
+      }
+      if (match) total += (rule.pts || 0);
+    }
+    return Math.min(100, total);
+  }
+
+  // Return score badge CSS class based on value
+  function scoreBadgeClass(score) {
+    if (score >= 90) return 'score-hot';
+    if (score >= 70) return 'score-high';
+    if (score >= 40) return 'score-mid';
+    return 'score-low';
+  }
+
+  // Render a score badge element (string)
+  function scoreHTML(score) {
+    return `<span class="score-badge ${scoreBadgeClass(score)}">${score}</span>`;
+  }
+
+  // Load scoring rules from agente_config
+  async function loadScoringRulesFromDB() {
+    if (!currentUser) return DEFAULT_SCORING_RULES;
+    try {
+      const { data } = await db.from('agente_config')
+        .select('valor')
+        .eq('user_id', currentUser.id)
+        .eq('chave', 'scoring_rules')
+        .maybeSingle();
+      if (data?.valor) {
+        const parsed = JSON.parse(data.valor);
+        if (Array.isArray(parsed) && parsed.length) return parsed;
+      }
+    } catch(e) {}
+    return JSON.parse(JSON.stringify(DEFAULT_SCORING_RULES));
+  }
+
+  // Save rules to agente_config
+  async function saveScoringRules() {
+    if (!currentUser) return;
+    // Collect rules from UI
+    const tbody = document.getElementById('scoring-rules-body');
+    const rows = tbody.querySelectorAll('tr.scoring-rule-row');
+    const rules = [];
+    rows.forEach(row => {
+      const id   = row.dataset.ruleId;
+      const orig = scoringRules.find(r => r.id === id) || {};
+      rules.push({
+        id,
+        label:  orig.label,
+        desc:   orig.desc,
+        active: row.querySelector('.scoring-rule-toggle').checked,
+        pts:    parseInt(row.querySelector('.scoring-pts-input').value) || 0,
+      });
+    });
+    scoringRules = rules;
+    // Upsert to agente_config
+    await db.from('agente_config').upsert(
+      { user_id: currentUser.id, chave: 'scoring_rules', valor: JSON.stringify(rules) },
+      { onConflict: 'user_id,chave' }
+    );
+    // Batch update scores on all leads
+    await recalcAllScores();
+    showToast('Critérios salvos e scores atualizados!');
+  }
+
+  // Recalculate and patch score on all leads for current user
+  async function recalcAllScores() {
+    if (!currentUser || !scoringRules) return;
+    const { data: leads } = await db.from('leads')
+      .select('id,nome,celular,tese,resumo,stage,notas,data_aniversario,atualizado_em')
+      .eq('user_id', currentUser.id);
+    if (!leads) return;
+    const updates = leads.map(l => ({ id: l.id, score: calcLeadScore(l, scoringRules) }));
+    for (const u of updates) {
+      await db.from('leads').update({ score: u.score }).eq('id', u.id);
+    }
+  }
+
+  // Load the scoring page
+  async function loadScoring() {
+    scoringRules = await loadScoringRulesFromDB();
+    renderScoringTable(scoringRules);
+    await loadTopLeads();
+  }
+
+  function renderScoringTable(rules) {
+    const tbody = document.getElementById('scoring-rules-body');
+    if (!tbody) return;
+    tbody.innerHTML = rules.map(rule => `
+      <tr class="scoring-rule-row" data-rule-id="${rule.id}">
+        <td><input type="checkbox" class="scoring-rule-toggle" ${rule.active ? 'checked' : ''}></td>
+        <td style="font-weight:600;font-size:13px;color:var(--text)">${rule.label}</td>
+        <td style="color:var(--text2);font-size:12px;">${rule.desc}</td>
+        <td style="text-align:right;"><input type="number" class="scoring-pts-input" min="0" max="100" value="${rule.pts}"></td>
+      </tr>
+    `).join('');
+  }
+
+  async function loadTopLeads() {
+    const el = document.getElementById('scoring-top-leads');
+    if (!el || !currentUser) return;
+    el.innerHTML = '<p style="color:var(--text2);font-size:13px;">Carregando...</p>';
+    const { data: leads } = await db.from('leads')
+      .select('id,nome,numero_whatsapp,stage,tese,resumo,celular,notas,data_aniversario,atualizado_em,score')
+      .eq('user_id', currentUser.id)
+      .order('score', { ascending: false })
+      .limit(8);
+    if (!leads || !leads.length) {
+      el.innerHTML = '<p style="color:var(--text2);font-size:13px;">Nenhum lead encontrado.</p>';
+      return;
+    }
+    // Recalc scores in-memory with current rules
+    const rules = scoringRules || DEFAULT_SCORING_RULES;
+    const scored = leads.map(l => ({ ...l, _score: calcLeadScore(l, rules) }));
+    scored.sort((a, b) => b._score - a._score);
+    const stageLabel = { novo_contato:'Novo',em_atendimento:'Em Atend.',qualificado:'Qualificado',nao_qualificado:'Não Qualif.',convertido:'Convertido',perdido:'Perdido' };
+    el.innerHTML = scored.slice(0, 8).map(l => `
+      <div class="scoring-lead-row">
+        <div style="flex:1;overflow:hidden;">
+          <div class="scoring-lead-name">${l.nome || l.numero_whatsapp || '—'}</div>
+          <div class="scoring-lead-stage">${stageLabel[l.stage] || l.stage}</div>
+        </div>
+        ${scoreHTML(l._score)}
+      </div>
+    `).join('');
   }
 
   // =====================
