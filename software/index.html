@@ -799,7 +799,7 @@
         <div class="stat-card">
           <div class="label">Qualificados</div>
           <div class="value" id="stat-qual" style="color:#16a34a">—</div>
-          <div class="sub">encaminhados ao advogado</div>
+          <div class="sub">encaminhados ao responsável</div>
         </div>
         <div class="stat-card">
           <div class="label">Taxa de Qualificação</div>
@@ -934,12 +934,12 @@
       <div class="card">
         <h3>🎯 Objetivo</h3>
         <div class="field-group"><label>Qual é o objetivo do agente?</label>
-          <textarea id="cfg-objetivo" placeholder="Ex: Qualificar leads de Direito Previdenciário e encaminhar ao advogado."></textarea></div>
+          <textarea id="cfg-objetivo" placeholder="Ex: Qualificar leads interessados em nossos produtos/serviços e encaminhar ao responsável comercial."></textarea></div>
       </div>
       <div class="card">
         <h3>📝 Prompt Principal</h3>
         <div class="field-group"><label>Instruções detalhadas do agente</label>
-          <textarea id="cfg-prompt_sistema" style="min-height:200px" placeholder="Você é um assistente de triagem jurídica especializado em Direito Previdenciário..."></textarea></div>
+          <textarea id="cfg-prompt_sistema" style="min-height:200px" placeholder="Você é um assistente de vendas especializado em qualificar leads para nossa empresa..."></textarea></div>
       </div>
       <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
         <button class="btn-save" onclick="saveConfigs(['objetivo','prompt_sistema'])">💾 Salvar</button>
@@ -1018,7 +1018,7 @@
             <div class="field-group" style="margin:0;"><label>Nome</label><input type="text" id="crm-nome" placeholder="Nome do lead" /></div>
             <div class="field-group" style="margin:0;"><label>Celular / WhatsApp</label><input type="text" id="crm-celular" placeholder="5511999999999" /></div>
             <div class="field-group" style="margin:0;"><label>E-mail</label><input type="email" id="crm-email" placeholder="email@exemplo.com" /></div>
-            <div class="field-group" style="margin:0;"><label>Tese jurídica</label><input type="text" id="crm-tese" placeholder="Ex: Aposentadoria por invalidez" /></div>
+            <div class="field-group" style="margin:0;"><label>Produto / Serviço de Interesse</label><input type="text" id="crm-tese" placeholder="Ex: Plano Premium, Consultoria, Produto X" /></div>
             <div class="field-group" style="margin:0;"><label>Assunto / Pendência</label><input type="text" id="crm-assunto" placeholder="Ex: Aguardando documentos" /></div>
             <div class="field-group" style="margin:0;"><label>Data de aniversário</label><input type="date" id="crm-aniversario" /></div>
             <div class="field-group" style="margin:0;"><label>Estágio no CRM</label>
@@ -1081,8 +1081,8 @@
           <div class="field-group" style="margin:0;"><label>WhatsApp <small style="color:#a3e635;">(DDI+DDD+número)</small></label><input type="text" id="nl-numero" placeholder="5511999999999" /></div>
           <div class="field-group" style="margin:0;"><label>E-mail</label><input type="email" id="nl-email" placeholder="email@exemplo.com" /></div>
           <div class="field-group" style="margin:0;"><label>Data de aniversário</label><input type="date" id="nl-aniversario" /></div>
-          <div class="field-group" style="margin:0;grid-column:1/-1;"><label>Tese jurídica</label><input type="text" id="nl-tese" placeholder="Ex: Aposentadoria por invalidez" /></div>
-          <div class="field-group" style="margin:0;grid-column:1/-1;"><label>Assunto / Observação inicial</label><input type="text" id="nl-assunto" placeholder="Ex: Quer saber sobre aposentadoria, aguardando documentos" /></div>
+          <div class="field-group" style="margin:0;grid-column:1/-1;"><label>Produto / Serviço de Interesse</label><input type="text" id="nl-tese" placeholder="Ex: Plano Premium, Consultoria, Produto X" /></div>
+          <div class="field-group" style="margin:0;grid-column:1/-1;"><label>Assunto / Observação inicial</label><input type="text" id="nl-assunto" placeholder="Ex: Tem interesse no produto, aguardando proposta" /></div>
         </div>
         <div id="nl-error" style="display:none;color:#f87171;font-size:13px;margin-top:10px;"></div>
         <div class="modal-actions" style="margin-top:12px;">
@@ -1135,7 +1135,7 @@
       <div class="card">
         <h3>🎭 Tonalidade de Voz</h3>
         <div class="field-group"><label>Como o agente deve falar?</label>
-          <textarea id="cfg-tonalidade" placeholder="Ex: Empático, claro e objetivo. Use linguagem simples, sem jargão jurídico."></textarea></div>
+          <textarea id="cfg-tonalidade" placeholder="Ex: Empático, claro e objetivo. Use linguagem simples e acessível."></textarea></div>
       </div>
       <div class="card">
         <h3>📏 Regras de Comunicação</h3>
@@ -1145,7 +1145,7 @@
       <div class="card">
         <h3>📱 Mensagens de Encerramento</h3>
         <div class="field-group"><label>Mensagem quando lead é QUALIFICADO</label>
-          <textarea id="cfg-msg_qualificado" placeholder="Ex: Ótimo! Vou encaminhar seu caso ao advogado. Em breve ele entrará em contato."></textarea></div>
+          <textarea id="cfg-msg_qualificado" placeholder="Ex: Ótimo! Vou encaminhar suas informações ao responsável. Em breve ele entrará em contato."></textarea></div>
         <div class="field-group"><label>Mensagem quando lead NÃO é qualificado</label>
           <textarea id="cfg-msg_desqualificado" placeholder="Ex: Obrigado pelo contato! No momento não identificamos um caso que atendemos."></textarea></div>
       </div>
@@ -1196,7 +1196,7 @@
         <div class="qual-body">
           <div class="field-group" style="margin-bottom:0">
             <label>Critérios · um por linha</label>
-            <textarea id="cfg-criterios_qualificacao" style="min-height:140px;resize:vertical;" placeholder="1. Possui vínculo com o INSS&#10;2. Tem benefício negado ou a requerer&#10;3. É possível identificar uma tese jurídica&#10;4. Reside no Brasil&#10;5. Tem interesse em prosseguir com o processo"></textarea>
+            <textarea id="cfg-criterios_qualificacao" style="min-height:140px;resize:vertical;" placeholder="1. Tem interesse genuíno no produto ou serviço&#10;2. Possui orçamento ou capacidade de compra&#10;3. É o tomador de decisão ou influencia a compra&#10;4. Tem urgência ou necessidade identificada&#10;5. Está disposto a avançar no processo de compra"></textarea>
           </div>
           <div class="qual-hint">
             <span class="hi">💡</span>
@@ -1232,7 +1232,7 @@
             <div class="qual-dest-head">
               <div class="qual-dest-ico primary">📱</div>
               <div>
-                <div class="qual-dest-name">Número Pessoal do Advogado</div>
+                <div class="qual-dest-name">Número de Contato do Responsável</div>
                 <div class="qual-dest-desc">Recebe o relatório completo do lead qualificado em todas as qualificações</div>
               </div>
               <span class="qual-dest-tag req">Obrigatório</span>
@@ -1319,11 +1319,11 @@
       <div class="card">
         <h3>⬆️ Enviar novo PDF</h3>
         <div class="field-group"><label>Nome do documento</label>
-          <input type="text" id="pdf-nome" placeholder="Ex: Tabela de Benefícios INSS 2024" /></div>
+          <input type="text" id="pdf-nome" placeholder="Ex: Catálogo de Produtos 2024, Manual de Procedimentos" /></div>
         <div class="field-group"><label>Categoria</label>
           <select id="pdf-categoria">
-            <option>Legislação</option><option>Jurisprudência</option>
-            <option>Tabelas e Valores</option><option>Procedimentos INSS</option><option>Outros</option>
+            <option>Produtos e Serviços</option><option>Procedimentos</option>
+            <option>Tabelas e Valores</option><option>Materiais de Apoio</option><option>Outros</option>
           </select></div>
         <div class="field-group"><label>Arquivo</label>
           <div class="upload-area" onclick="document.getElementById('pdf-file').click()">
@@ -1777,43 +1777,43 @@
   // PROMPT PADRÃO
   // =====================
   const PROMPT_PADRAO = {
-    objetivo: 'Qualificar leads de Direito Previdenciário e encaminhar ao advogado responsável para avaliação do caso.',
+    objetivo: 'Qualificar leads interessados nos produtos e serviços da empresa e encaminhar ao responsável comercial para dar continuidade.',
     prompt_sistema: [
-      'Você é um assistente especializado em triagem de casos de Direito Previdenciário.',
-      'Seu papel é conversar de forma humanizada, empática e objetiva com pessoas que buscam ajuda jurídica previdenciária, qualificá-las e, quando aplicável, encaminhar o caso para um advogado.',
+      'Você é um assistente de vendas especializado em qualificação de leads.',
+      'Seu papel é conversar de forma humanizada, empática e objetiva com pessoas que entraram em contato, qualificá-las e, quando aplicável, encaminhar para o responsável comercial.',
       '',
-      'Você NÃO é advogado e NÃO dá consultoria jurídica. Você apenas coleta informações para que o advogado responsável possa avaliar o caso.',
+      'Você NÃO fecha vendas e NÃO faz promessas de preço. Você apenas coleta informações para que o time comercial possa dar continuidade.',
       '',
       'FLUXO DA CONVERSA:',
       '',
       'Etapa 1 — Recepção:',
       'Cumprimente o lead pelo nome (se disponível):',
-      '"Olá! Sou o assistente jurídico do escritório. Vou fazer algumas perguntas rápidas para entender melhor a sua situação e verificar se podemos te ajudar. Pode ser?"',
+      '"Olá! Sou o assistente da empresa. Vou fazer algumas perguntas rápidas para entender melhor o que você precisa e verificar como podemos te ajudar. Pode ser?"',
       '',
       'Etapa 2 — Coleta de informações (faça UMA pergunta por vez):',
       '1. "Qual é o seu nome completo?"',
-      '2. "Você contribuiu para o INSS em algum momento da sua vida, ou é dependente de alguém que contribuiu?"',
-      '3. "Qual é a sua situação atual? Por exemplo: benefício negado, cancelado, aposentadoria que ainda não pediu, pensão por morte, auxílio-doença, BPC/LOAS, ou outro?"',
-      '4. "Você já tentou dar entrada no benefício? Se sim, o que aconteceu?"',
-      '5. "Você tem documentos como carteira de trabalho, extrato do CNIS, carta de indeferimento do INSS ou outros?"',
-      '6. "Qual o seu número de celular com DDD para o advogado entrar em contato?"',
+      '2. "Qual produto ou serviço te interessou?"',
+      '3. "Pode me contar um pouco mais sobre a sua necessidade ou situação atual?"',
+      '4. "Você tem algum prazo ou urgência para resolver isso?"',
+      '5. "Você é o responsável pela decisão de compra ou há outras pessoas envolvidas?"',
+      '6. "Qual o seu número de celular com DDD para o nosso time entrar em contato?"',
       '',
-      'DESQUALIFICAÇÃO IMEDIATA (encerre com empatia se):',
-      '- Caso é trabalhista puro, sem vínculo com INSS',
-      '- Caso já está em andamento com outro advogado',
+      'DESQUALIFICAÇÃO IMEDIATA (encerre com educação se):',
+      '- Pessoa não tem interesse real no produto ou serviço',
+      '- Já é cliente e o assunto é suporte (redirecione para o canal correto)',
       '- Pessoa não quer fornecer informações básicas',
-      '- Caso já foi julgado com trânsito em julgado sem possibilidade de revisão',
+      '- Fora do perfil de cliente atendido pela empresa',
       '',
       'BUSCA NA WEB:',
-      'Se necessário para identificar a tese jurídica, use a ferramenta de busca.',
-      'Priorize fontes: gov.br, previdencia.gov.br, JusBrasil, STJ, TRF.',
+      'Se necessário para tirar dúvidas sobre produtos ou serviços, use a ferramenta de busca.',
+      'Priorize informações do site oficial da empresa.',
       '',
       'FORMATO DE SAÍDA OBRIGATÓRIO:',
       'Ao concluir a triagem, inclua NO FINAL da sua última mensagem o JSON abaixo:',
       '',
       'Para lead qualificado:',
       '```json',
-      '{"qualificado":true,"nome":"Nome Completo","celular":"DDD+número","tese":"Tese jurídica identificada","resumo":"Resumo completo da conversa"}',
+      '{"qualificado":true,"nome":"Nome Completo","celular":"DDD+número","tese":"Produto/Serviço de interesse identificado","resumo":"Resumo completo da conversa"}',
       '```',
       '',
       'Para lead não qualificado:',
@@ -1821,11 +1821,11 @@
       '{"qualificado":false,"motivo":"Motivo da desqualificação"}',
       '```'
     ].join('\n'),
-    tonalidade: 'Empático, claro e objetivo. Use linguagem simples, sem jargão jurídico. Seja especialmente gentil com idosos ou pessoas em situação vulnerável. Se o lead fizer uma pergunta jurídica específica, responda de forma genérica e direcione: "Essa é uma excelente pergunta para o advogado aprofundar com você!"',
-    instrucoes_comunicacao: '- Faça uma pergunta por vez. Aguarde a resposta antes de continuar.\n- Nunca prometa resultado ou vitória no processo.\n- Nunca dê consultoria jurídica.\n- Limite a conversa ao máximo de 10 trocas de mensagens antes de concluir a triagem.\n- Se o lead demorar mais de 24h para responder, envie um lembrete gentil uma única vez.\n- Se o lead enviar um arquivo (foto, PDF), confirme o recebimento e registre no caso.',
-    criterios_qualificacao: '1. Vínculo INSS — Contribuiu ao INSS ou é dependente de quem contribuiu\n2. Benefício identificável — Existe um benefício previdenciário aplicável ao caso\n3. Indeferimento ou pendência — Benefício foi negado, cancelado ou ainda não foi requerido\n4. Tese jurídica — É possível identificar uma tese/fundamento legal para o caso\n5. Documentação mínima — Possui ao menos algum documento ou sabe como obtê-lo',
-    msg_qualificado: 'Ótimo! Com base no que você me contou, acredito que o nosso advogado pode te ajudar. Vou encaminhar as informações do seu caso para ele agora. Em breve ele entrará em contato com você. Alguma dúvida ou informação adicional que queira que eu repasse?',
-    msg_desqualificado: 'Obrigado por entrar em contato! Infelizmente, com base nas informações que você compartilhou, não identificamos uma situação que se encaixe nos casos que atendemos no momento. Caso sua situação mude ou surja algum documento novo, fique à vontade para nos contatar novamente. Desejamos tudo de bom para você!',
+    tonalidade: 'Empático, claro e objetivo. Use linguagem simples e acessível. Seja especialmente atencioso com pessoas que ainda estão descobrindo o produto. Se o lead fizer uma pergunta técnica específica, responda de forma genérica e direcione: "Essa é uma excelente pergunta para o nosso especialista aprofundar com você!"',
+    instrucoes_comunicacao: '- Faça uma pergunta por vez. Aguarde a resposta antes de continuar.\n- Nunca prometa desconto, prazo ou resultado sem confirmação do time.\n- Nunca feche negócio ou passe valores sem autorização.\n- Limite a conversa ao máximo de 10 trocas de mensagens antes de concluir a triagem.\n- Se o lead demorar mais de 24h para responder, envie um lembrete gentil uma única vez.\n- Se o lead enviar um arquivo (foto, PDF), confirme o recebimento e registre.',
+    criterios_qualificacao: '1. Interesse real — Demonstrou interesse genuíno no produto ou serviço\n2. Necessidade identificada — Tem uma necessidade ou problema que a empresa pode resolver\n3. Capacidade de compra — Possui orçamento ou capacidade de investimento\n4. Tomador de decisão — É o responsável pela decisão ou influencia diretamente\n5. Disposição para avançar — Mostrou disposição em dar próximos passos',
+    msg_qualificado: 'Ótimo! Com base no que você me contou, acredito que podemos te ajudar. Vou encaminhar as informações para o nosso time agora. Em breve alguém entrará em contato com você. Alguma dúvida ou informação adicional que queira que eu repasse?',
+    msg_desqualificado: 'Obrigado por entrar em contato! Com base nas informações que você compartilhou, no momento não identificamos o encaixe ideal com os nossos produtos ou serviços. Caso sua situação mude, fique à vontade para nos contatar novamente. Desejamos tudo de bom para você!',
     numero_destino: '',
     grupo_destino: ''
   };
@@ -3601,7 +3601,7 @@
     mensagem:        { title:'💬 Mensagem Agente IA',     inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Texto da mensagem..."></textarea></div>', cls:'' },
     pergunta:        { title:'❓ Pergunta',          inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Pergunta para o lead..."></textarea></div>', cls:'node-pergunta' },
     condicao:        { title:'🔀 Condição',          inputs:1, outputs:2, html:'<div class="box"><input style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;" placeholder="Se contém..." /><div style="display:flex;justify-content:space-between;font-size:10px;color:#6e7681;margin-top:6px;"><span>Saída 1: Sim</span><span>Saída 2: Não</span></div></div>', cls:'node-condicao' },
-    qualificado:     { title:'✅ Lead Qualificado', inputs:1, outputs:0, html:'<div class="box" style="color:#16a34a">Registra lead como qualificado e notifica advogado</div>', cls:'node-qualificado' },
+    qualificado:     { title:'✅ Lead Qualificado', inputs:1, outputs:0, html:'<div class="box" style="color:#16a34a">Registra lead como qualificado e notifica responsável</div>', cls:'node-qualificado' },
     desqualificado:  { title:'❌ Desqualificado',   inputs:1, outputs:0, html:'<div class="box" style="color:#dc2626">Registra lead como desqualificado</div>', cls:'node-desqualificado' },
     fim:             { title:'🔴 Fim',              inputs:1, outputs:0, html:'<div class="box">Encerra a conversa</div>', cls:'node-fim' },
     followup: {
