@@ -3997,11 +3997,12 @@
 
   function openCreateClientModal() {
     ['new-client-name','new-client-email','new-client-password','new-client-instance'].forEach(id => {
-      document.getElementById(id).value = '';
+      const el = document.getElementById(id);
+      if (el) el.value = '';
     });
     document.getElementById('create-client-error').textContent = '';
     document.getElementById('btn-create-client').disabled = false;
-    document.getElementById('btn-create-client').textContent = '✅ Criar conta';
+    document.getElementById('btn-create-client').textContent = 'Criar conta';
     document.getElementById('modal-backdrop').classList.add('open');
   }
 
@@ -4049,10 +4050,10 @@
     const result = await adminFetch('POST', payload);
     if (result?.error) {
       errEl.textContent = 'Erro: ' + result.error;
-      btn.disabled = false; btn.textContent = '✅ Criar conta';
+      btn.disabled = false; btn.textContent = 'Criar conta';
       return;
     }
-    btn.disabled = false; btn.textContent = '✅ Criar conta';
+    btn.disabled = false; btn.textContent = 'Criar conta';
     closeModal();
     loadClients();
   }
