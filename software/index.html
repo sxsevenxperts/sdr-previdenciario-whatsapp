@@ -59,7 +59,7 @@
     #drawflow { background: #0a0f0a !important; }
     .drawflow-node { background: var(--bg-card) !important; border-color: var(--border) !important; color: var(--text) !important; }
     .drawflow-node .title-box { color: #0a0a0a !important; }
-    .drawflow-node input, .drawflow-node textarea { background: var(--bg) !important; color: var(--text) !important; border-color: var(--border) !important; }
+    .drawflow-node input, .drawflow-node textarea, .drawflow-node select { background: var(--bg) !important; color: var(--text) !important; border-color: var(--border) !important; }
 
     /* ── Tabs ────────────────────────────────────────────────────────── */
     .tabs { background: var(--bg-card2) !important; }
@@ -510,7 +510,30 @@
     .drawflow .drawflow-node.node-pergunta .title-box { background:#65a30d; }
     .drawflow .drawflow-node.node-followup .title-box { background:#0891b2; }
     .drawflow .drawflow-node.node-aguardar .title-box { background:#d97706; }
+    .drawflow .drawflow-node.node-etapa .title-box { background:linear-gradient(135deg,#16a34a,#065f46); color:#fff; }
+    .drawflow .drawflow-node.node-etapa { min-width:220px; }
     .drawflow-delete { background:#ef4444 !important; }
+    /* ── Flow Etapa Palette ─────────────────────────────────────────── */
+    .flow-plan-status { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; padding:8px 10px; background:#0d1117; border-radius:8px; border:1px solid #21262d; }
+    .flow-plan-badge { font-size:11px; font-weight:600; border-radius:20px; padding:3px 9px; display:flex; align-items:center; gap:4px; }
+    .flow-plan-badge.num { background:rgba(14,118,168,.15); color:#58a6ff; border:1px solid rgba(14,118,168,.3); }
+    .flow-plan-badge.agt { background:rgba(163,230,53,.1); color:#a3e635; border:1px solid rgba(163,230,53,.25); }
+    .palette-node-etapa { background:#0d1e0d; border:1.5px solid #2a4a2a; border-radius:10px; padding:10px 12px; margin-bottom:6px; cursor:grab; transition:all .15s; user-select:none; }
+    .palette-node-etapa:hover { background:#142e14; border-color:#a3e635; }
+    .palette-node-etapa:active { cursor:grabbing; }
+    .palette-node-etapa.locked { opacity:0.45; cursor:not-allowed; background:#161b22; border-color:#30363d; border-style:dashed; }
+    .palette-node-etapa.locked:hover { background:#161b22; border-color:#30363d; }
+    .etapa-pal-num { font-size:12px; font-weight:700; color:#a3e635; display:flex; align-items:center; gap:4px; }
+    .etapa-pal-agt { font-size:11px; color:#8b949e; margin-top:3px; display:flex; align-items:center; gap:4px; }
+    .etapa-pal-lock { float:right; font-size:15px; margin-top:-4px; }
+    .etapa-pal-upgrade { font-size:10px; color:#8b949e; margin-top:4px; }
+    .etapa-pal-upgrade a { color:#58a6ff; cursor:pointer; text-decoration:none; }
+    /* ── Etapa node inside canvas ────────────────────────────────────── */
+    .etapa-select { width:100%; font-size:12px; background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:5px 8px; color:#e6edf3; margin-bottom:8px; cursor:pointer; }
+    .etapa-relatorio-wrap { display:flex; align-items:center; gap:6px; font-size:11px; color:#8b949e; margin-top:2px; cursor:pointer; padding:4px 6px; border-radius:6px; }
+    .etapa-relatorio-wrap:hover { background:rgba(163,230,53,.06); }
+    .etapa-relatorio-wrap input[type=checkbox] { accent-color:#a3e635; cursor:pointer; }
+    .etapa-report-preview { font-size:10px; color:#6e7681; margin-top:6px; padding:6px 8px; background:#0d1117; border-radius:6px; border-left:2px solid #a3e635; display:none; }
     .flow-saved-list { display:flex; flex-direction:column; gap:8px; }
     .flow-saved-item { display:flex; align-items:center; justify-content:space-between; padding:10px 14px; background:#1c2128; border-radius:8px; font-size:13px; cursor:pointer; border:1.5px solid transparent; transition:all .2s; }
     .flow-saved-item:hover { border-color:#a3e635; background:#1a2e00; }
@@ -1958,31 +1981,41 @@
 
     <!-- DESIGNER DE FLUXOS -->
     <div class="page" id="page-fluxos">
-      <div class="page-header"><h1>Designer de Fluxos</h1><p>Crie e salve fluxos visuais de conversa para o seu agente</p></div>
+      <div class="page-header">
+        <h1>Designer de Fluxos</h1>
+        <p>Monte pipelines de atendimento com números e agentes IA — o lead avança com relatório de cada etapa</p>
+      </div>
 
       <div class="flow-toolbar">
         <input type="text" id="flow-name-input" placeholder="Nome do fluxo..." />
         <button class="btn-save" onclick="saveFlow()">Salvar</button>
         <button class="btn-secondary" onclick="newFlow()">Novo</button>
-        <button class="btn-secondary" onclick="clearCanvas()">Limpar tela</button>
+        <button class="btn-secondary" onclick="clearCanvas()">Limpar</button>
         <button class="btn-secondary" onclick="exportFlow()">Exportar JSON</button>
       </div>
 
       <div class="flow-layout">
         <!-- Paleta de nós -->
         <div class="flow-palette">
-          <h4>Nós disponíveis</h4>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'inicio')">Início</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'mensagem')">Mensagem Agente IA</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'pergunta')">Pergunta</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'condicao')">Condição</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'qualificado')">Qualificado</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'desqualificado')">Desqualificado</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'fim')">Fim</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'followup')">Disparo / Follow-up</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'aguardar')">⏳ Aguardar</div>
 
-          <h4 style="margin-top:16px">Fluxos salvos</h4>
+          <!-- Status do plano -->
+          <div class="flow-plan-status" id="flow-plan-status">
+            <span class="flow-plan-badge num">📱 1 número</span>
+            <span class="flow-plan-badge agt">🤖 1 agente</span>
+          </div>
+
+          <h4>Etapas de Atendimento</h4>
+          <div id="flow-etapas-palette">
+            <p style="font-size:11px;color:#6e7681;text-align:center;padding:8px;">Carregando...</p>
+          </div>
+
+          <h4 style="margin-top:14px">Terminadores</h4>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'inicio')">🟢 Início</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'qualificado')">✅ Qualificado</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'desqualificado')">❌ Desqualificado</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'fim')">🔴 Fim</div>
+
+          <h4 style="margin-top:14px">Fluxos salvos</h4>
           <div id="saved-flows-list"><p style="font-size:12px;color:#6e7681;text-align:center;padding:8px;">Nenhum fluxo salvo</p></div>
         </div>
 
@@ -2453,7 +2486,7 @@
       }
     }
     if (name === 'fluxos') {
-      setTimeout(() => { initDrawflow(); loadSavedFlows(); }, 100);
+      setTimeout(() => loadFluxosPage(), 100);
     }
     if (name === 'batepapo') {
       loadConversations();
@@ -4888,41 +4921,125 @@
   let dragNodeType = null;
 
   const NODE_TEMPLATES = {
-    inicio:          { title:'🟢 Início',          inputs:0, outputs:1, html:'<div class="box">Ponto de entrada do fluxo</div>', cls:'node-inicio' },
-    mensagem:        { title:'💬 Mensagem Agente IA',     inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Texto da mensagem..."></textarea></div>', cls:'' },
-    pergunta:        { title:'❓ Pergunta',          inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Pergunta para o lead..."></textarea></div>', cls:'node-pergunta' },
-    condicao:        { title:'🔀 Condição',          inputs:1, outputs:2, html:'<div class="box"><input style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;" placeholder="Se contém..." /><div style="display:flex;justify-content:space-between;font-size:10px;color:#6e7681;margin-top:6px;"><span>Saída 1: Sim</span><span>Saída 2: Não</span></div></div>', cls:'node-condicao' },
-    qualificado:     { title:'✅ Lead Qualificado', inputs:1, outputs:0, html:'<div class="box" style="color:#16a34a">Registra lead como qualificado e notifica responsável</div>', cls:'node-qualificado' },
-    desqualificado:  { title:'❌ Desqualificado',   inputs:1, outputs:0, html:'<div class="box" style="color:#dc2626">Registra lead como desqualificado</div>', cls:'node-desqualificado' },
-    fim:             { title:'🔴 Fim',              inputs:1, outputs:0, html:'<div class="box">Encerra a conversa</div>', cls:'node-fim' },
-    followup: {
-      title: '📤 Disparo / Follow-up',
-      inputs: 1, outputs: 1,
+    inicio:         { title:'🟢 Início',           inputs:0, outputs:1, html:'<div class="box">Ponto de entrada do fluxo</div>', cls:'node-inicio' },
+    qualificado:    { title:'✅ Lead Qualificado',  inputs:1, outputs:0, html:'<div class="box" style="color:#16a34a">Lead qualificado — notifica responsável</div>', cls:'node-qualificado' },
+    desqualificado: { title:'❌ Desqualificado',    inputs:1, outputs:0, html:'<div class="box" style="color:#dc2626">Lead não qualificado — encerra atendimento</div>', cls:'node-desqualificado' },
+    fim:            { title:'🔴 Fim',               inputs:1, outputs:0, html:'<div class="box">Encerra a conversa</div>', cls:'node-fim' },
+    etapa: {
+      title: '📞 Etapa de Atendimento',
+      inputs: 1, outputs: 1, cls: 'node-etapa',
       html: `<div class="box">
-        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">📱 Número destino</label>
-        <input style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:5px;" placeholder="5511999999999 ou {{numero_lead}}" class="followup-numero" />
-        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin:8px 0 4px;">💬 Mensagem</label>
-        <textarea style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;resize:vertical;min-height:60px;" placeholder="Olá {{nome}}! Tudo bem? Queria acompanhar o seu caso..." class="followup-msg"></textarea>
-        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin:8px 0 4px;">⏱ Enviar após (minutos)</label>
-        <input type="number" style="width:80px;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:5px;" value="60" min="1" class="followup-delay" />
-        <div style="font-size:10px;color:#6e7681;margin-top:6px;">Variáveis: {{nome}}, {{numero_lead}}, {{tese}}</div>
-      </div>`,
-      cls: 'node-followup'
-    },
-    aguardar: {
-      title: '⏳ Aguardar',
-      inputs: 1, outputs: 1,
-      html: `<div class="box">
-        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Aguardar resposta por</label>
-        <div style="display:flex;align-items:center;gap:6px;">
-          <input type="number" style="width:70px;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:5px;" value="24" min="1" class="aguardar-horas" />
-          <span style="font-size:12px;color:#8b949e">horas</span>
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">📱 Número WhatsApp</label>
+        <select class="etapa-select etapa-numero">ETAPA_NUMEROS_OPTIONS</select>
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">🤖 Agente de IA</label>
+        <select class="etapa-select etapa-agente">ETAPA_AGENTES_OPTIONS</select>
+        <label class="etapa-relatorio-wrap" title="O resumo do atendimento anterior é enviado para este agente antes de ele responder">
+          <input type="checkbox" class="etapa-relatorio" checked />
+          📊 Receber relatório do atendimento anterior
+        </label>
+        <div class="etapa-report-preview" id="etapa-report-sample">
+          <em>📋 Exemplo de relatório:</em><br/>
+          Lead: João Silva | Tese: Aposentadoria por idade<br/>
+          Resumo: Interessado, tem 67 anos, aguarda documentação.
         </div>
-        <div style="font-size:10px;color:#6e7681;margin-top:6px;">Pausa o fluxo até receber mensagem ou o tempo esgotar</div>
-      </div>`,
-      cls: 'node-aguardar'
+      </div>`
     },
+    // Legado — mantidos para compatibilidade com fluxos antigos
+    mensagem:       { title:'💬 Mensagem IA',      inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Texto da mensagem..."></textarea></div>', cls:'' },
+    pergunta:       { title:'❓ Pergunta',           inputs:1, outputs:1, html:'<div class="box"><textarea style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Pergunta para o lead..."></textarea></div>', cls:'node-pergunta' },
+    condicao:       { title:'🔀 Condição',           inputs:1, outputs:2, html:'<div class="box"><input style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;" placeholder="Se contém..." /><div style="display:flex;justify-content:space-between;font-size:10px;color:#6e7681;margin-top:6px;"><span>Saída 1: Sim</span><span>Saída 2: Não</span></div></div>', cls:'node-condicao' },
+    followup:       { title:'📤 Follow-up',          inputs:1, outputs:1, html:'<div class="box"><input style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:5px;margin-bottom:6px;" placeholder="5511999999999" class="followup-numero" /><textarea style="width:100%;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:6px;resize:vertical;min-height:50px;" placeholder="Mensagem de follow-up..." class="followup-msg"></textarea></div>', cls:'node-followup' },
+    aguardar:       { title:'⏳ Aguardar',           inputs:1, outputs:1, html:'<div class="box"><input type="number" style="width:70px;font-size:12px;border:1px solid #30363d;border-radius:6px;padding:5px;" value="24" min="1" class="aguardar-horas" /><span style="font-size:12px;color:#8b949e;margin-left:6px;">horas</span></div>', cls:'node-aguardar' },
   };
+
+  // ── Dados de plano carregados para o designer de fluxos ─────────────
+  let _fluxoNumeros = [];   // ex: ['EVO-main','EVO-extra-1']
+  let _fluxoAgentes = [];   // ex: ['Agente 1 (Principal)','Agente 2']
+  let _dragEtapaIdx = null; // índice da etapa arrastada (0 = número 1, etc.)
+
+  async function loadFluxosPage() {
+    // 1. Inicializa Drawflow se necessário
+    initDrawflow();
+    loadSavedFlows();
+
+    // 2. Carrega dados do perfil
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+
+    const { data: profile } = await db.from('profiles').select('evo_instance').eq('id', user.id).single();
+
+    // 3. Conta add-ons ativos
+    const { data: addons } = await db.from('pedidos_creditos')
+      .select('pacote')
+      .eq('user_id', user.id)
+      .eq('status', 'ativo')
+      .in('pacote', ['addon_agente', 'addon_numero']);
+
+    const extraNums = (addons || []).filter(a => a.pacote === 'addon_numero').length;
+    const extraAgts = (addons || []).filter(a => a.pacote === 'addon_agente').length;
+
+    // 4. Monta listas
+    const instBase = profile?.evo_instance || 'Número Principal';
+    _fluxoNumeros = [instBase];
+    for (let i = 1; i <= extraNums; i++) _fluxoNumeros.push(`Número Extra ${i}`);
+
+    _fluxoAgentes = ['Agente 1 (Principal)'];
+    for (let i = 1; i <= extraAgts; i++) _fluxoAgentes.push(`Agente ${i + 1}`);
+
+    // 5. Atualiza badges de plano
+    const statusEl = document.getElementById('flow-plan-status');
+    if (statusEl) {
+      statusEl.innerHTML =
+        `<span class="flow-plan-badge num">📱 ${_fluxoNumeros.length} número${_fluxoNumeros.length > 1 ? 's' : ''}</span>` +
+        `<span class="flow-plan-badge agt">🤖 ${_fluxoAgentes.length} agente${_fluxoAgentes.length > 1 ? 's' : ''}</span>`;
+    }
+
+    // 6. Renderiza paleta de etapas
+    renderFlowPalette();
+  }
+
+  function renderFlowPalette() {
+    const el = document.getElementById('flow-etapas-palette');
+    if (!el) return;
+
+    let html = '';
+    // Slot por número disponível
+    for (let i = 0; i < _fluxoNumeros.length; i++) {
+      const numLabel = _fluxoNumeros[i];
+      const agtLabel = _fluxoAgentes[i] || 'Sem agente (humano)';
+      html += `
+        <div class="palette-node-etapa" draggable="true"
+             ondragstart="dragEtapa(event,${i})"
+             title="Arraste para o canvas para adicionar esta etapa">
+          <div class="etapa-pal-num">📱 ${escapeHtml(numLabel)}</div>
+          <div class="etapa-pal-agt">🤖 ${escapeHtml(agtLabel)}</div>
+        </div>`;
+    }
+
+    // Slots bloqueados (até 3 extras como preview)
+    const maxPreview = Math.min(3, 3 - _fluxoNumeros.length + 1);
+    for (let j = 0; j < maxPreview; j++) {
+      html += `
+        <div class="palette-node-etapa locked" title="Adquira mais números e agentes no Marketplace">
+          <span class="etapa-pal-lock">🔒</span>
+          <div class="etapa-pal-num" style="color:#6e7681;">📱 Número extra</div>
+          <div class="etapa-pal-agt">🤖 Agente extra</div>
+          <div class="etapa-pal-upgrade">
+            <a onclick="showPage('faturamento',document.querySelector('.nav-item[onclick*=faturamento]'));setTimeout(()=>showBillingTab('marketplace',document.querySelectorAll('.billing-tab-btn')[1]),400)">
+              ➕ Adquirir no Marketplace
+            </a>
+          </div>
+        </div>`;
+    }
+
+    el.innerHTML = html || '<p style="font-size:11px;color:#6e7681;text-align:center;padding:8px;">Nenhum número configurado</p>';
+  }
+
+  function dragEtapa(event, idx) {
+    _dragEtapaIdx = idx;
+    dragNodeType = 'etapa';
+    event.dataTransfer.setData('text', 'etapa');
+  }
 
   function initDrawflow() {
     if (editor) return;
@@ -4931,14 +5048,19 @@
     editor.reroute = true;
     editor.editor_mode = 'edit';
     editor.start();
-    // Registra os tipos de nó
+    // Registra tipos de nó (etapa usa placeholder – substituído no drop)
     Object.entries(NODE_TEMPLATES).forEach(([type, cfg]) => {
-      editor.registerNode(type, { html: `<div class="title-box">${cfg.title}</div>${cfg.html}`, inputs: cfg.inputs, outputs: cfg.outputs });
+      const safeHtml = cfg.html.replace('ETAPA_NUMEROS_OPTIONS','').replace('ETAPA_AGENTES_OPTIONS','');
+      editor.registerNode(type, {
+        html: `<div class="title-box">${cfg.title}</div>${safeHtml}`,
+        inputs: cfg.inputs, outputs: cfg.outputs
+      });
     });
   }
 
   function drag(event, type) {
     dragNodeType = type;
+    _dragEtapaIdx = null;
     event.dataTransfer.setData('text', type);
   }
 
@@ -4953,14 +5075,35 @@
     const rect = wrap.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
+
+    let nodeHtml;
+    if (type === 'etapa') {
+      // Gera opções dinâmicas com base no plano do usuário
+      const idx = _dragEtapaIdx !== null ? _dragEtapaIdx : 0;
+      const numerosOpts = _fluxoNumeros.map((n, i) =>
+        `<option value="${i}" ${i === idx ? 'selected' : ''}>${escapeHtml(n)}</option>`
+      ).join('');
+      const agentesOpts = '<option value="">Sem agente (humano)</option>' +
+        _fluxoAgentes.map((a, i) =>
+          `<option value="${i}" ${i === idx && _fluxoAgentes[idx] ? 'selected' : ''}>${escapeHtml(a)}</option>`
+        ).join('');
+      const etapaBody = cfg.html
+        .replace('ETAPA_NUMEROS_OPTIONS', numerosOpts)
+        .replace('ETAPA_AGENTES_OPTIONS', agentesOpts);
+      nodeHtml = `<div class="title-box">📞 Etapa ${_fluxoNumeros[idx] ? '— ' + _fluxoNumeros[idx] : 'de Atendimento'}</div>${etapaBody}`;
+    } else {
+      nodeHtml = `<div class="title-box">${cfg.title}</div>${cfg.html}`;
+    }
+
     editor.addNode(
       type, cfg.inputs, cfg.outputs,
       x, y,
       cfg.cls,
       {},
-      `<div class="title-box">${cfg.title}</div>${cfg.html}`
+      nodeHtml
     );
     dragNodeType = null;
+    _dragEtapaIdx = null;
   }
 
   function newFlow() {
