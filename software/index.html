@@ -5017,14 +5017,16 @@
   // Configure com os links reais das Ofertas criadas no Hotmart
   // =====================
   const HOTMART_CHECKOUT_URLS = {
+    // Pacotes de tokens — preencher após criar produto Tokens no Hotmart
     tokens_mini:   'https://pay.hotmart.com/CONFIGURE_AQUI?off=tokens_mini',
     tokens_medio:  'https://pay.hotmart.com/CONFIGURE_AQUI?off=tokens_medio',
     tokens_grande: 'https://pay.hotmart.com/CONFIGURE_AQUI?off=tokens_grande',
     tokens_max:    'https://pay.hotmart.com/CONFIGURE_AQUI?off=tokens_max',
-    addon_objecao: 'https://pay.hotmart.com/CONFIGURE_AQUI?off=addon_objecao',
-    addon_agente:  'https://pay.hotmart.com/CONFIGURE_AQUI?off=addon_agente',
-    addon_numero:  'https://pay.hotmart.com/CONFIGURE_AQUI?off=addon_numero',
-    addon_usuario: 'https://pay.hotmart.com/CONFIGURE_AQUI?off=addon_usuario',
+    // Addons recorrentes — Produto XPERT.IA (ID 7336568)
+    addon_objecao: 'https://pay.hotmart.com/A104782857U?off=8ivu9qbb',  // Objeção IA     R$127/mês
+    addon_agente:  'https://pay.hotmart.com/A104782857U?off=cjszocj0',  // Agente Extra   R$197/mês
+    addon_numero:  'https://pay.hotmart.com/A104782857U?off=w17oc1q3',  // WhatsApp Extra R$97/mês
+    addon_usuario: 'https://pay.hotmart.com/A104782857U?off=vhne1box',  // Usuário Extra  R$57/mês
   };
 
   function openAddonCheckout(offerCode, qty) {

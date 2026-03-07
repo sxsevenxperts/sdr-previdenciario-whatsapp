@@ -8,8 +8,8 @@
  *
  * COMPRA DE ADDON (por cliente existente):
  *   → offer.code reconhecido em ADDON_OFFER_CODES → ativa addon para o usuário
- *   Addons: tokens_mini, tokens_medio, tokens_grande, tokens_max,
- *           addon_objecao, addon_agente, addon_numero, addon_usuario
+ *   Addons recorrentes: cjszocj0 (agente), 8ivu9qbb (objecao), w17oc1q3 (numero), vhne1box (usuario)
+ *   Tokens (one-time): offer codes a preencher após criar produto Tokens no Hotmart
  *
  * DESATIVAÇÃO: SUBSCRIPTION_CANCELLATION, PURCHASE_CANCELED, PURCHASE_REFUNDED, PURCHASE_CHARGEBACK
  *   → define active=false e status da assinatura como cancelado
@@ -47,18 +47,18 @@ const EVENTS_DEACTIVATE = [
 ];
 
 // ── Mapa de offer.code → addon ────────────────────────────────────────────
-// Configure os offer.code exatamente como cadastrado nas Ofertas do Hotmart.
+// Chaves = offer.code exato enviado pelo Hotmart no webhook (payload.data.purchase.offer.code).
 const ADDON_OFFER_CODES: Record<string, { type: string; tokens?: number; qty?: number; valor?: number }> = {
-  // Pacotes de tokens (one-time)
-  tokens_mini:   { type: "tokens", tokens: 5_000_000,  valor: 97  },
-  tokens_medio:  { type: "tokens", tokens: 10_000_000, valor: 177 },
-  tokens_grande: { type: "tokens", tokens: 20_000_000, valor: 297 },
-  tokens_max:    { type: "tokens", tokens: 50_000_000, valor: 597 },
-  // Addons recorrentes
-  addon_objecao: { type: "objecao", valor: 127 },
-  addon_agente:  { type: "agente",  qty: 1, valor: 197 },
-  addon_numero:  { type: "numero",  qty: 1, valor: 97  },
-  addon_usuario: { type: "usuario", qty: 1, valor: 57  },
+  // Addons recorrentes — Produto XPERT.IA (ID 7336568)
+  cjszocj0: { type: "agente",  qty: 1, valor: 197 },  // Agente Extra     R$197/mês
+  "8ivu9qbb": { type: "objecao", valor: 127 },         // Objeção IA       R$127/mês
+  w17oc1q3: { type: "numero",  qty: 1, valor: 97  },  // WhatsApp Extra   R$97/mês
+  vhne1box: { type: "usuario", qty: 1, valor: 57  },  // Usuário Extra    R$57/mês
+  // Pacotes de tokens (one-time) — offer codes a preencher após criar produto Tokens no Hotmart
+  // tokens_mini:   { type: "tokens", tokens: 5_000_000,  valor: 97  },
+  // tokens_medio:  { type: "tokens", tokens: 10_000_000, valor: 177 },
+  // tokens_grande: { type: "tokens", tokens: 20_000_000, valor: 297 },
+  // tokens_max:    { type: "tokens", tokens: 50_000_000, valor: 597 },
 };
 
 // ── Agente padrão genérico (espelho do manage-clients) ────────────────────
