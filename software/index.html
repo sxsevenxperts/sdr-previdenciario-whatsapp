@@ -4908,21 +4908,54 @@
     loadMeusPedidos(user.id);
   }
 
+  const ADDON_NOMES = {
+    tokens_mini:   '➕ Tokens Mini (5M)',
+    tokens_medio:  '➕➕ Tokens Médio (10M)',
+    tokens_grande: '🚀 Tokens Grande (20M)',
+    tokens_max:    '💼 Tokens Max (50M)',
+    addon_objecao: '🛡️ Agente de Objeção IA',
+    addon_agente:  '🤖 Agente Extra',
+    addon_numero:  '📱 Número Extra',
+    addon_usuario: '👤 Usuário Extra',
+  };
+
   async function loadMeusPedidos(userId) {
     const el = document.getElementById('pedidos-cliente-table');
     if (!el) return;
-    const { data } = await db.from('pedidos_creditos').select('*').eq('user_id', userId).order('criado_em', { ascending: false }).limit(10);
-    if (!data || !data.length) {
+    const [{ data: creditos }, { data: addons }] = await Promise.all([
+      db.from('pedidos_creditos').select('*').eq('user_id', userId).order('criado_em', { ascending: false }).limit(10),
+      db.from('addon_purchases').select('*').eq('user_id', userId).order('criado_em', { ascending: false }).limit(10),
+    ]);
+    const rows = [
+      ...(creditos || []).map(p => ({
+        data: p.criado_em, tipo: 'tokens',
+        nome: PACOTES_CREDITOS[p.pacote]?.nome || p.pacote,
+        detalhe: `${(p.tokens/1000000).toFixed(1)}M tokens`,
+        valor: p.preco_brl ? 'R$ '+p.preco_brl : p.preco_usd ? '$'+p.preco_usd : '—',
+        status: p.status,
+        statusLabel: p.status === 'pendente' ? '⏳ Pendente' : p.status === 'aprovado' ? '✅ Aprovado' : '❌ Recusado',
+      })),
+      ...(addons || []).map(a => ({
+        data: a.criado_em, tipo: 'addon',
+        nome: ADDON_NOMES[a.offer_code] || a.offer_code,
+        detalhe: a.quantidade > 1 ? `x${a.quantidade}` : '—',
+        valor: a.valor ? 'R$ '+a.valor : '—',
+        status: a.status,
+        statusLabel: a.status === 'ativo' ? '✅ Ativo' : a.status === 'cancelado' ? '❌ Cancelado' : '🔄 ' + a.status,
+      })),
+    ].sort((a, b) => new Date(b.data) - new Date(a.data)).slice(0, 15);
+
+    if (!rows.length) {
       el.innerHTML = '<p class="empty-state" style="padding:20px;">Nenhum pedido realizado ainda.</p>'; return;
     }
     el.innerHTML = `<table>
-      <thead><tr><th>Data</th><th>Pacote</th><th>Tokens</th><th>Valor</th><th>Status</th></tr></thead>
-      <tbody>${data.map(p => `<tr>
-        <td style="font-size:12px;color:#6e7681">${new Date(p.criado_em).toLocaleDateString('pt-BR')}</td>
-        <td style="font-weight:600">${PACOTES_CREDITOS[p.pacote]?.nome || p.pacote}</td>
-        <td>${(p.tokens/1000000).toFixed(1)}M tokens</td>
-        <td style="font-weight:700;color:#a3e635">${p.preco_brl ? 'R$ '+p.preco_brl : p.preco_usd ? '$'+p.preco_usd : '—'}</td>
-        <td><span class="pedidos-badge ${p.status}">${p.status === 'pendente' ? '⏳ Pendente' : p.status === 'aprovado' ? '✅ Aprovado' : '❌ Recusado'}</span></td>
+      <thead><tr><th>Data</th><th>Produto</th><th>Detalhe</th><th>Valor</th><th>Status</th></tr></thead>
+      <tbody>${rows.map(p => `<tr>
+        <td style="font-size:12px;color:#6e7681">${new Date(p.data).toLocaleDateString('pt-BR')}</td>
+        <td style="font-weight:600">${p.nome}</td>
+        <td style="color:#94a3b8">${p.detalhe}</td>
+        <td style="font-weight:700;color:#a3e635">${p.valor}</td>
+        <td><span class="pedidos-badge ${p.status}">${p.statusLabel}</span></td>
       </tr>`).join('')}</tbody>
     </table>`;
   }
@@ -5810,12 +5843,11 @@
     if (currentProfile?.role === 'admin') {
       _equipeQuotaMax = 9999;
     } else {
-      const { data: addons } = await db.from('pedidos_creditos')
-        .select('pacote')
+      const { data: subAddon } = await db.from('assinaturas')
+        .select('usuarios_extras_limite')
         .eq('user_id', user.id)
-        .eq('status', 'ativo')
-        .eq('pacote', 'addon_usuario');
-      _equipeQuotaMax = (addons || []).length;
+        .maybeSingle();
+      _equipeQuotaMax = subAddon?.usuarios_extras_limite ?? 0;
     }
 
     // 2. Membros cadastrados
@@ -5828,10 +5860,11 @@
 
     // 3. Números disponíveis (da instância + extras)
     const { data: profile } = await db.from('profiles').select('evo_instance').eq('id', user.id).single();
-    const { data: addonNums } = await db.from('pedidos_creditos')
-      .select('id').eq('user_id', user.id).eq('status', 'ativo').eq('pacote', 'addon_numero');
+    const { data: subNums } = await db.from('assinaturas')
+      .select('numeros_extras').eq('user_id', user.id).maybeSingle();
+    const numExtras = subNums?.numeros_extras ?? 0;
     _equipeNumeros = [profile?.evo_instance || 'Número Principal'];
-    (addonNums || []).forEach((_, i) => _equipeNumeros.push(`Número Extra ${i + 1}`));
+    for (let i = 1; i <= numExtras; i++) _equipeNumeros.push(`Número Extra ${i}`);
 
     // 4. Atualiza barra de cota
     const usados = _equipeMembros.length;
@@ -6092,14 +6125,13 @@
       _fluxoObjecao = true;
       extraNums = 4; extraAgts = 4; // admin vê exemplos expandidos
     } else {
-      const { data: addons } = await db.from('pedidos_creditos')
-        .select('pacote')
+      const { data: subFluxo } = await db.from('assinaturas')
+        .select('addon_objecao, agentes_extras, numeros_extras')
         .eq('user_id', user.id)
-        .eq('status', 'ativo')
-        .in('pacote', ['addon_agente', 'addon_numero', 'addon_objecao']);
-      extraNums = (addons || []).filter(a => a.pacote === 'addon_numero').length;
-      extraAgts = (addons || []).filter(a => a.pacote === 'addon_agente').length;
-      _fluxoObjecao = (addons || []).some(a => a.pacote === 'addon_objecao');
+        .maybeSingle();
+      extraNums = subFluxo?.numeros_extras ?? 0;
+      extraAgts = subFluxo?.agentes_extras ?? 0;
+      _fluxoObjecao = subFluxo?.addon_objecao ?? false;
     }
 
     // 4. Monta listas
