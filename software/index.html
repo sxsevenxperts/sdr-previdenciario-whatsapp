@@ -528,7 +528,12 @@
     .drawflow .drawflow-node.node-contexto .title-box { background:#7c3aed; }
     .drawflow .drawflow-node.node-mover-pipeline .title-box { background:#0f766e; }
     .drawflow .drawflow-node.node-objecao .title-box { background:linear-gradient(135deg,#dc2626,#9f1239); }
-    .drawflow .drawflow-node.node-objecao { border-color:#dc2626; min-width:220px; }
+    .drawflow .drawflow-node.node-objecao { border-color:#dc2626; min-width:270px; }
+    .objecao-section-label { font-size:10px; font-weight:700; color:#f87171; text-transform:uppercase; letter-spacing:.5px; margin:10px 0 4px; }
+    .objecao-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(220,38,38,.12); border:1px solid rgba(220,38,38,.3); border-radius:6px; padding:3px 8px; font-size:10px; color:#fca5a5; margin-bottom:8px; }
+    .objecao-tipos { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px; }
+    .objecao-tipo-check { display:flex; align-items:center; gap:4px; font-size:11px; color:#c9d1d9; background:#21262d; border-radius:5px; padding:3px 7px; cursor:pointer; }
+    .objecao-tipo-check input { accent-color:#dc2626; width:12px; height:12px; }
     .palette-node.node-acao-pago { border-color:#dc2626; color:#fca5a5; }
     .palette-node.node-acao-pago.locked { opacity:0.5; cursor:not-allowed; border-style:dashed; }
     .palette-node.node-acao-pago.locked:hover { border-color:#dc2626; color:#fca5a5; background:#161b22; }
@@ -1947,23 +1952,25 @@
 
         <!-- SEÇÃO 4: IDENTIFICAÇÃO DE OBJEÇÃO -->
         <div class="mkt-section">
-          <div class="mkt-section-title">🛡️ Identificação de Objeção por IA</div>
-          <div class="mkt-section-sub">A IA monitora em tempo real e detecta objeções do lead durante o atendimento, enviando um alerta instantâneo para o número do cliente. Aparece como nó no Designer de Fluxos. Acrescido à mensalidade.</div>
+          <div class="mkt-section-title">🛡️ Agente IA — Identificação de Objeção + Plano de Ação</div>
+          <div class="mkt-section-sub">Um agente de IA especializado monitora a conversa em tempo real, detecta objeções do lead, gera um plano de ação personalizado para contorná-las e envia o relatório completo direto no WhatsApp do responsável. Aparece como nó exclusivo no Designer de Fluxos.</div>
           <div class="mkt-qty-card">
             <div class="mkt-qty-left">
               <div style="font-size:42px;flex-shrink:0;">🛡️</div>
               <div>
-                <div class="mkt-addon-name" style="font-size:16px;margin-bottom:6px;">Identificar Objeção (IA)</div>
+                <div class="mkt-addon-name" style="font-size:16px;margin-bottom:6px;">Identificar Objeção + Plano de Ação (IA)</div>
                 <ul class="mkt-addon-features" style="margin:0;">
-                  <li>IA detecta objeções em tempo real</li>
-                  <li>Alerta instantâneo no número do cliente</li>
-                  <li>Nó exclusivo no Designer de Fluxos</li>
-                  <li>Desvio automático de fluxo com/sem objeção</li>
+                  <li>Agente IA detecta objeções em tempo real (preço, urgência, confiança, necessidade, autoridade, concorrência)</li>
+                  <li>Gera plano de ação personalizado para contornar cada objeção</li>
+                  <li>Inclui argumentos baseados no perfil e histórico do lead</li>
+                  <li>Envia relatório completo + plano via WhatsApp ao responsável</li>
+                  <li>Nó exclusivo no Designer de Fluxos com 2 saídas (com/sem objeção)</li>
+                  <li>Desvio automático de fluxo conforme resultado da análise</li>
                 </ul>
               </div>
             </div>
             <div class="mkt-qty-right">
-              <div class="mkt-unit-price" style="color:#fca5a5;">R$ 97<span>/mês</span></div>
+              <div class="mkt-unit-price" style="color:#fca5a5;">R$ 127<span>/mês</span></div>
               <div class="mkt-addon-recurrence" style="background:rgba(220,38,38,.08);color:#fca5a5;">🔄 Recorrente</div>
               <button class="btn-addon-buy" style="background:#dc2626;" onclick="showAddonModal('objecao')">
                 Ativar Identificação de Objeção
@@ -2093,7 +2100,7 @@
           <div class="palette-node" draggable="true" ondragstart="drag(event,'mover_pipeline')">🗂️ Mover no CRM</div>
           <div class="palette-node node-acao-pago" id="palette-objecao" draggable="true"
                ondragstart="dragObjecao(event)"
-               title="Identificação de Objeção por IA — R$ 97/mês">🛡️ Identificar Objeção IA</div>
+               title="Agente IA — Identificar Objeção + Gerar Plano de Ação + Enviar relatório via WhatsApp — R$ 127/mês">🛡️ Identificar Objeção + Plano IA</div>
 
           <h4 style="margin-top:14px">Terminadores</h4>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'inicio')">🟢 Início</div>
@@ -4732,7 +4739,7 @@
   // ADDON PURCHASE (Agente / Número) com seletor de quantidade
   // =====================
   const _addonQty  = { agente: 1, numero: 1, objecao: 1 };
-  const _addonUnit = { agente: 197, numero: 97, objecao: 97 };
+  const _addonUnit = { agente: 197, numero: 97, objecao: 127 };
 
   function changeAddonQty(tipo, delta) {
     _addonQty[tipo] = Math.max(1, (_addonQty[tipo] || 1) + delta);
@@ -4756,9 +4763,9 @@
     const nome  = nomes[tipo] || tipo;
     // Objeção é único — não tem qty
     if (tipo === 'objecao') {
-      const msg = `🛡️ Ativar Identificação de Objeção por IA\n\nValor: R$ 97/mês\n⚠️ Será acrescido à sua mensalidade.\n\nApós ativação, o nó aparecerá desbloqueado no Designer de Fluxos.\n\nDeseja solicitar?`;
+      const msg = `🛡️ Ativar Agente IA — Identificação de Objeção + Plano de Ação\n\nO agente monitora a conversa em tempo real, detecta objeções, gera um plano de ação personalizado e envia o relatório via WhatsApp ao responsável.\n\nValor: R$ 127/mês\n⚠️ Será acrescido à sua mensalidade.\n\nApós ativação, o nó aparecerá desbloqueado no Designer de Fluxos.\n\nDeseja solicitar?`;
       if (!confirm(msg)) return;
-      requestAddonPurchase('objecao', 1, 97);
+      requestAddonPurchase('objecao', 1, 127);
       return;
     }
     const plural = qty > 1 ? 's' : '';
@@ -5138,12 +5145,39 @@
     objecao: {
       title: '🛡️ Identificar Objeção (IA)', inputs: 1, outputs: 2, cls: 'node-objecao',
       html: `<div class="box">
-        <div style="font-size:12px;color:#c9d1d9;margin-bottom:8px;">A IA analisa a mensagem e detecta objeções. Envia alerta ao número indicado.</div>
-        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">📱 Enviar alerta para:</label>
-        <input class="etapa-select" placeholder="5511999999999 (número do cliente)" />
-        <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:8px;padding:0 2px;">
-          <span style="color:#dc2626;font-weight:600;">🛡️ Com objeção (saída 1)</span>
-          <span style="color:#16a34a;font-weight:600;">✅ Sem objeção (saída 2)</span>
+        <div class="objecao-badge">⚡ Agente IA especializado em objeções</div>
+
+        <div class="objecao-section-label">Tipos de objeção a detectar</div>
+        <div class="objecao-tipos">
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Preço/custo</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Urgência</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Confiança</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Necessidade</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Autoridade</label>
+          <label class="objecao-tipo-check"><input type="checkbox" /> Concorrência</label>
+        </div>
+
+        <div class="objecao-section-label">Plano de ação gerado pela IA</div>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#c9d1d9;margin-bottom:4px;cursor:pointer;">
+          <input type="checkbox" checked style="accent-color:#dc2626;" />
+          Gerar plano de contorno da objeção
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#c9d1d9;margin-bottom:4px;cursor:pointer;">
+          <input type="checkbox" checked style="accent-color:#dc2626;" />
+          Incluir argumentos personalizados do lead
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#c9d1d9;margin-bottom:8px;cursor:pointer;">
+          <input type="checkbox" checked style="accent-color:#dc2626;" />
+          Incluir histórico da conversa no relatório
+        </label>
+
+        <div class="objecao-section-label">📱 Enviar relatório + plano para WhatsApp</div>
+        <input class="etapa-select" placeholder="5511999999999 (WhatsApp do responsável)" style="margin-bottom:4px;" />
+        <div style="font-size:10px;color:#8b949e;margin-bottom:8px;">O agente envia um resumo da objeção identificada + plano de ação para contorná-la neste número.</div>
+
+        <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:6px;padding:4px 6px;background:#21262d;border-radius:6px;">
+          <span style="color:#dc2626;font-weight:700;">🛡️ Com objeção → saída 1</span>
+          <span style="color:#16a34a;font-weight:700;">✅ Sem objeção → saída 2</span>
         </div>
       </div>`
     },
@@ -5190,7 +5224,7 @@
       statusEl.innerHTML =
         `<span class="flow-plan-badge num">📱 ${_fluxoNumeros.length} número${_fluxoNumeros.length > 1 ? 's' : ''}</span>` +
         `<span class="flow-plan-badge agt">🤖 ${_fluxoAgentes.length} agente${_fluxoAgentes.length > 1 ? 's' : ''}</span>` +
-        (_fluxoObjecao ? `<span class="flow-plan-badge" style="background:rgba(220,38,38,.12);color:#fca5a5;border:1px solid rgba(220,38,38,.3);">🛡️ Objeção IA</span>` : '');
+        (_fluxoObjecao ? `<span class="flow-plan-badge" style="background:rgba(220,38,38,.12);color:#fca5a5;border:1px solid rgba(220,38,38,.3);" title="Agente IA detecta objeções, gera plano de ação e envia relatório via WhatsApp">🛡️ Objeção IA + Plano de Ação</span>` : '');
     }
 
     // 6. Atualiza hint da paleta
@@ -5210,7 +5244,7 @@
       } else {
         palOb.classList.add('locked');
         palOb.setAttribute('draggable','false');
-        palOb.title = '🔒 Recurso pago — R$ 97/mês. Comprar no Marketplace';
+        palOb.title = '🔒 Agente IA — Identificação de Objeção + Plano de Ação — R$ 127/mês. Comprar no Marketplace';
       }
     }
   }
@@ -5218,7 +5252,7 @@
   function dragObjecao(event) {
     if (!_fluxoObjecao) {
       event.preventDefault();
-      alert('🔒 Identificação de Objeção é um recurso pago.\n\nValor: R$ 97/mês\n\nAcesse Faturamento → Marketplace para contratar.');
+      alert('🔒 Agente IA — Identificação de Objeção + Plano de Ação é um recurso pago.\n\nO que inclui:\n• Detecção de objeções em tempo real\n• Geração de plano de ação personalizado para contorná-las\n• Envio do relatório via WhatsApp ao responsável\n\nValor: R$ 127/mês\n\nAcesse Faturamento → Marketplace para contratar.');
       return;
     }
     drag(event, 'objecao');
