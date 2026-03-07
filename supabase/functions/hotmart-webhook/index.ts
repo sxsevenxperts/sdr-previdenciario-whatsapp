@@ -2,8 +2,14 @@
  * Edge Function: hotmart-webhook
  * Recebe eventos de pagamento da Hotmart e gerencia o ciclo de vida dos clientes.
  *
- * ATIVAÇÃO: PURCHASE_APPROVED, PURCHASE_COMPLETE, PURCHASE_REACTIVATED, SUBSCRIPTION_REACTIVATED
- *   → cria usuário novo (com convite por email) OU reativa conta existente
+ * NOVA ASSINATURA (plano base):
+ *   PURCHASE_APPROVED / PURCHASE_COMPLETE / PURCHASE_REACTIVATED / SUBSCRIPTION_REACTIVATED
+ *   → offer.code NÃO reconhecido como addon → cria/reativa conta de cliente
+ *
+ * COMPRA DE ADDON (por cliente existente):
+ *   → offer.code reconhecido em ADDON_OFFER_CODES → ativa addon para o usuário
+ *   Addons: tokens_mini, tokens_medio, tokens_grande, tokens_max,
+ *           addon_objecao, addon_agente, addon_numero, addon_usuario
  *
  * DESATIVAÇÃO: SUBSCRIPTION_CANCELLATION, PURCHASE_CANCELED, PURCHASE_REFUNDED, PURCHASE_CHARGEBACK
  *   → define active=false e status da assinatura como cancelado
@@ -39,6 +45,21 @@ const EVENTS_DEACTIVATE = [
   "PURCHASE_REFUNDED",
   "PURCHASE_CHARGEBACK",
 ];
+
+// ── Mapa de offer.code → addon ────────────────────────────────────────────
+// Configure os offer.code exatamente como cadastrado nas Ofertas do Hotmart.
+const ADDON_OFFER_CODES: Record<string, { type: string; tokens?: number; qty?: number; valor?: number }> = {
+  // Pacotes de tokens (one-time)
+  tokens_mini:   { type: "tokens", tokens: 5_000_000,  valor: 97  },
+  tokens_medio:  { type: "tokens", tokens: 10_000_000, valor: 177 },
+  tokens_grande: { type: "tokens", tokens: 20_000_000, valor: 297 },
+  tokens_max:    { type: "tokens", tokens: 50_000_000, valor: 597 },
+  // Addons recorrentes
+  addon_objecao: { type: "objecao", valor: 127 },
+  addon_agente:  { type: "agente",  qty: 1, valor: 197 },
+  addon_numero:  { type: "numero",  qty: 1, valor: 97  },
+  addon_usuario: { type: "usuario", qty: 1, valor: 57  },
+};
 
 // ── Agente padrão genérico (espelho do manage-clients) ────────────────────
 const AGENTE_DEFAULTS: Record<string, string> = {
@@ -143,7 +164,96 @@ async function findUserByEmail(email: string): Promise<string | null> {
   return (data as any)?.id ?? null;
 }
 
-// ── Ações principais ─────────────────────────────────────────────────────
+// ── Ações: Addon para cliente existente ───────────────────────────────────
+
+async function activateAddon(
+  buyerEmail: string,
+  offerCode: string,
+  transactionId: string,
+): Promise<{ action: string; userId: string; addonType: string }> {
+  const userId = await findUserByEmail(buyerEmail);
+  if (!userId) {
+    throw new Error("Usuário não encontrado para addon: " + buyerEmail);
+  }
+
+  const addon = ADDON_OFFER_CODES[offerCode];
+  if (!addon) {
+    throw new Error("offer.code desconhecido: " + offerCode);
+  }
+
+  if (addon.type === "tokens") {
+    // Incrementa saldo de tokens
+    await adminDb.rpc("incrementar_tokens", { uid: userId, qtd: addon.tokens });
+    console.log(`Tokens adicionados: ${addon.tokens} para ${buyerEmail}`);
+  } else if (addon.type === "objecao") {
+    // Ativa agente de objeção
+    await adminDb.from("assinaturas")
+      .update({ addon_objecao: true })
+      .eq("user_id", userId);
+    console.log(`Addon objeção ativado para ${buyerEmail}`);
+  } else if (["agente", "numero", "usuario"].includes(addon.type)) {
+    // Incrementa contador de extras
+    const coluna = addon.type === "agente" ? "agentes_extras"
+                 : addon.type === "numero" ? "numeros_extras"
+                 : "usuarios_extras_limite";
+    await adminDb.rpc("incrementar_addon", { uid: userId, coluna, qtd: addon.qty ?? 1 });
+    console.log(`Addon ${addon.type} incrementado (+${addon.qty ?? 1}) para ${buyerEmail}`);
+  }
+
+  // Registrar no histórico
+  await adminDb.from("addon_purchases").insert({
+    user_id: userId,
+    offer_code: offerCode,
+    addon_type: addon.type,
+    quantidade: addon.qty ?? 1,
+    valor: addon.valor ?? null,
+    hotmart_transaction: transactionId,
+    status: "ativo",
+  });
+
+  return { action: "addon_activated", userId, addonType: addon.type };
+}
+
+async function deactivateAddon(
+  buyerEmail: string,
+  offerCode: string,
+  transactionId: string,
+): Promise<{ action: string; userId: string | null }> {
+  const userId = await findUserByEmail(buyerEmail);
+  if (!userId) {
+    console.warn("Usuário não encontrado para reverter addon:", buyerEmail);
+    return { action: "not_found", userId: null };
+  }
+
+  const addon = ADDON_OFFER_CODES[offerCode];
+  if (!addon) {
+    console.warn("offer.code desconhecido para deactivateAddon:", offerCode);
+    return { action: "unknown_offer", userId };
+  }
+
+  if (addon.type === "objecao") {
+    await adminDb.from("assinaturas")
+      .update({ addon_objecao: false })
+      .eq("user_id", userId);
+  } else if (["agente", "numero", "usuario"].includes(addon.type)) {
+    const coluna = addon.type === "agente" ? "agentes_extras"
+                 : addon.type === "numero" ? "numeros_extras"
+                 : "usuarios_extras_limite";
+    // Decrementa (mínimo 0)
+    await adminDb.rpc("incrementar_addon", { uid: userId, coluna, qtd: -(addon.qty ?? 1) });
+  }
+  // Tokens não são revertidos (política de negócio: tokens já usados não são estornados)
+
+  // Atualiza status no histórico
+  await adminDb.from("addon_purchases")
+    .update({ status: "cancelado" })
+    .eq("hotmart_transaction", transactionId);
+
+  console.log(`Addon ${offerCode} revertido para ${buyerEmail}`);
+  return { action: "addon_deactivated", userId };
+}
+
+// ── Ações: Cliente principal ──────────────────────────────────────────────
 
 async function activateClient(
   buyerName: string,
@@ -277,9 +387,13 @@ Deno.serve(async (req) => {
     const event: string = payload?.event ?? "";
     const buyer      = payload?.data?.buyer ?? {};
     const product    = payload?.data?.product ?? {};
+    const purchase   = payload?.data?.purchase ?? {};
+    const offer      = purchase?.offer ?? {};
+    const offerCode  = (offer?.code ?? "").toLowerCase().trim();
+    const transactionId = purchase?.transaction ?? "";
 
-    // Tokens a conceder (pode ser configurado futuramente via payload ou env)
-    const TOKENS_INICIAIS = 5_000_000; // 5M tokens — plano base
+    // Tokens a conceder (plano base — apenas para novos clientes)
+    const TOKENS_INICIAIS = 5_000_000;
 
     const buyerName  = buyer?.name  ?? "Cliente";
     const buyerEmail = (buyer?.email ?? "").toLowerCase().trim();
@@ -289,27 +403,50 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, reason: "sem_email" }), { status: 200 });
     }
 
-    console.log(`Hotmart event: ${event} | email: ${buyerEmail}`);
+    console.log(`Hotmart event: ${event} | email: ${buyerEmail} | offer: ${offerCode || "(sem offer.code)"}`);
+
+    // ── Verificar se é compra de addon ────────────────────────────────
+    const isAddon = offerCode in ADDON_OFFER_CODES;
 
     if (EVENTS_ACTIVATE.includes(event)) {
-      const result = await activateClient(
-        buyerName,
-        buyerEmail,
-        product?.name ?? "SDR Agente",
-        TOKENS_INICIAIS,
-      );
-      return new Response(JSON.stringify({ ok: true, ...result }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      if (isAddon) {
+        // Addon para cliente existente
+        const result = await activateAddon(buyerEmail, offerCode, transactionId);
+        return new Response(JSON.stringify({ ok: true, ...result }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      } else {
+        // Nova assinatura do plano principal
+        const result = await activateClient(
+          buyerName,
+          buyerEmail,
+          product?.name ?? "SDR Agente",
+          TOKENS_INICIAIS,
+        );
+        return new Response(JSON.stringify({ ok: true, ...result }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
     }
 
     if (EVENTS_DEACTIVATE.includes(event)) {
-      const result = await deactivateClient(buyerEmail);
-      return new Response(JSON.stringify({ ok: true, ...result }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      if (isAddon) {
+        // Reverter addon (cancelamento/reembolso)
+        const result = await deactivateAddon(buyerEmail, offerCode, transactionId);
+        return new Response(JSON.stringify({ ok: true, ...result }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      } else {
+        // Desativar conta principal
+        const result = await deactivateClient(buyerEmail);
+        return new Response(JSON.stringify({ ok: true, ...result }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
     }
 
     // Evento não tratado — responde 200 para Hotmart não retentar
