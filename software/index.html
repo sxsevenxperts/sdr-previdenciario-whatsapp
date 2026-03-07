@@ -2020,7 +2020,7 @@
                 <li>Soma ao saldo atual</li>
                 <li>Sem prazo de validade</li>
               </ul>
-              <button class="btn-buy" onclick="showBuyModal('mini')">Adicionar</button>
+              <button id="btn-buy-mini" class="btn-buy" onclick="showBuyModal('mini')">Adicionar</button>
             </div>
             <div class="pricing-card popular">
               <div class="pop-badge">Mais Popular</div>
@@ -2034,7 +2034,7 @@
                 <li>Sem prazo de validade</li>
                 <li>Melhor custo/benefício</li>
               </ul>
-              <button class="btn-buy" onclick="showBuyModal('medio')">Adicionar</button>
+              <button id="btn-buy-medio" class="btn-buy" onclick="showBuyModal('medio')">Adicionar</button>
             </div>
             <div class="pricing-card">
               <div class="pkg-name">Grande</div>
@@ -2047,7 +2047,7 @@
                 <li>Sem prazo de validade</li>
                 <li>Suporte prioritário</li>
               </ul>
-              <button class="btn-buy" onclick="showBuyModal('grande')">Adicionar</button>
+              <button id="btn-buy-grande" class="btn-buy" onclick="showBuyModal('grande')">Adicionar</button>
             </div>
             <div class="pricing-card">
               <div class="pkg-name">Max</div>
@@ -2060,7 +2060,7 @@
                 <li>Sem prazo de validade</li>
                 <li>Suporte dedicado</li>
               </ul>
-              <button class="btn-buy" onclick="showBuyModal('max')">Adicionar</button>
+              <button id="btn-buy-max" class="btn-buy" onclick="showBuyModal('max')">Adicionar</button>
             </div>
           </div>
         </div>
@@ -2091,7 +2091,7 @@
             <div class="mkt-qty-right">
               <div class="mkt-unit-price" style="color:#fca5a5;">R$ 127<span>/mês</span></div>
               <div class="mkt-addon-recurrence" style="background:rgba(220,38,38,.08);color:#fca5a5;">🔄 Recorrente</div>
-              <button class="btn-addon-buy" style="background:#dc2626;" onclick="showAddonModal('objecao')">
+              <button id="btn-addon-objecao" class="btn-addon-buy" style="background:#dc2626;" onclick="showAddonModal('objecao')">
                 🛡️ Ativar Agente de Objeção IA
               </button>
             </div>
@@ -2124,7 +2124,7 @@
                 <button onclick="changeAddonQty('agente',+1)">+</button>
               </div>
               <div class="mkt-total-price">Total: <strong id="total-agente">R$ 197/mês</strong></div>
-              <button class="btn-addon-buy" onclick="showAddonModal('agente')">
+              <button id="btn-addon-agente" class="btn-addon-buy" onclick="showAddonModal('agente')">
                 Contratar <span id="qty-label-agente">1 agente</span>
               </button>
             </div>
@@ -2157,7 +2157,7 @@
                 <button onclick="changeAddonQty('numero',+1)">+</button>
               </div>
               <div class="mkt-total-price">Total: <strong id="total-numero">R$ 97/mês</strong></div>
-              <button class="btn-addon-buy" onclick="showAddonModal('numero')">
+              <button id="btn-addon-numero" class="btn-addon-buy" onclick="showAddonModal('numero')">
                 Contratar <span id="qty-label-numero">1 número</span>
               </button>
             </div>
@@ -2192,7 +2192,7 @@
                 <button onclick="changeAddonQty('usuario',+1)">+</button>
               </div>
               <div class="mkt-total-price">Total: <strong id="total-usuario">R$ 57/mês</strong></div>
-              <button class="btn-addon-buy" style="background:#6366f1;" onclick="showAddonModal('usuario')">
+              <button id="btn-addon-usuario" class="btn-addon-buy" style="background:#6366f1;" onclick="showAddonModal('usuario')">
                 Contratar <span id="qty-label-usuario">1 usuário</span>
               </button>
             </div>
@@ -4881,6 +4881,21 @@
     max:    { nome: '💼 Max',     leads: 1350,  tokens: 50000000,  preco_brl: 597, moeda: 'BRL' },
   };
 
+  // ── Links de Checkout Hotmart ─────────────────────────────────────────────
+  // Substitua as strings vazias pelos links de checkout gerados na Hotmart.
+  // Quando preenchidos, os botões redirecionam para o Hotmart e o webhook
+  // ativa o recurso automaticamente após a compra (em até 5 minutos).
+  const HOTMART_LINKS = {
+    tokens_mini:   '',   // ex: 'https://pay.hotmart.com/XXXXXXXX?checkoutMode=10'
+    tokens_medio:  '',
+    tokens_grande: '',
+    tokens_max:    '',
+    addon_objecao: '',
+    addon_agente:  '',
+    addon_numero:  '',
+    addon_usuario: '',
+  };
+
   let buyPacoteAtual = null;
   let addCreditsUserId = null;
 
@@ -4982,7 +4997,12 @@
 
   function buyFromAlert() {
     dismissTokenAlert();
-    // Navega para faturamento → Marketplace e abre modal do Médio diretamente
+    // Se link Hotmart do Médio configurado → abre direto no checkout
+    if (HOTMART_LINKS.tokens_medio) {
+      window.open(HOTMART_LINKS.tokens_medio, '_blank');
+      return;
+    }
+    // Fallback: navega para Marketplace e abre modal do Médio
     showPage('faturamento', document.querySelector('.nav-item[onclick*="faturamento"]'));
     setTimeout(() => {
       showBillingTab('marketplace', document.querySelectorAll('.billing-tab-btn')[1]);
@@ -5004,6 +5024,26 @@
     if (btn) btn.classList.add('active');
     const pane = document.getElementById('billing-pane-' + tab);
     if (pane) pane.classList.add('active');
+    if (tab === 'marketplace') updateMarketplaceButtons();
+  }
+
+  function updateMarketplaceButtons() {
+    // Atualiza labels dos botões de compra conforme Hotmart configurado
+    const tokenMap = { mini: 'btn-buy-mini', medio: 'btn-buy-medio', grande: 'btn-buy-grande', max: 'btn-buy-max' };
+    const addonMap = { objecao: 'btn-addon-objecao', agente: 'btn-addon-agente', numero: 'btn-addon-numero', usuario: 'btn-addon-usuario' };
+
+    ['mini','medio','grande','max'].forEach(k => {
+      const el = document.getElementById('btn-buy-' + k);
+      if (!el) return;
+      el.textContent = HOTMART_LINKS['tokens_' + k] ? '🛒 Comprar via Hotmart' : 'Adicionar';
+    });
+    ['objecao','agente','numero','usuario'].forEach(k => {
+      const el = document.getElementById('btn-addon-' + k);
+      if (!el) return;
+      const base = { objecao: '🛡️ Ativar Agente de Objeção IA', agente: 'Contratar', numero: 'Contratar', usuario: 'Contratar' };
+      const baseHotmart = { objecao: '🛡️ Comprar via Hotmart', agente: '🛒 Comprar via Hotmart', numero: '🛒 Comprar via Hotmart', usuario: '🛒 Comprar via Hotmart' };
+      el.textContent = HOTMART_LINKS['addon_' + k] ? baseHotmart[k] : base[k];
+    });
   }
 
   // =====================
@@ -5027,12 +5067,27 @@
   function showAddonModal(tipo) {
     const qty   = _addonQty[tipo] || 1;
     const unit  = _addonUnit[tipo];
-    const total = qty * unit;
+    const total = tipo === 'objecao' ? 127 : qty * unit;
     const icons = { agente:'🤖', numero:'📱', objecao:'🛡️', usuario:'👤' };
     const nomes = { agente:'Agente de IA Extra', numero:'Número WhatsApp Extra', objecao:'Identificação de Objeção IA', usuario:'Usuário Extra' };
     const icon  = icons[tipo] || '📦';
     const nome  = nomes[tipo] || tipo;
-    // Objeção é único — não tem qty
+
+    // Se link Hotmart configurado → redireciona para checkout
+    const hotmartLink = HOTMART_LINKS['addon_' + tipo];
+    if (hotmartLink) {
+      let msg;
+      if (tipo === 'objecao') {
+        msg = `🛡️ Ativar Agente IA — Objeção + Plano de Ação\n\nR$ 127/mês — recorrente mensal\n\n✅ Após a compra, o recurso é ativado automaticamente em até 5 minutos.\n\nAbrir checkout agora?`;
+      } else {
+        const plural = qty > 1 ? 's' : '';
+        msg = `${icon} Contratar ${qty} ${nome}${plural}\n\nQuantidade: ${qty}\nTotal: R$ ${total}/mês — recorrente\n\n✅ Após a compra, o recurso é ativado automaticamente em até 5 minutos.\n\nAbrir checkout agora?`;
+      }
+      if (confirm(msg)) window.open(hotmartLink, '_blank');
+      return;
+    }
+
+    // Fallback: fluxo PIX / solicitação manual
     if (tipo === 'objecao') {
       const msg = `🛡️ Ativar Agente IA — Identificação de Objeção + Plano de Ação\n\nO agente monitora a conversa em tempo real, detecta objeções, gera um plano de ação personalizado e envia o relatório via WhatsApp ao responsável.\n\nValor: R$ 127/mês\n⚠️ Será acrescido à sua mensalidade.\n\nApós ativação, o nó aparecerá desbloqueado no Designer de Fluxos.\n\nDeseja solicitar?`;
       if (!confirm(msg)) return;
@@ -5070,6 +5125,24 @@
   function showBuyModal(pacoteId) {
     const pkg = PACOTES_CREDITOS[pacoteId];
     if (!pkg) return;
+
+    // Se link Hotmart configurado → redireciona diretamente para checkout
+    const hotmartLink = HOTMART_LINKS['tokens_' + pacoteId];
+    if (hotmartLink) {
+      if (confirm(
+        `⚡ Adicionar ${pkg.nome}\n\n` +
+        `🔢 +${(pkg.tokens/1000000).toFixed(0)}M tokens\n` +
+        `👥 +${pkg.leads.toLocaleString('pt-BR')} atendimentos extras\n` +
+        `💳 R$ ${pkg.preco_brl} — pagamento único\n\n` +
+        `✅ Após a compra, os tokens serão creditados automaticamente em até 5 minutos.\n\n` +
+        `Abrir checkout agora?`
+      )) {
+        window.open(hotmartLink, '_blank');
+      }
+      return;
+    }
+
+    // Fallback: fluxo PIX manual
     buyPacoteAtual = pacoteId;
     const precoFmt = pkg.moeda === 'BRL'
       ? `R$ ${pkg.preco_brl}`
