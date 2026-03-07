@@ -454,6 +454,37 @@
     .token-progress-bar { height:8px; background:#fee2e2; border-radius:8px; margin:12px 0 4px; overflow:hidden; }
     .token-progress-fill { height:100%; border-radius:8px; transition:width .5s ease; }
 
+    /* BILLING TABS & MARKETPLACE */
+    .billing-tabs { display:flex; gap:4px; background:#161b22; border-radius:12px; padding:4px; margin-bottom:24px; width:fit-content; }
+    .billing-tab-btn { padding:9px 22px; border:none; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; transition:all .18s; background:transparent; color:#8b949e; }
+    .billing-tab-btn.active { background:#a3e635; color:#0d1117; }
+    .billing-tab-btn:not(.active):hover { background:rgba(255,255,255,.05); color:#e6edf3; }
+    .billing-tab-pane { display:none; }
+    .billing-tab-pane.active { display:block; }
+    .mkt-section { margin-bottom:32px; }
+    .mkt-section-title { font-size:16px; font-weight:700; color:#e6edf3; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+    .mkt-section-sub { font-size:13px; color:#6e7681; margin-bottom:16px; }
+    .mkt-addon-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:16px; margin-bottom:8px; }
+    .mkt-addon-card { background:#161b22; border-radius:14px; padding:24px 20px; border:2px solid #21262d; transition:all .2s; position:relative; }
+    .mkt-addon-card:hover { border-color:#a3e635; transform:translateY(-2px); box-shadow:0 6px 24px rgba(163,230,53,.12); }
+    .mkt-addon-card.featured { border-color:#a3e635; }
+    .mkt-addon-icon { font-size:28px; margin-bottom:10px; }
+    .mkt-addon-name { font-size:15px; font-weight:700; color:#e6edf3; margin-bottom:2px; }
+    .mkt-addon-desc { font-size:12px; color:#6e7681; margin-bottom:14px; line-height:1.5; }
+    .mkt-addon-price { font-size:32px; font-weight:900; color:#a3e635; letter-spacing:-1px; line-height:1; }
+    .mkt-addon-price sup { font-size:14px; font-weight:600; vertical-align:super; }
+    .mkt-addon-price sub { font-size:13px; font-weight:400; color:#6e7681; }
+    .mkt-addon-recurrence { font-size:11px; color:#8b949e; margin:6px 0 14px; background:rgba(163,230,53,.08); border-radius:6px; padding:3px 9px; display:inline-block; font-weight:600; }
+    .mkt-addon-features { list-style:none; margin:0 0 16px; padding:0; display:flex; flex-direction:column; gap:5px; }
+    .mkt-addon-features li { font-size:12px; color:#8b949e; display:flex; align-items:center; gap:6px; }
+    .mkt-addon-features li::before { content:'✓'; color:#16a34a; font-weight:700; flex-shrink:0; }
+    .btn-addon-buy { width:100%; padding:11px; background:#a3e635; color:#0d1117; border:none; border-radius:8px; font-size:14px; font-weight:700; cursor:pointer; transition:background .2s; }
+    .btn-addon-buy:hover { background:#84cc16; }
+    .plan-includes-banner { background:linear-gradient(135deg,#0d2700 0%,#1a3a00 100%); border-radius:12px; padding:18px 22px; margin-bottom:24px; border:1.5px solid rgba(163,230,53,.2); display:flex; align-items:flex-start; gap:14px; flex-direction:column; }
+    .plan-includes-banner h4 { font-size:13px; font-weight:700; color:#a3e635; margin-bottom:8px; text-transform:uppercase; letter-spacing:.5px; }
+    .plan-includes-items { display:flex; gap:10px; flex-wrap:wrap; }
+    .plan-inc-item { background:rgba(163,230,53,.1); border-radius:20px; padding:5px 14px; font-size:12px; font-weight:600; color:#a3e635; border:1px solid rgba(163,230,53,.2); }
+
     /* FLOW DESIGNER */
     .flow-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
     .flow-toolbar input { flex:1; min-width:200px; padding:9px 14px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:14px; }
@@ -1621,155 +1652,235 @@
 
     <!-- FATURAMENTO -->
     <div class="page" id="page-faturamento">
-      <div class="page-header"><h1>Faturamento</h1><p>Gerencie sua assinatura e histórico de pagamentos</p></div>
+      <div class="page-header"><h1>Faturamento</h1><p>Gerencie sua assinatura e adicione recursos ao plano</p></div>
 
-      <!-- Hero da assinatura -->
-      <div class="billing-hero" id="billing-hero">
-        <div>
-          <h2>XPERT.IA — Plano Mensal</h2>
-          <p>O único agente IA que <strong>ouve áudios, pesquisa na web e recebe arquivos</strong> no WhatsApp</p>
-          <div id="billing-status-badge" class="billing-status-badge trial">⏳ Período de teste</div>
-          <div style="margin-top:12px;font-size:13px;opacity:.8;">
-            IA WhatsApp 24/7 &nbsp;|&nbsp; 5M tokens/mês &nbsp;|&nbsp; Áudio &nbsp;|&nbsp; Pesquisa Web &nbsp;|&nbsp; 📎 &nbsp;Arquivos
+      <!-- Tabs de navegação -->
+      <div class="billing-tabs">
+        <button class="billing-tab-btn active" onclick="showBillingTab('assinatura',this)">📋 Minha Assinatura</button>
+        <button class="billing-tab-btn" onclick="showBillingTab('marketplace',this)">🛒 Marketplace</button>
+      </div>
+
+      <!-- ======================== TAB: MINHA ASSINATURA ======================== -->
+      <div class="billing-tab-pane active" id="billing-pane-assinatura">
+
+        <!-- Hero da assinatura -->
+        <div class="billing-hero" id="billing-hero">
+          <div>
+            <h2>XPERT.IA — Plano Mensal</h2>
+            <p>O único agente IA que <strong>ouve áudios, pesquisa na web e recebe arquivos</strong> no WhatsApp</p>
+            <div id="billing-status-badge" class="billing-status-badge trial">⏳ Período de teste</div>
+            <div style="margin-top:12px;font-size:13px;opacity:.8;">
+              1 Agente IA &nbsp;|&nbsp; 1 Número WhatsApp &nbsp;|&nbsp; 5M tokens/mês &nbsp;|&nbsp; Áudio &nbsp;|&nbsp; Pesquisa Web
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="price"><sup>R$</sup><span id="billing-total-price">497</span><sub>/mês</sub></div>
+            <div style="opacity:.75;font-size:12px;margin-top:4px" id="billing-next-date">Próxima cobrança: —</div>
+            <div style="margin-top:6px;font-size:11px;opacity:.6;" id="billing-addons-summary"></div>
+            <button class="btn-addon-buy" style="margin-top:10px;width:auto;padding:8px 16px;font-size:12px;" onclick="showBillingTab('marketplace', document.querySelectorAll('.billing-tab-btn')[1])">➕ Adicionar recursos</button>
           </div>
         </div>
-        <div style="text-align:right">
-          <div class="price"><sup>R$</sup>497<sub>/mês</sub></div>
-          <div style="opacity:.75;font-size:13px;margin-top:4px" id="billing-next-date">Próxima cobrança: —</div>
-          <div style="margin-top:8px;font-size:12px;opacity:.65;">Precisa de mais? Compre tokens extras abaixo</div>
-        </div>
-      </div>
 
-      <div class="billing-info-grid">
-        <div class="billing-info-card">
-          <div class="label">Plano</div>
-          <div class="value">Mensal</div>
-          <div class="sub">5M tokens inclusos/mês</div>
-        </div>
-        <div class="billing-info-card">
-          <div class="label">Status</div>
-          <div class="value" id="billing-status-text">—</div>
-          <div class="sub" id="billing-cycle-text">Cobrança mensal</div>
-        </div>
-        <div class="billing-info-card">
-          <div class="label">Vencimento</div>
-          <div class="value" id="billing-due-day">—</div>
-          <div class="sub">todo mês</div>
-        </div>
-      </div>
-
-      <!-- SALDO DE CRÉDITOS -->
-      <div class="credits-balance" id="credits-balance-card">
-        <div>
-          <h3>Saldo de Tokens</h3>
-          <div class="tokens-value" id="saldo-tokens-display">—</div>
-          <div class="tokens-sub">tokens disponíveis para atendimento</div>
-        </div>
-        <div style="display:flex;gap:12px;">
-          <div class="tokens-box">
-            <div class="leads-num" id="saldo-leads-display">—</div>
-            <div class="leads-label">leads restantes</div>
+        <div class="billing-info-grid" style="grid-template-columns:repeat(5,1fr);">
+          <div class="billing-info-card">
+            <div class="label">Plano Base</div>
+            <div class="value" style="font-size:15px;">R$ 497</div>
+            <div class="sub">5M tokens/mês</div>
           </div>
-          <div class="tokens-box" style="background:rgba(34,197,94,0.2);">
-            <div class="leads-num" id="saldo-usado-display">—</div>
-            <div class="leads-label">usados este mês</div>
+          <div class="billing-info-card">
+            <div class="label">Agentes de IA</div>
+            <div class="value" id="billing-agentes-count">1</div>
+            <div class="sub">incluído no plano</div>
+          </div>
+          <div class="billing-info-card">
+            <div class="label">Números WhatsApp</div>
+            <div class="value" id="billing-numeros-count">1</div>
+            <div class="sub">incluído no plano</div>
+          </div>
+          <div class="billing-info-card">
+            <div class="label">Status</div>
+            <div class="value" id="billing-status-text">—</div>
+            <div class="sub" id="billing-cycle-text">Cobrança mensal</div>
+          </div>
+          <div class="billing-info-card">
+            <div class="label">Vencimento</div>
+            <div class="value" id="billing-due-day">—</div>
+            <div class="sub">todo mês</div>
           </div>
         </div>
-      </div>
 
-      <!-- COMPRAR TOKENS EXTRAS -->
-      <div class="pricing-section-title">Comprar Tokens Extras</div>
-      <p style="font-size:13px;color:#6e7681;margin-bottom:16px;margin-top:-8px;">
-        Seu plano já inclui <strong>5M tokens/mês</strong>. Precisa atender mais leads? Adicione tokens extras a qualquer momento.
-      </p>
-      <div class="pricing-grid">
-        <!-- Mini -->
-        <div class="pricing-card">
-          <div class="pkg-name">Mini</div>
-          <div class="pkg-leads">+135 leads extras</div>
-          <div class="pkg-price"><sup>R$</sup>97</div>
-          <div class="pkg-tokens">+5 milhões de tokens</div>
-          <ul class="pkg-features">
-            <li>+135 atendimentos</li>
-            <li>Soma ao saldo atual</li>
-            <li>Sem prazo de validade</li>
-          </ul>
-          <button class="btn-buy" onclick="showBuyModal('mini')">Adicionar</button>
+        <!-- SALDO DE CRÉDITOS -->
+        <div class="credits-balance" id="credits-balance-card">
+          <div>
+            <h3>Saldo de Tokens</h3>
+            <div class="tokens-value" id="saldo-tokens-display">—</div>
+            <div class="tokens-sub">tokens disponíveis para atendimento</div>
+          </div>
+          <div style="display:flex;gap:12px;">
+            <div class="tokens-box">
+              <div class="leads-num" id="saldo-leads-display">—</div>
+              <div class="leads-label">leads restantes</div>
+            </div>
+            <div class="tokens-box" style="background:rgba(34,197,94,0.2);">
+              <div class="leads-num" id="saldo-usado-display">—</div>
+              <div class="leads-label">usados este mês</div>
+            </div>
+          </div>
         </div>
-        <!-- Médio -->
-        <div class="pricing-card popular">
-          <div class="pop-badge">Mais Popular</div>
-          <div class="pkg-name">Médio</div>
-          <div class="pkg-leads">+270 leads extras</div>
-          <div class="pkg-price"><sup>R$</sup>177</div>
-          <div class="pkg-tokens">+10 milhões de tokens</div>
-          <ul class="pkg-features">
-            <li>+270 atendimentos</li>
-            <li>Soma ao saldo atual</li>
-            <li>Sem prazo de validade</li>
-            <li>Melhor custo/benefício</li>
-          </ul>
-          <button class="btn-buy" onclick="showBuyModal('medio')">Adicionar</button>
-        </div>
-        <!-- Grande -->
-        <div class="pricing-card">
-          <div class="pkg-name">Grande</div>
-          <div class="pkg-leads">+540 leads extras</div>
-          <div class="pkg-price"><sup>R$</sup>297</div>
-          <div class="pkg-tokens">+20 milhões de tokens</div>
-          <ul class="pkg-features">
-            <li>+540 atendimentos</li>
-            <li>Soma ao saldo atual</li>
-            <li>Sem prazo de validade</li>
-            <li>Suporte prioritário</li>
-          </ul>
-          <button class="btn-buy" onclick="showBuyModal('grande')">Adicionar</button>
-        </div>
-        <!-- Ilimitado -->
-        <div class="pricing-card">
-          <div class="pkg-name">Max</div>
-          <div class="pkg-leads">+1.350 leads extras</div>
-          <div class="pkg-price"><sup>R$</sup>597</div>
-          <div class="pkg-tokens">+50 milhões de tokens</div>
-          <ul class="pkg-features">
-            <li>+1.350 atendimentos</li>
-            <li>Soma ao saldo atual</li>
-            <li>Sem prazo de validade</li>
-            <li>Suporte dedicado</li>
-          </ul>
-          <button class="btn-buy" onclick="showBuyModal('max')">Adicionar</button>
-        </div>
-      </div>
 
-      <!-- Pedidos pendentes do cliente -->
-      <div class="card" id="pedidos-cliente-card" style="margin-bottom:20px;">
-        <h3>Meus Pedidos</h3>
-        <div id="pedidos-cliente-table"><p class="loading">Carregando...</p></div>
-      </div>
-
-      <!-- Histórico de cobranças (cliente) -->
-      <div class="card" id="billing-history-card">
-        <h3>Histórico de Cobranças</h3>
-        <div id="billing-history-table"><p class="loading">Carregando...</p></div>
-      </div>
-
-      <!-- Admin: pedidos de créditos -->
-      <div class="card admin-only" id="admin-pedidos-card" style="margin-bottom:20px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="margin:0">Pedidos de Créditos</h3>
-          <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadAdminPedidos()">Atualizar</button>
+        <!-- Pedidos pendentes do cliente -->
+        <div class="card" id="pedidos-cliente-card" style="margin-bottom:20px;">
+          <h3>Meus Pedidos</h3>
+          <div id="pedidos-cliente-table"><p class="loading">Carregando...</p></div>
         </div>
-        <div id="admin-pedidos-table"><p class="loading">Carregando...</p></div>
-      </div>
 
-      <!-- Admin: gerenciar assinaturas de todos os clientes -->
-      <div class="card admin-only" id="billing-admin-card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="margin:0">Assinaturas dos Clientes</h3>
-          <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadAdminBilling()">Atualizar</button>
+        <!-- Histórico de cobranças (cliente) -->
+        <div class="card" id="billing-history-card">
+          <h3>Histórico de Cobranças</h3>
+          <div id="billing-history-table"><p class="loading">Carregando...</p></div>
         </div>
-        <div id="admin-billing-table"><p class="loading">Carregando...</p></div>
-      </div>
+
+        <!-- Admin: pedidos de créditos -->
+        <div class="card admin-only" id="admin-pedidos-card" style="margin-bottom:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 style="margin:0">Pedidos de Créditos e Add-ons</h3>
+            <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadAdminPedidos()">Atualizar</button>
+          </div>
+          <div id="admin-pedidos-table"><p class="loading">Carregando...</p></div>
+        </div>
+
+        <!-- Admin: gerenciar assinaturas de todos os clientes -->
+        <div class="card admin-only" id="billing-admin-card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 style="margin:0">Assinaturas dos Clientes</h3>
+            <button class="btn-save" style="padding:8px 16px;font-size:13px" onclick="loadAdminBilling()">Atualizar</button>
+          </div>
+          <div id="admin-billing-table"><p class="loading">Carregando...</p></div>
+        </div>
+
+      </div><!-- /billing-pane-assinatura -->
+
+      <!-- ======================== TAB: MARKETPLACE ======================== -->
+      <div class="billing-tab-pane" id="billing-pane-marketplace">
+
+        <!-- O que está incluído no plano base -->
+        <div class="plan-includes-banner">
+          <h4>✅ Incluído no Plano Base — R$ 497/mês</h4>
+          <div class="plan-includes-items">
+            <span class="plan-inc-item">🤖 1 Agente de IA</span>
+            <span class="plan-inc-item">📱 1 Número WhatsApp</span>
+            <span class="plan-inc-item">🔢 5M tokens/mês</span>
+            <span class="plan-inc-item">🎙️ Transcrição de Áudio</span>
+            <span class="plan-inc-item">🔍 Pesquisa Web</span>
+            <span class="plan-inc-item">📎 Recebimento de Arquivos</span>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 1: TOKENS EXTRAS -->
+        <div class="mkt-section">
+          <div class="mkt-section-title">🔢 Tokens Extras</div>
+          <div class="mkt-section-sub">Seu plano já inclui 5M tokens/mês. Precisa atender mais leads? Adicione tokens a qualquer momento — somam ao saldo atual, sem prazo de validade.</div>
+          <div class="pricing-grid">
+            <div class="pricing-card">
+              <div class="pkg-name">Mini</div>
+              <div class="pkg-leads">+135 leads extras</div>
+              <div class="pkg-price"><sup>R$</sup>97</div>
+              <div class="pkg-tokens">+5 milhões de tokens</div>
+              <ul class="pkg-features">
+                <li>+135 atendimentos</li>
+                <li>Soma ao saldo atual</li>
+                <li>Sem prazo de validade</li>
+              </ul>
+              <button class="btn-buy" onclick="showBuyModal('mini')">Adicionar</button>
+            </div>
+            <div class="pricing-card popular">
+              <div class="pop-badge">Mais Popular</div>
+              <div class="pkg-name">Médio</div>
+              <div class="pkg-leads">+270 leads extras</div>
+              <div class="pkg-price"><sup>R$</sup>177</div>
+              <div class="pkg-tokens">+10 milhões de tokens</div>
+              <ul class="pkg-features">
+                <li>+270 atendimentos</li>
+                <li>Soma ao saldo atual</li>
+                <li>Sem prazo de validade</li>
+                <li>Melhor custo/benefício</li>
+              </ul>
+              <button class="btn-buy" onclick="showBuyModal('medio')">Adicionar</button>
+            </div>
+            <div class="pricing-card">
+              <div class="pkg-name">Grande</div>
+              <div class="pkg-leads">+540 leads extras</div>
+              <div class="pkg-price"><sup>R$</sup>297</div>
+              <div class="pkg-tokens">+20 milhões de tokens</div>
+              <ul class="pkg-features">
+                <li>+540 atendimentos</li>
+                <li>Soma ao saldo atual</li>
+                <li>Sem prazo de validade</li>
+                <li>Suporte prioritário</li>
+              </ul>
+              <button class="btn-buy" onclick="showBuyModal('grande')">Adicionar</button>
+            </div>
+            <div class="pricing-card">
+              <div class="pkg-name">Max</div>
+              <div class="pkg-leads">+1.350 leads extras</div>
+              <div class="pkg-price"><sup>R$</sup>597</div>
+              <div class="pkg-tokens">+50 milhões de tokens</div>
+              <ul class="pkg-features">
+                <li>+1.350 atendimentos</li>
+                <li>Soma ao saldo atual</li>
+                <li>Sem prazo de validade</li>
+                <li>Suporte dedicado</li>
+              </ul>
+              <button class="btn-buy" onclick="showBuyModal('max')">Adicionar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 2: AGENTES DE IA -->
+        <div class="mkt-section">
+          <div class="mkt-section-title">🤖 Agentes de IA Extras</div>
+          <div class="mkt-section-sub">Adicione mais agentes de IA para atender diferentes públicos, produtos ou segmentos — cada um com prompt, tom e configurações independentes. Acrescido à mensalidade.</div>
+          <div class="mkt-addon-grid">
+            <div class="mkt-addon-card featured">
+              <div class="mkt-addon-icon">🤖</div>
+              <div class="mkt-addon-name">Agente de IA Extra</div>
+              <div class="mkt-addon-desc">Agente independente com prompt, personalidade e configurações próprias. Aparece no Designer de Fluxos.</div>
+              <div class="mkt-addon-price"><sup>R$</sup>197<sub>/mês</sub></div>
+              <div class="mkt-addon-recurrence">🔄 Recorrente — acrescido na mensalidade</div>
+              <ul class="mkt-addon-features">
+                <li>Prompt e tom independentes</li>
+                <li>Base de conhecimento própria</li>
+                <li>Aparece no Designer de Fluxos</li>
+                <li>Relatório de atendimento integrado</li>
+              </ul>
+              <button class="btn-addon-buy" onclick="showAddonModal('agente')">Contratar Agente Extra</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 3: NÚMEROS WHATSAPP -->
+        <div class="mkt-section">
+          <div class="mkt-section-title">📱 Números WhatsApp Extras</div>
+          <div class="mkt-section-sub">Conecte números adicionais — cada número pode ser atribuído a um agente diferente no Designer de Fluxos. Acrescido à mensalidade.</div>
+          <div class="mkt-addon-grid">
+            <div class="mkt-addon-card featured">
+              <div class="mkt-addon-icon">📱</div>
+              <div class="mkt-addon-name">Número WhatsApp Extra</div>
+              <div class="mkt-addon-desc">Conecte um número adicional de WhatsApp. Ele pode receber e encaminhar leads no Designer de Fluxos.</div>
+              <div class="mkt-addon-price"><sup>R$</sup>97<sub>/mês</sub></div>
+              <div class="mkt-addon-recurrence">🔄 Recorrente — acrescido na mensalidade</div>
+              <ul class="mkt-addon-features">
+                <li>Conexão via QR Code</li>
+                <li>Integrável ao Designer de Fluxos</li>
+                <li>Pode ter agente próprio</li>
+                <li>Relatório por número</li>
+              </ul>
+              <button class="btn-addon-buy" onclick="showAddonModal('numero')">Contratar Número Extra</button>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /billing-pane-marketplace -->
     </div>
 
     <!-- LEAD SCORING -->
@@ -4474,15 +4585,78 @@
 
   function buyFromAlert() {
     dismissTokenAlert();
-    // Navega para faturamento e abre modal do Médio diretamente
+    // Navega para faturamento → Marketplace e abre modal do Médio diretamente
     showPage('faturamento', document.querySelector('.nav-item[onclick*="faturamento"]'));
-    setTimeout(() => showBuyModal('medio'), 400);
+    setTimeout(() => {
+      showBillingTab('marketplace', document.querySelectorAll('.billing-tab-btn')[1]);
+      setTimeout(() => showBuyModal('medio'), 150);
+    }, 400);
   }
 
   // Fecha ao clicar fora
   document.getElementById('token-alert-popup').addEventListener('click', function(e) {
     if (e.target === this) dismissTokenAlert();
   });
+
+  // =====================
+  // BILLING TABS
+  // =====================
+  function showBillingTab(tab, btn) {
+    document.querySelectorAll('.billing-tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.billing-tab-pane').forEach(p => p.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    const pane = document.getElementById('billing-pane-' + tab);
+    if (pane) pane.classList.add('active');
+  }
+
+  // =====================
+  // ADDON PURCHASE (Agente / Número)
+  // =====================
+  function showAddonModal(tipo) {
+    const cfg = {
+      agente: {
+        title: '🤖 Contratar Agente de IA Extra',
+        nome: 'Agente de IA Extra',
+        preco: 'R$ 197/mês',
+        descricao: 'Um novo agente independente com prompt, personalidade e configurações próprias. Será ativado após confirmação do pagamento e aparecerá no Designer de Fluxos.',
+        aviso: 'Este valor será acrescido à sua mensalidade a partir do próximo ciclo.'
+      },
+      numero: {
+        title: '📱 Contratar Número WhatsApp Extra',
+        nome: 'Número WhatsApp Extra',
+        preco: 'R$ 97/mês',
+        descricao: 'Um número adicional de WhatsApp para conectar via QR Code. Pode ser integrado ao Designer de Fluxos e ter um agente próprio.',
+        aviso: 'Este valor será acrescido à sua mensalidade a partir do próximo ciclo.'
+      }
+    };
+    const c = cfg[tipo];
+    if (!c) return;
+    const msg = `${c.title}\n\n` +
+      `Produto: ${c.nome}\n` +
+      `Valor: ${c.preco}\n\n` +
+      `${c.descricao}\n\n` +
+      `⚠️ ${c.aviso}\n\n` +
+      `Deseja solicitar este add-on? O administrador entrará em contato com os dados de pagamento via PIX.`;
+    if (!confirm(msg)) return;
+    requestAddonPurchase(tipo, c.nome, c.preco);
+  }
+
+  async function requestAddonPurchase(tipo, nome, preco) {
+    const { data: { user } } = await db.auth.getUser();
+    const { error } = await db.from('pedidos_creditos').insert({
+      user_id: user.id,
+      pacote: 'addon_' + tipo,
+      tokens: 0,
+      preco_brl: tipo === 'agente' ? 197 : 97,
+      status: 'pendente'
+    });
+    if (error) {
+      alert('Erro ao enviar solicitação. Tente novamente.');
+      return;
+    }
+    alert(`✅ Solicitação enviada!\n\nAdd-on: ${nome}\nValor: ${preco}\n\nEm breve o administrador entrará em contato com os dados para pagamento via PIX.\nApós confirmação, o recurso será ativado em até 2h.`);
+    loadAdminPedidos && loadAdminPedidos();
+  }
 
   function showBuyModal(pacoteId) {
     const pkg = PACOTES_CREDITOS[pacoteId];
