@@ -528,12 +528,22 @@
     .drawflow .drawflow-node.node-contexto .title-box { background:#7c3aed; }
     .drawflow .drawflow-node.node-mover-pipeline .title-box { background:#0f766e; }
     .drawflow .drawflow-node.node-objecao .title-box { background:linear-gradient(135deg,#dc2626,#9f1239); }
-    .drawflow .drawflow-node.node-objecao { border-color:#dc2626; min-width:270px; }
-    .objecao-section-label { font-size:10px; font-weight:700; color:#f87171; text-transform:uppercase; letter-spacing:.5px; margin:10px 0 4px; }
+    .drawflow .drawflow-node.node-objecao { border-color:#dc2626; min-width:300px; }
+    .objecao-section-label { font-size:10px; font-weight:700; color:#f87171; text-transform:uppercase; letter-spacing:.5px; margin:10px 0 4px; display:flex; align-items:center; gap:4px; }
+    .objecao-section-label::before { content:''; display:block; flex:1; height:1px; background:rgba(220,38,38,.25); }
     .objecao-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(220,38,38,.12); border:1px solid rgba(220,38,38,.3); border-radius:6px; padding:3px 8px; font-size:10px; color:#fca5a5; margin-bottom:8px; }
-    .objecao-tipos { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:6px; }
-    .objecao-tipo-check { display:flex; align-items:center; gap:4px; font-size:11px; color:#c9d1d9; background:#21262d; border-radius:5px; padding:3px 7px; cursor:pointer; }
+    .objecao-tipos { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:4px; }
+    .objecao-tipo-check { display:flex; align-items:center; gap:4px; font-size:11px; color:#c9d1d9; background:#21262d; border-radius:5px; padding:3px 7px; cursor:pointer; border:1px solid transparent; transition:border-color .15s; }
+    .objecao-tipo-check:has(input:checked) { border-color:rgba(220,38,38,.4); color:#fca5a5; }
     .objecao-tipo-check input { accent-color:#dc2626; width:12px; height:12px; }
+    .objecao-check-full { display:flex; align-items:center; gap:6px; font-size:11px; color:#c9d1d9; margin-bottom:4px; cursor:pointer; padding:3px 0; }
+    .objecao-check-full input { accent-color:#dc2626; width:12px; height:12px; flex-shrink:0; }
+    .objecao-divider { display:flex; align-items:center; gap:6px; margin:10px 0 6px; }
+    .objecao-divider span { font-size:10px; font-weight:700; color:#f87171; text-transform:uppercase; letter-spacing:.5px; white-space:nowrap; }
+    .objecao-divider::before, .objecao-divider::after { content:''; flex:1; height:1px; background:rgba(220,38,38,.25); }
+    .objecao-textarea { width:100%; box-sizing:border-box; background:#0d1117; border:1px solid #30363d; border-radius:6px; color:#c9d1d9; font-size:11px; padding:6px 8px; resize:vertical; min-height:52px; margin-bottom:4px; outline:none; font-family:inherit; }
+    .objecao-textarea:focus { border-color:rgba(220,38,38,.5); }
+    .objecao-outputs { display:flex; justify-content:space-between; font-size:10px; margin-top:8px; padding:5px 8px; background:#21262d; border-radius:6px; border:1px solid rgba(220,38,38,.2); }
     .palette-node.node-acao-pago { border-color:#dc2626; color:#fca5a5; }
     .palette-node.node-acao-pago.locked { opacity:0.5; cursor:not-allowed; border-style:dashed; }
     .palette-node.node-acao-pago.locked:hover { border-color:#dc2626; color:#fca5a5; background:#161b22; }
@@ -1952,20 +1962,21 @@
 
         <!-- SEÇÃO 4: IDENTIFICAÇÃO DE OBJEÇÃO -->
         <div class="mkt-section">
-          <div class="mkt-section-title">🛡️ Agente IA — Identificação de Objeção + Plano de Ação</div>
-          <div class="mkt-section-sub">Um agente de IA especializado monitora a conversa em tempo real, detecta objeções do lead, gera um plano de ação personalizado para contorná-las e envia o relatório completo direto no WhatsApp do responsável. Aparece como nó exclusivo no Designer de Fluxos.</div>
+          <div class="mkt-section-title">🛡️ Agente IA — Identificação de Objeção + Plano de Ação Completo</div>
+          <div class="mkt-section-sub">Um agente de IA especializado analisa toda a conversa com o lead, identifica a objeção com precisão, avalia o que dificultou a conversão (tempo de resposta, tom, engajamento), gera um plano de ação personalizado e envia o relatório completo + script de follow-up direto no WhatsApp do responsável.</div>
           <div class="mkt-qty-card">
             <div class="mkt-qty-left">
               <div style="font-size:42px;flex-shrink:0;">🛡️</div>
               <div>
-                <div class="mkt-addon-name" style="font-size:16px;margin-bottom:6px;">Identificar Objeção + Plano de Ação (IA)</div>
+                <div class="mkt-addon-name" style="font-size:16px;margin-bottom:6px;">Agente IA — Objeção + Diagnóstico + Plano de Ação</div>
                 <ul class="mkt-addon-features" style="margin:0;">
-                  <li>Agente IA detecta objeções em tempo real (preço, urgência, confiança, necessidade, autoridade, concorrência)</li>
-                  <li>Gera plano de ação personalizado para contornar cada objeção</li>
-                  <li>Inclui argumentos baseados no perfil e histórico do lead</li>
-                  <li>Envia relatório completo + plano via WhatsApp ao responsável</li>
+                  <li><strong>Dados do lead:</strong> analisa nome, celular, o que buscava e por que não fechou</li>
+                  <li><strong>Detecta 8 tipos de objeção:</strong> preço, urgência, confiança, necessidade, autoridade, medo, concorrência, desconfiança</li>
+                  <li><strong>Diagnostica o que dificultou:</strong> tempo de resposta do agente, horário, desengajamento, tom, informações insuficientes, abandono da conversa</li>
+                  <li><strong>Plano de ação preciso:</strong> argumentos personalizados + melhor momento para retomar + aponta falhas do atendimento</li>
+                  <li><strong>Script de follow-up pronto</strong> gerado pela IA para envio imediato</li>
+                  <li><strong>Relatório completo via WhatsApp</strong> com todos os dados + plano + script</li>
                   <li>Nó exclusivo no Designer de Fluxos com 2 saídas (com/sem objeção)</li>
-                  <li>Desvio automático de fluxo conforme resultado da análise</li>
                 </ul>
               </div>
             </div>
@@ -5143,39 +5154,102 @@
       </div>`
     },
     objecao: {
-      title: '🛡️ Identificar Objeção (IA)', inputs: 1, outputs: 2, cls: 'node-objecao',
+      title: '🛡️ Identificar Objeção + Plano de Ação (IA)', inputs: 1, outputs: 2, cls: 'node-objecao',
       html: `<div class="box">
-        <div class="objecao-badge">⚡ Agente IA especializado em objeções</div>
+        <div class="objecao-badge">⚡ Agente IA especializado em objeções previdenciárias</div>
 
-        <div class="objecao-section-label">Tipos de objeção a detectar</div>
+        <!-- 1. DADOS DO LEAD QUE O AGENTE USA -->
+        <div class="objecao-divider"><span>1 · Dados do lead para análise</span></div>
         <div class="objecao-tipos">
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Preço/custo</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Urgência</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Confiança</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Necessidade</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Autoridade</label>
-          <label class="objecao-tipo-check"><input type="checkbox" /> Concorrência</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Nome</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Celular</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> O que buscava</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Por que não fechou</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Histórico completo</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Tese previdenciária</label>
+          <label class="objecao-tipo-check"><input type="checkbox" /> Aniversário / datas</label>
         </div>
 
-        <div class="objecao-section-label">Plano de ação gerado pela IA</div>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#c9d1d9;margin-bottom:4px;cursor:pointer;">
-          <input type="checkbox" checked style="accent-color:#dc2626;" />
-          Gerar plano de contorno da objeção
+        <!-- 2. TIPOS DE OBJEÇÃO A IDENTIFICAR -->
+        <div class="objecao-divider"><span>2 · Tipos de objeção a identificar</span></div>
+        <div class="objecao-tipos">
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Preço / custo</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Urgência / "depois"</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Confiança / credibilidade</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Necessidade / "não preciso"</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Autoridade / "consultar cônjuge"</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Medo / risco percebido</label>
+          <label class="objecao-tipo-check"><input type="checkbox" /> Concorrência / "já tenho advogado"</label>
+          <label class="objecao-tipo-check"><input type="checkbox" /> Desconfiança no processo</label>
+        </div>
+
+        <!-- 3. PARÂMETROS QUE DIFICULTARAM A CONVERSÃO -->
+        <div class="objecao-divider"><span>3 · O que dificultou a conversão</span></div>
+        <label class="objecao-check-full">
+          <input type="checkbox" checked />
+          ⏱️ Tempo de resposta do agente (lentidão entre mensagens)
         </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#c9d1d9;margin-bottom:4px;cursor:pointer;">
-          <input type="checkbox" checked style="accent-color:#dc2626;" />
-          Incluir argumentos personalizados do lead
+        <label class="objecao-check-full">
+          <input type="checkbox" checked />
+          🕐 Horário do contato (fora do horário ideal)
         </label>
-        <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#c9d1d9;margin-bottom:8px;cursor:pointer;">
-          <input type="checkbox" checked style="accent-color:#dc2626;" />
-          Incluir histórico da conversa no relatório
+        <label class="objecao-check-full">
+          <input type="checkbox" checked />
+          🔇 Mensagens sem resposta do lead (desengajamento)
+        </label>
+        <label class="objecao-check-full">
+          <input type="checkbox" checked />
+          💬 Tom ou abordagem inadequada do agente
+        </label>
+        <label class="objecao-check-full">
+          <input type="checkbox" checked />
+          📋 Informações insuficientes fornecidas ao lead
+        </label>
+        <label class="objecao-check-full">
+          <input type="checkbox" checked />
+          🔁 Interrupção ou abandono da conversa
+        </label>
+        <label class="objecao-check-full">
+          <input type="checkbox" />
+          📉 Queda de engajamento ao longo do atendimento
         </label>
 
-        <div class="objecao-section-label">📱 Enviar relatório + plano para WhatsApp</div>
+        <!-- 4. PLANO DE AÇÃO -->
+        <div class="objecao-divider"><span>4 · Plano de ação gerado pela IA</span></div>
+        <label class="objecao-check-full">
+          <input type="checkbox" checked />
+          🎯 Gerar argumentos personalizados para contornar a objeção
+        </label>
+        <label class="objecao-check-full">
+          <input type="checkbox" checked />
+          📅 Sugerir melhor momento e abordagem para retomar contato
+        </label>
+        <label class="objecao-check-full">
+          <input type="checkbox" checked />
+          📝 Gerar script de follow-up pronto para envio
+        </label>
+        <label class="objecao-check-full">
+          <input type="checkbox" checked />
+          🔍 Apontar erros do atendimento que prejudicaram a conversão
+        </label>
+        <label class="objecao-check-full">
+          <input type="checkbox" />
+          💡 Sugerir ajuste no fluxo/agente para casos similares
+        </label>
+        <div style="margin-top:6px;">
+          <div style="font-size:10px;font-weight:600;color:#8b949e;margin-bottom:3px;">Instruções adicionais para o agente (opcional):</div>
+          <textarea class="objecao-textarea" placeholder="Ex: Sempre mencionar o prazo de recuperação do INSS. Focar em segurança jurídica para leads com objeção de confiança..."></textarea>
+        </div>
+
+        <!-- 5. ENVIO DO RELATÓRIO -->
+        <div class="objecao-divider"><span>5 · Enviar relatório via WhatsApp</span></div>
         <input class="etapa-select" placeholder="5511999999999 (WhatsApp do responsável)" style="margin-bottom:4px;" />
-        <div style="font-size:10px;color:#8b949e;margin-bottom:8px;">O agente envia um resumo da objeção identificada + plano de ação para contorná-la neste número.</div>
+        <div style="font-size:10px;color:#8b949e;margin-bottom:6px;line-height:1.5;">
+          O agente envia: <strong style="color:#fca5a5;">nome do lead · celular · o que buscava · motivo do não fechamento · objeção identificada · fatores que dificultaram · plano de ação + script de follow-up</strong>
+        </div>
 
-        <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:6px;padding:4px 6px;background:#21262d;border-radius:6px;">
+        <!-- SAÍDAS -->
+        <div class="objecao-outputs">
           <span style="color:#dc2626;font-weight:700;">🛡️ Com objeção → saída 1</span>
           <span style="color:#16a34a;font-weight:700;">✅ Sem objeção → saída 2</span>
         </div>
