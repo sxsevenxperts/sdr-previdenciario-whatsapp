@@ -3,14 +3,18 @@
  * Recebe eventos de pagamento da Hotmart e gerencia o ciclo de vida dos clientes.
  *
  * ATIVAÇÃO: PURCHASE_APPROVED, PURCHASE_COMPLETE, PURCHASE_REACTIVATED, SUBSCRIPTION_REACTIVATED
- *   → cria usuário novo (com convite por email) OU reativa conta existente
+ *   → cria usuário novo OU reativa conta existente OU aplica addon
  *
  * DESATIVAÇÃO: SUBSCRIPTION_CANCELLATION, PURCHASE_CANCELED, PURCHASE_REFUNDED, PURCHASE_CHARGEBACK
  *   → define active=false e status da assinatura como cancelado
  *
+ * ADDONS (identificados pelo product ID do Hotmart, sem precisar de link):
+ *   → atualiza assinatura do cliente existente
+ *   → Configurar secrets: ADDON_OBJECAO_PRODUCT_ID, ADDON_AGENTE_EXTRA_PRODUCT_ID,
+ *                         ADDON_NUMERO_EXTRA_PRODUCT_ID, ADDON_USUARIO_EXTRA_PRODUCT_ID
+ *
  * Endpoint público (verify_jwt: false).
- * Segurança: token secreto configurável via variável HOTMART_WEBHOOK_SECRET (opcional).
- * O token pode ser passado como query param ?token=xxx ou header X-Hotmart-Webhook-Token.
+ * Segurança: token secreto via HOTMART_WEBHOOK_SECRET (query param ?token= ou header X-Hotmart-Webhook-Token).
  */
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -21,6 +25,14 @@ const EVOLUTION_API_URL = Deno.env.get("EVOLUTION_API_URL") ?? "";
 const EVOLUTION_API_KEY = Deno.env.get("EVOLUTION_API_KEY") ?? "";
 const HOTMART_SECRET    = Deno.env.get("HOTMART_WEBHOOK_SECRET") ?? "";
 const PANEL_URL         = Deno.env.get("PANEL_URL") ?? "https://xpertia.sevenxperts.solutions/";
+
+// IDs dos produtos addon no Hotmart (configure via Supabase Secrets)
+const ADDON_PRODUCT_IDS: Record<string, string> = {
+  [Deno.env.get("ADDON_OBJECAO_PRODUCT_ID")       ?? ""]: "objecao",
+  [Deno.env.get("ADDON_AGENTE_EXTRA_PRODUCT_ID")  ?? ""]: "agente_extra",
+  [Deno.env.get("ADDON_NUMERO_EXTRA_PRODUCT_ID")  ?? ""]: "numero_extra",
+  [Deno.env.get("ADDON_USUARIO_EXTRA_PRODUCT_ID") ?? ""]: "usuario_extra",
+};
 
 const adminDb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
@@ -39,7 +51,7 @@ const EVENTS_DEACTIVATE = [
   "PURCHASE_CHARGEBACK",
 ];
 
-// ── Agente padrão genérico (espelho do manage-clients) ────────────────────
+// ── Agente padrão genérico ────────────────────────────────────────────────
 const AGENTE_DEFAULTS: Record<string, string> = {
   objetivo:
     "Qualificar leads interessados nos produtos e serviços da empresa e encaminhar ao responsável comercial para dar continuidade.",
@@ -131,7 +143,6 @@ async function insertAgenteConfigDefaults(userId: string): Promise<void> {
   await adminDb.from("agente_config").upsert(rows, { onConflict: "user_id,chave", ignoreDuplicates: true });
 }
 
-/** Busca usuário pelo email diretamente na tabela auth.users (service role) */
 async function findUserByEmail(email: string): Promise<string | null> {
   const { data } = await adminDb
     .schema("auth")
@@ -142,7 +153,62 @@ async function findUserByEmail(email: string): Promise<string | null> {
   return (data as any)?.id ?? null;
 }
 
-// ── Ações principais ─────────────────────────────────────────────────────
+// ── Addon: aplica benefício ao cliente existente ──────────────────────────
+
+async function applyAddon(
+  buyerEmail: string,
+  addonType: string,
+  productName: string,
+  transactionId: string,
+  valor: number,
+): Promise<{ action: string; userId: string | null }> {
+  const userId = await findUserByEmail(buyerEmail);
+
+  if (!userId) {
+    console.warn("Addon comprado por usuário não cadastrado:", buyerEmail, addonType);
+    return { action: "addon_user_not_found", userId: null };
+  }
+
+  // Registra a compra do addon
+  await adminDb.from("addon_purchases").insert({
+    user_id: userId,
+    offer_code: addonType,
+    addon_type: addonType,
+    quantidade: 1,
+    valor,
+    hotmart_transaction: transactionId,
+    status: "ativo",
+  });
+
+  // Aplica o benefício na assinatura
+  switch (addonType) {
+    case "objecao":
+      await adminDb.from("assinaturas")
+        .update({ addon_objecao: true })
+        .eq("user_id", userId);
+      break;
+
+    case "agente_extra":
+      await adminDb.rpc("incrementar_addon", { uid: userId, coluna: "agentes_extras", qtd: 1 });
+      break;
+
+    case "numero_extra":
+      await adminDb.rpc("incrementar_addon", { uid: userId, coluna: "numeros_extras", qtd: 1 });
+      break;
+
+    case "usuario_extra":
+      await adminDb.rpc("incrementar_addon", { uid: userId, coluna: "usuarios_extras_limite", qtd: 1 });
+      break;
+
+    default:
+      console.warn("Tipo de addon desconhecido:", addonType);
+  }
+
+  console.log(`Addon aplicado: ${addonType} → ${buyerEmail} (${userId})`);
+  return { action: `addon_${addonType}`, userId };
+}
+
+// ── Ativação de cliente (produto principal) ───────────────────────────────
 
 async function activateClient(
   buyerName: string,
@@ -150,18 +216,15 @@ async function activateClient(
   productName: string,
   tokensIniciais: number,
 ): Promise<{ action: string; userId: string }> {
-
   const existingId = await findUserByEmail(buyerEmail);
 
   if (existingId) {
     // Reativa conta existente
     await adminDb.from("profiles").update({ active: true }).eq("id", existingId);
-    await adminDb.from("assinaturas")
-      .upsert(
-        { user_id: existingId, plano: productName, valor: 497, status: "ativo" },
-        { onConflict: "user_id" },
-      );
-    // Adiciona tokens ao saldo existente
+    await adminDb.from("assinaturas").upsert(
+      { user_id: existingId, plano: productName, valor: 497, status: "ativa" },
+      { onConflict: "user_id" },
+    );
     const { data: tc } = await adminDb.from("tokens_creditos")
       .select("saldo_tokens, total_comprado")
       .eq("user_id", existingId)
@@ -240,6 +303,8 @@ async function activateClient(
   return { action: "created", userId };
 }
 
+// ── Desativação ───────────────────────────────────────────────────────────
+
 async function deactivateClient(buyerEmail: string): Promise<{ action: string; userId: string | null }> {
   const userId = await findUserByEmail(buyerEmail);
   if (!userId) {
@@ -247,9 +312,7 @@ async function deactivateClient(buyerEmail: string): Promise<{ action: string; u
     return { action: "not_found", userId: null };
   }
   await adminDb.from("profiles").update({ active: false }).eq("id", userId);
-  await adminDb.from("assinaturas")
-    .update({ status: "cancelado" })
-    .eq("user_id", userId);
+  await adminDb.from("assinaturas").update({ status: "cancelada" }).eq("user_id", userId);
 
   console.log("Cliente desativado:", buyerEmail, userId);
   return { action: "deactivated", userId };
@@ -268,26 +331,27 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // ── Validação do token secreto (opcional) ──────────────────────────
+    // ── Validação do token secreto ─────────────────────────────────────
     if (HOTMART_SECRET) {
-      const url     = new URL(req.url);
-      const qToken  = url.searchParams.get("token") ?? "";
-      const hToken  = req.headers.get("x-hotmart-webhook-token") ?? "";
+      const url    = new URL(req.url);
+      const qToken = url.searchParams.get("token") ?? "";
+      const hToken = req.headers.get("x-hotmart-webhook-token") ?? "";
       if (qToken !== HOTMART_SECRET && hToken !== HOTMART_SECRET) {
         console.warn("Token Hotmart inválido. Recebido:", qToken || hToken);
         return new Response("Unauthorized", { status: 401 });
       }
     }
 
-    const payload    = await req.json();
-    const event: string = payload?.event ?? "";
-    const buyer      = payload?.data?.buyer ?? {};
-    const product    = payload?.data?.product ?? {};
+    const payload           = await req.json();
+    const event: string     = payload?.event ?? "";
+    const buyer             = payload?.data?.buyer ?? {};
+    const product           = payload?.data?.product ?? {};
+    const purchase          = payload?.data?.purchase ?? {};
+    const productId: string = String(product?.id ?? "");
+    const transactionId     = purchase?.transaction ?? purchase?.id ?? "";
+    const valor             = Number(purchase?.price?.value ?? purchase?.value ?? 0);
 
-    // Tokens a conceder (pode ser configurado futuramente via payload ou env)
-    const TOKENS_INICIAIS = 5_000_000; // 5M tokens — plano base
-
-    const buyerName  = buyer?.name  ?? "Cliente";
+    const buyerName  = buyer?.name ?? "Cliente";
     const buyerEmail = (buyer?.email ?? "").toLowerCase().trim();
 
     if (!buyerEmail) {
@@ -295,9 +359,22 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: true, reason: "sem_email" }), { status: 200 });
     }
 
-    console.log(`Hotmart event: ${event} | email: ${buyerEmail}`);
+    console.log(`Hotmart event: ${event} | product_id: ${productId} | email: ${buyerEmail}`);
 
     if (EVENTS_ACTIVATE.includes(event)) {
+      // Verifica se é addon pelo product ID
+      const addonType = productId && ADDON_PRODUCT_IDS[productId] ? ADDON_PRODUCT_IDS[productId] : null;
+
+      if (addonType) {
+        const result = await applyAddon(buyerEmail, addonType, product?.name ?? "", transactionId, valor);
+        return new Response(JSON.stringify({ ok: true, ...result }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      // Produto principal: cria/reativa cliente
+      const TOKENS_INICIAIS = 5_000_000;
       const result = await activateClient(
         buyerName,
         buyerEmail,
@@ -318,7 +395,6 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Evento não tratado — responde 200 para Hotmart não retentar
     console.log("Evento ignorado:", event);
     return new Response(JSON.stringify({ ok: true, action: "ignored", event }), { status: 200 });
 
