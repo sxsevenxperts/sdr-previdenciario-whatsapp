@@ -2003,10 +2003,15 @@
             <span class="flow-plan-badge num">📱 1 número</span>
             <span class="flow-plan-badge agt">🤖 1 agente</span>
           </div>
+          <div style="font-size:11px;color:#8b949e;margin-bottom:10px;line-height:1.4;">
+            Quer mais? <a style="color:#58a6ff;cursor:pointer;text-decoration:none;" onclick="showPage('faturamento',document.querySelector('.nav-item[onclick*=faturamento]'));setTimeout(()=>showBillingTab('marketplace',document.querySelectorAll('.billing-tab-btn')[1]),400);">Comprar no Marketplace ↗</a>
+          </div>
 
           <h4>Etapas de Atendimento</h4>
-          <div id="flow-etapas-palette">
-            <p style="font-size:11px;color:#6e7681;text-align:center;padding:8px;">Carregando...</p>
+          <div class="palette-node-etapa" draggable="true" ondragstart="drag(event,'etapa')"
+               title="Cada etapa escolhe um número e um agente de forma independente">
+            <div class="etapa-pal-num">📞 Etapa de Atendimento</div>
+            <div class="etapa-pal-agt" id="flow-etapa-hint">Arraste para o canvas</div>
           </div>
 
           <h4 style="margin-top:14px">Terminadores</h4>
@@ -4953,9 +4958,8 @@
   };
 
   // ── Dados de plano carregados para o designer de fluxos ─────────────
-  let _fluxoNumeros = [];   // ex: ['EVO-main','EVO-extra-1']
+  let _fluxoNumeros = [];   // ex: ['EVO-main','EVO-extra-1'] — carregado ao abrir Designer de Fluxos
   let _fluxoAgentes = [];   // ex: ['Agente 1 (Principal)','Agente 2']
-  let _dragEtapaIdx = null; // índice da etapa arrastada (0 = número 1, etc.)
 
   async function loadFluxosPage() {
     // 1. Inicializa Drawflow se necessário
@@ -4994,51 +4998,12 @@
         `<span class="flow-plan-badge agt">🤖 ${_fluxoAgentes.length} agente${_fluxoAgentes.length > 1 ? 's' : ''}</span>`;
     }
 
-    // 6. Renderiza paleta de etapas
-    renderFlowPalette();
-  }
-
-  function renderFlowPalette() {
-    const el = document.getElementById('flow-etapas-palette');
-    if (!el) return;
-
-    let html = '';
-    // Slot por número disponível
-    for (let i = 0; i < _fluxoNumeros.length; i++) {
-      const numLabel = _fluxoNumeros[i];
-      const agtLabel = _fluxoAgentes[i] || 'Sem agente (humano)';
-      html += `
-        <div class="palette-node-etapa" draggable="true"
-             ondragstart="dragEtapa(event,${i})"
-             title="Arraste para o canvas para adicionar esta etapa">
-          <div class="etapa-pal-num">📱 ${escapeHtml(numLabel)}</div>
-          <div class="etapa-pal-agt">🤖 ${escapeHtml(agtLabel)}</div>
-        </div>`;
+    // 6. Atualiza hint da paleta
+    const hint = document.getElementById('flow-etapa-hint');
+    if (hint) {
+      const n = _fluxoNumeros.length, a = _fluxoAgentes.length;
+      hint.textContent = `${n} número${n>1?'s':''} · ${a} agente${a>1?'s':''} disponíveis`;
     }
-
-    // Slots bloqueados (até 3 extras como preview)
-    const maxPreview = Math.min(3, 3 - _fluxoNumeros.length + 1);
-    for (let j = 0; j < maxPreview; j++) {
-      html += `
-        <div class="palette-node-etapa locked" title="Adquira mais números e agentes no Marketplace">
-          <span class="etapa-pal-lock">🔒</span>
-          <div class="etapa-pal-num" style="color:#6e7681;">📱 Número extra</div>
-          <div class="etapa-pal-agt">🤖 Agente extra</div>
-          <div class="etapa-pal-upgrade">
-            <a onclick="showPage('faturamento',document.querySelector('.nav-item[onclick*=faturamento]'));setTimeout(()=>showBillingTab('marketplace',document.querySelectorAll('.billing-tab-btn')[1]),400)">
-              ➕ Adquirir no Marketplace
-            </a>
-          </div>
-        </div>`;
-    }
-
-    el.innerHTML = html || '<p style="font-size:11px;color:#6e7681;text-align:center;padding:8px;">Nenhum número configurado</p>';
-  }
-
-  function dragEtapa(event, idx) {
-    _dragEtapaIdx = idx;
-    dragNodeType = 'etapa';
-    event.dataTransfer.setData('text', 'etapa');
   }
 
   function initDrawflow() {
@@ -5060,7 +5025,6 @@
 
   function drag(event, type) {
     dragNodeType = type;
-    _dragEtapaIdx = null;
     event.dataTransfer.setData('text', type);
   }
 
@@ -5078,19 +5042,16 @@
 
     let nodeHtml;
     if (type === 'etapa') {
-      // Gera opções dinâmicas com base no plano do usuário
-      const idx = _dragEtapaIdx !== null ? _dragEtapaIdx : 0;
-      const numerosOpts = _fluxoNumeros.map((n, i) =>
-        `<option value="${i}" ${i === idx ? 'selected' : ''}>${escapeHtml(n)}</option>`
-      ).join('');
+      // Todos os números e agentes disponíveis — sem pré-seleção forçada
+      const numerosOpts = _fluxoNumeros.length
+        ? _fluxoNumeros.map((n, i) => `<option value="${i}">${escapeHtml(n)}</option>`).join('')
+        : '<option value="">Nenhum número configurado</option>';
       const agentesOpts = '<option value="">Sem agente (humano)</option>' +
-        _fluxoAgentes.map((a, i) =>
-          `<option value="${i}" ${i === idx && _fluxoAgentes[idx] ? 'selected' : ''}>${escapeHtml(a)}</option>`
-        ).join('');
+        _fluxoAgentes.map((a, i) => `<option value="${i}">${escapeHtml(a)}</option>`).join('');
       const etapaBody = cfg.html
         .replace('ETAPA_NUMEROS_OPTIONS', numerosOpts)
         .replace('ETAPA_AGENTES_OPTIONS', agentesOpts);
-      nodeHtml = `<div class="title-box">📞 Etapa ${_fluxoNumeros[idx] ? '— ' + _fluxoNumeros[idx] : 'de Atendimento'}</div>${etapaBody}`;
+      nodeHtml = `<div class="title-box">📞 Etapa de Atendimento</div>${etapaBody}`;
     } else {
       nodeHtml = `<div class="title-box">${cfg.title}</div>${cfg.html}`;
     }
@@ -5103,7 +5064,6 @@
       nodeHtml
     );
     dragNodeType = null;
-    _dragEtapaIdx = null;
   }
 
   function newFlow() {
