@@ -184,21 +184,28 @@ async function activateClient(
   // 1. Instância EVO (não-bloqueante)
   await createEvoInstance(instanceName);
 
-  // 2. Convida usuário via Supabase Auth (envia e-mail de definição de senha)
-  const { data: invited, error: inviteErr } = await adminDb.auth.admin.inviteUserByEmail(
-    buyerEmail,
-    {
-      data: { display_name: buyerName, role: "client" },
-      redirectTo: PANEL_URL,
-    },
-  );
+  // 2. Cria usuário no Auth com senha temporária aleatória
+  const tempPassword = crypto.randomUUID() + crypto.randomUUID();
+  const { data: created, error: createErr } = await adminDb.auth.admin.createUser({
+    email: buyerEmail,
+    password: tempPassword,
+    email_confirm: true,
+    user_metadata: { display_name: buyerName, role: "client" },
+  });
 
-  if (inviteErr || !invited.user) {
-    console.error("Erro ao convidar usuário:", inviteErr?.message);
-    throw new Error("Falha ao criar conta: " + (inviteErr?.message ?? "desconhecido"));
+  if (createErr || !created.user) {
+    console.error("Erro ao criar usuário:", createErr?.message);
+    throw new Error("Falha ao criar conta: " + (createErr?.message ?? "desconhecido"));
   }
 
-  const userId = invited.user.id;
+  const userId = created.user.id;
+
+  // Envia email de redefinição de senha para o cliente acessar o painel
+  await adminDb.auth.admin.generateLink({
+    type: "recovery",
+    email: buyerEmail,
+    options: { redirectTo: PANEL_URL },
+  });
 
   // 3. Profile
   await adminDb.from("profiles").upsert({
@@ -214,7 +221,7 @@ async function activateClient(
     user_id: userId,
     plano: productName || "SDR Agente",
     valor: 497,
-    status: "ativo",
+    status: "ativa",
   });
 
   // 5. Tokens iniciais
