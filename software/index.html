@@ -863,6 +863,46 @@
     .dash-prog-fill { height:100%; border-radius:3px; background:#a3e635; transition:width .4s; }
     .dash-empty { text-align:center; color:#8b949e; padding:40px; }
 
+    /* ── Equipe ───────────────────────────────────────────────── */
+    .equipe-quota-bar { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:16px 20px; display:flex; align-items:center; gap:16px; margin-bottom:24px; flex-wrap:wrap; }
+    .equipe-quota-info { flex:1; min-width:180px; }
+    .equipe-quota-title { font-size:13px; font-weight:700; color:#e6edf3; margin-bottom:2px; }
+    .equipe-quota-sub { font-size:12px; color:#8b949e; }
+    .equipe-quota-bar-track { flex:2; min-width:140px; background:#21262d; border-radius:8px; height:8px; overflow:hidden; }
+    .equipe-quota-bar-fill { height:100%; background:linear-gradient(90deg,#6366f1,#818cf8); border-radius:8px; transition:width .4s; }
+    .equipe-quota-bar-fill.full { background:linear-gradient(90deg,#dc2626,#f87171); }
+    .equipe-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:16px; }
+    .equipe-card { background:#161b22; border:1px solid #30363d; border-radius:14px; padding:20px; transition:border-color .15s, box-shadow .15s; }
+    .equipe-card:hover { border-color:#6366f1; box-shadow:0 4px 20px rgba(99,102,241,.15); }
+    .equipe-card-head { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+    .equipe-avatar { width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:800; color:#fff; flex-shrink:0; letter-spacing:-.5px; }
+    .equipe-card-meta { flex:1; min-width:0; }
+    .equipe-card-name { font-size:14px; font-weight:700; color:#e6edf3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .equipe-card-cargo { font-size:11px; font-weight:600; color:#8b949e; margin-top:1px; display:flex; align-items:center; gap:5px; }
+    .equipe-cargo-badge { background:#21262d; border:1px solid #30363d; border-radius:5px; padding:2px 7px; font-size:10px; color:#c9d1d9; font-weight:600; }
+    .equipe-card-actions { display:flex; gap:6px; }
+    .equipe-btn { background:#21262d; border:1px solid #30363d; border-radius:7px; padding:4px 9px; font-size:11px; color:#c9d1d9; cursor:pointer; transition:all .15s; }
+    .equipe-btn:hover { background:#30363d; color:#e6edf3; border-color:#58a6ff; }
+    .equipe-btn.danger:hover { border-color:#f87171; color:#f87171; }
+    .equipe-card-body { display:flex; flex-direction:column; gap:8px; }
+    .equipe-field { background:#0d1117; border:1px solid #21262d; border-radius:8px; padding:8px 12px; }
+    .equipe-field-label { font-size:10px; font-weight:700; color:#6e7681; text-transform:uppercase; letter-spacing:.5px; margin-bottom:3px; }
+    .equipe-field-value { font-size:12px; color:#c9d1d9; display:flex; align-items:center; gap:6px; }
+    .equipe-field-value select { background:transparent; border:none; color:#c9d1d9; font-size:12px; outline:none; flex:1; cursor:pointer; }
+    .equipe-field-value select option { background:#161b22; }
+    .equipe-field-empty { color:#6e7681; font-style:italic; }
+    .equipe-tarefas-count { display:inline-flex; align-items:center; gap:4px; background:rgba(99,102,241,.1); border:1px solid rgba(99,102,241,.2); border-radius:5px; padding:2px 8px; font-size:11px; color:#818cf8; font-weight:600; }
+    .equipe-empty { text-align:center; padding:60px 20px; color:#6e7681; }
+    .equipe-empty-icon { font-size:48px; margin-bottom:12px; }
+    .equipe-empty-title { font-size:16px; font-weight:600; color:#8b949e; margin-bottom:8px; }
+    /* Modal Usuário Extra */
+    #modal-usuario-extra { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; display:none; align-items:center; justify-content:center; }
+    #modal-usuario-extra.open { display:flex; }
+    .usuario-modal-box { background:#161b22; border:1px solid #30363d; border-radius:16px; padding:28px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; }
+    .usuario-modal-title { font-size:16px; font-weight:700; color:#e6edf3; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+    .usuario-cor-picker { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+    .usuario-cor-swatch { width:28px; height:28px; border-radius:7px; cursor:pointer; border:2px solid transparent; transition:all .15s; flex-shrink:0; }
+    .usuario-cor-swatch.selected { border-color:#fff; transform:scale(1.15); }
     /* ── Lead Scoring ─────────────────────────────────────────── */
     .score-badge {
       display:inline-flex; align-items:center; justify-content:center;
@@ -946,6 +986,9 @@
       </div>
       <div class="nav-item" onclick="showPage('crm', this)">
         <span class="icon"></span> CRM — Pipeline
+      </div>
+      <div class="nav-item" onclick="showPage('equipe', this)">
+        <span class="icon">👥</span> Equipe
       </div>
       <div class="nav-section">Configuração</div>
       <div class="nav-item" onclick="showPage('agente', this)">
@@ -1295,9 +1338,14 @@
         <!-- TAB TAREFAS -->
         <div class="crm-tab-content" id="crm-tab-tarefas">
           <div id="crm-tarefas-list" style="margin-bottom:16px;min-height:60px;"></div>
-          <div style="display:flex;gap:8px;align-items:flex-end;border-top:1px solid #f1f5f9;padding-top:14px;margin-top:4px;">
-            <div class="field-group" style="flex:1;margin:0;"><label>Nova tarefa</label><input type="text" id="nova-tarefa-desc" placeholder="Ex: Ligar para confirmar documentos" /></div>
-            <div class="field-group" style="margin:0;width:140px;"><label>Vencimento</label><input type="date" id="nova-tarefa-data" /></div>
+          <div style="display:flex;gap:8px;align-items:flex-end;border-top:1px solid #f1f5f9;padding-top:14px;margin-top:4px;flex-wrap:wrap;">
+            <div class="field-group" style="flex:2;min-width:160px;margin:0;"><label>Nova tarefa</label><input type="text" id="nova-tarefa-desc" placeholder="Ex: Ligar para confirmar proposta" /></div>
+            <div class="field-group" style="margin:0;min-width:120px;"><label>Vencimento</label><input type="date" id="nova-tarefa-data" /></div>
+            <div class="field-group" style="margin:0;min-width:140px;"><label>👤 Atribuir para</label>
+              <select id="nova-tarefa-atribuido" style="font-size:12px;">
+                <option value="">— Eu mesmo —</option>
+              </select>
+            </div>
             <button class="btn-add-tarefa" onclick="addTarefa()" style="margin-bottom:0;flex-shrink:0;">Adicionar</button>
           </div>
         </div>
@@ -1708,6 +1756,91 @@
       </div>
     </div>
 
+    <!-- EQUIPE -->
+    <div class="page" id="page-equipe">
+      <div class="page-header">
+        <div>
+          <h1>👥 Equipe</h1>
+          <p>Gerencie membros da equipe, atribua números de WhatsApp e tarefas de leads</p>
+        </div>
+        <button class="btn-primary" onclick="abrirModalUsuario()">➕ Adicionar Membro</button>
+      </div>
+
+      <!-- Barra de cota -->
+      <div class="equipe-quota-bar">
+        <div class="equipe-quota-info">
+          <div class="equipe-quota-title">Usuários da equipe</div>
+          <div class="equipe-quota-sub" id="equipe-quota-sub">Carregando...</div>
+        </div>
+        <div class="equipe-quota-bar-track" style="max-width:200px;">
+          <div class="equipe-quota-bar-fill" id="equipe-quota-fill" style="width:0%"></div>
+        </div>
+        <div style="font-size:12px;color:#8b949e;" id="equipe-quota-label">—</div>
+        <a style="font-size:12px;color:#6366f1;cursor:pointer;font-weight:600;" onclick="showPage('faturamento',document.querySelector('.nav-item[onclick*=faturamento]'));setTimeout(()=>showBillingTab('marketplace',document.querySelectorAll('.billing-tab-btn')[1]),400);">
+          + Contratar mais usuários ↗
+        </a>
+      </div>
+
+      <!-- Grid de membros -->
+      <div class="equipe-grid" id="equipe-grid">
+        <div class="equipe-empty">
+          <div class="equipe-empty-icon">👥</div>
+          <div class="equipe-empty-title">Nenhum membro adicionado</div>
+          <div>Contrate usuários extras no Marketplace e adicione membros da equipe aqui.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Adicionar / Editar Membro -->
+    <div id="modal-usuario-extra">
+      <div class="usuario-modal-box">
+        <div class="usuario-modal-title">
+          <span id="usuario-modal-icon">👤</span>
+          <span id="usuario-modal-title-text">Adicionar Membro</span>
+        </div>
+        <input type="hidden" id="usuario-id" />
+        <div class="field-group">
+          <label>Nome completo *</label>
+          <input type="text" id="usuario-nome" placeholder="Ex: Maria Oliveira" />
+        </div>
+        <div class="field-group">
+          <label>Cargo / Função</label>
+          <input type="text" id="usuario-cargo" placeholder="Ex: Colaborador, Gerente, SDR..." />
+        </div>
+        <div class="field-group">
+          <label>E-mail</label>
+          <input type="email" id="usuario-email" placeholder="email@empresa.com" />
+        </div>
+        <div class="field-group">
+          <label>WhatsApp de contato</label>
+          <input type="tel" id="usuario-whatsapp" placeholder="5511999999999" />
+        </div>
+        <div class="field-group">
+          <label>Número WhatsApp atribuído (instância)</label>
+          <select id="usuario-numero">
+            <option value="">— Sem número atribuído —</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label>Cor de identificação</label>
+          <div class="usuario-cor-picker" id="usuario-cor-picker">
+            <div class="usuario-cor-swatch selected" style="background:#6366f1;" data-cor="#6366f1"></div>
+            <div class="usuario-cor-swatch" style="background:#0ea5e9;" data-cor="#0ea5e9"></div>
+            <div class="usuario-cor-swatch" style="background:#10b981;" data-cor="#10b981"></div>
+            <div class="usuario-cor-swatch" style="background:#f59e0b;" data-cor="#f59e0b"></div>
+            <div class="usuario-cor-swatch" style="background:#ef4444;" data-cor="#ef4444"></div>
+            <div class="usuario-cor-swatch" style="background:#8b5cf6;" data-cor="#8b5cf6"></div>
+            <div class="usuario-cor-swatch" style="background:#ec4899;" data-cor="#ec4899"></div>
+            <div class="usuario-cor-swatch" style="background:#14b8a6;" data-cor="#14b8a6"></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button class="btn-primary" style="flex:1;" onclick="salvarUsuarioExtra()">💾 Salvar</button>
+          <button class="btn-secondary" style="flex:1;" onclick="fecharModalUsuario()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- FATURAMENTO -->
     <div class="page" id="page-faturamento">
       <div class="page-header"><h1>Faturamento</h1><p>Gerencie sua assinatura e adicione recursos ao plano</p></div>
@@ -1960,7 +2093,42 @@
           </div>
         </div>
 
-        <!-- SEÇÃO 4: IDENTIFICAÇÃO DE OBJEÇÃO -->
+        <!-- SEÇÃO 4: USUÁRIOS EXTRAS -->
+        <div class="mkt-section">
+          <div class="mkt-section-title">👥 Usuários Extras da Equipe</div>
+          <div class="mkt-section-sub">O plano base inclui 1 usuário (proprietário). Adicione membros da equipe para atribuir tarefas de leads, números de WhatsApp e responsabilidades de atendimento. Cada usuário extra tem acesso à página Equipe para ver suas atribuições.</div>
+          <div class="mkt-qty-card" style="border-color:#6366f1;">
+            <div class="mkt-qty-left">
+              <div style="font-size:42px;flex-shrink:0;">👤</div>
+              <div>
+                <div class="mkt-addon-name" style="font-size:16px;margin-bottom:6px;">Usuário Extra</div>
+                <ul class="mkt-addon-features" style="margin:0;">
+                  <li>Membro da equipe adicional com perfil próprio</li>
+                  <li>Atribuição de tarefas de leads específicos</li>
+                  <li>Número de WhatsApp atribuído ao usuário</li>
+                  <li>Cargo/função personalizável (SDR, Gerente, Suporte…)</li>
+                  <li>Identificação visual por cor no CRM e tarefas</li>
+                  <li>Visível em toda plataforma para atribuições</li>
+                </ul>
+              </div>
+            </div>
+            <div class="mkt-qty-right">
+              <div class="mkt-unit-price" style="color:#818cf8;">R$ 57<span>/mês cada</span></div>
+              <div class="mkt-addon-recurrence" style="background:rgba(99,102,241,.08);color:#818cf8;">🔄 Recorrente</div>
+              <div class="mkt-stepper">
+                <button onclick="changeAddonQty('usuario',-1)">−</button>
+                <span class="mkt-stepper-val" id="qty-usuario">1</span>
+                <button onclick="changeAddonQty('usuario',+1)">+</button>
+              </div>
+              <div class="mkt-total-price">Total: <strong id="total-usuario">R$ 57/mês</strong></div>
+              <button class="btn-addon-buy" style="background:#6366f1;" onclick="showAddonModal('usuario')">
+                Contratar <span id="qty-label-usuario">1 usuário</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 5: IDENTIFICAÇÃO DE OBJEÇÃO -->
         <div class="mkt-section">
           <div class="mkt-section-title">🛡️ Agente IA — Identificação de Objeção + Plano de Ação Completo</div>
           <div class="mkt-section-sub">Um agente de IA especializado analisa toda a conversa com o lead, identifica a objeção com precisão, avalia o que dificultou a conversão (tempo de resposta, tom, engajamento), gera um plano de ação personalizado e envia o relatório completo + script de follow-up direto no WhatsApp do responsável.</div>
@@ -2589,6 +2757,7 @@
         loadAdminPedidos();
       }
     }
+    if (name === 'equipe') loadEquipePage();
     if (name === 'fluxos') {
       setTimeout(() => loadFluxosPage(), 100);
     }
@@ -3355,6 +3524,20 @@
 
   // ---- Tarefas ----
   async function loadTarefas(leadId) {
+    // Popula select de membros da equipe (busca se ainda não carregado)
+    const selAt = document.getElementById('nova-tarefa-atribuido');
+    if (selAt && typeof _equipeMembros !== 'undefined') {
+      if (!_equipeMembros.length) {
+        const { data: { user } } = await db.auth.getUser();
+        const { data: mbs } = await db.from('usuarios_extras')
+          .select('id,nome,cor').eq('owner_id', user.id).eq('ativo', true);
+        _equipeMembros = mbs || [];
+      }
+      const cur = selAt.value;
+      selAt.innerHTML = '<option value="">— Eu mesmo —</option>' +
+        (_equipeMembros || []).map(m => `<option value="${m.id}">${escapeHtml(m.nome)}</option>`).join('');
+      selAt.value = cur;
+    }
     const { data } = await db.from('lead_tarefas').select('*').eq('lead_id', leadId).order('criado_em');
     renderTarefas(data || []);
     // Atualiza lead local e re-renderiza card no kanban
@@ -3371,22 +3554,35 @@
   function renderTarefas(tarefas) {
     const el = document.getElementById('crm-tarefas-list');
     if (!tarefas.length) { el.innerHTML = '<div style="color:#6e7681;font-size:13px;padding:8px 0;">Nenhuma tarefa ainda. Adicione abaixo.</div>'; return; }
-    el.innerHTML = tarefas.map(t => `<div class="tarefa-item" data-tarefa-id="${t.id}">
-      <input type="checkbox" ${t.concluida?'checked':''} onchange="toggleTarefa('${t.id}',this.checked)" />
-      <span class="tarefa-desc ${t.concluida?'done':''}">${escapeHtml(t.descricao)}</span>
-      ${t.data_vencimento ? `<span class="tarefa-date">📅 ${new Date(t.data_vencimento+'T00:00:00').toLocaleDateString('pt-BR')}</span>` : ''}
-      <button class="tarefa-del" onclick="deleteTarefa('${t.id}')" title="Excluir">✕</button>
-    </div>`).join('');
+    el.innerHTML = tarefas.map(t => {
+      const membro = _equipeMembros?.find(m => m.id === t.atribuido_a);
+      const membroTag = membro
+        ? `<span style="font-size:10px;background:${membro.cor||'#6366f1'}22;color:${membro.cor||'#6366f1'};border:1px solid ${membro.cor||'#6366f1'}44;border-radius:5px;padding:1px 6px;font-weight:600;">👤 ${escapeHtml(membro.nome.split(' ')[0])}</span>`
+        : '';
+      return `<div class="tarefa-item" data-tarefa-id="${t.id}">
+        <input type="checkbox" ${t.concluida?'checked':''} onchange="toggleTarefa('${t.id}',this.checked)" />
+        <span class="tarefa-desc ${t.concluida?'done':''}">${escapeHtml(t.descricao)}</span>
+        ${membroTag}
+        ${t.data_vencimento ? `<span class="tarefa-date">📅 ${new Date(t.data_vencimento+'T00:00:00').toLocaleDateString('pt-BR')}</span>` : ''}
+        <button class="tarefa-del" onclick="deleteTarefa('${t.id}')" title="Excluir">✕</button>
+      </div>`;
+    }).join('');
   }
 
   async function addTarefa() {
     const desc = document.getElementById('nova-tarefa-desc').value.trim();
     if (!desc || !crmOpenLeadId) return;
     const { data: { user } } = await db.auth.getUser();
-    const dataVenc = document.getElementById('nova-tarefa-data').value || null;
-    await db.from('lead_tarefas').insert({ lead_id: crmOpenLeadId, user_id: user.id, descricao: desc, data_vencimento: dataVenc });
+    const dataVenc   = document.getElementById('nova-tarefa-data').value || null;
+    const atribuidoA = document.getElementById('nova-tarefa-atribuido')?.value || null;
+    await db.from('lead_tarefas').insert({
+      lead_id: crmOpenLeadId, user_id: user.id, descricao: desc,
+      data_vencimento: dataVenc, atribuido_a: atribuidoA || null
+    });
     document.getElementById('nova-tarefa-desc').value = '';
     document.getElementById('nova-tarefa-data').value = '';
+    const selAt = document.getElementById('nova-tarefa-atribuido');
+    if (selAt) selAt.value = '';
     await loadTarefas(crmOpenLeadId);
   }
 
@@ -4749,14 +4945,14 @@
   // =====================
   // ADDON PURCHASE (Agente / Número) com seletor de quantidade
   // =====================
-  const _addonQty  = { agente: 1, numero: 1, objecao: 1 };
-  const _addonUnit = { agente: 197, numero: 97, objecao: 127 };
+  const _addonQty  = { agente: 1, numero: 1, objecao: 1, usuario: 1 };
+  const _addonUnit = { agente: 197, numero: 97, objecao: 127, usuario: 57 };
 
   function changeAddonQty(tipo, delta) {
     _addonQty[tipo] = Math.max(1, (_addonQty[tipo] || 1) + delta);
     const qty = _addonQty[tipo];
     const total = qty * _addonUnit[tipo];
-    const nouns = { agente: ['agente','agentes'], numero: ['número','números'] };
+    const nouns = { agente: ['agente','agentes'], numero: ['número','números'], usuario: ['usuário','usuários'] };
     const noun = nouns[tipo];
     const el = (id) => document.getElementById(id);
     if (el('qty-' + tipo))       el('qty-' + tipo).textContent = qty;
@@ -4768,8 +4964,8 @@
     const qty   = _addonQty[tipo] || 1;
     const unit  = _addonUnit[tipo];
     const total = qty * unit;
-    const icons = { agente:'🤖', numero:'📱', objecao:'🛡️' };
-    const nomes = { agente:'Agente de IA Extra', numero:'Número WhatsApp Extra', objecao:'Identificação de Objeção IA' };
+    const icons = { agente:'🤖', numero:'📱', objecao:'🛡️', usuario:'👤' };
+    const nomes = { agente:'Agente de IA Extra', numero:'Número WhatsApp Extra', objecao:'Identificação de Objeção IA', usuario:'Usuário Extra' };
     const icon  = icons[tipo] || '📦';
     const nome  = nomes[tipo] || tipo;
     // Objeção é único — não tem qty
@@ -5256,6 +5452,236 @@
       </div>`
     },
   };
+
+  // =====================================================================
+  // EQUIPE — Usuários Extras
+  // =====================================================================
+  const CORES_USUARIO = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6'];
+  let _equipeNumeros = [];   // números disponíveis para atribuição
+  let _equipeMembros = [];   // cache local dos membros carregados
+  let _equipeQuotaMax = 0;   // usuários contratados no marketplace
+
+  async function loadEquipePage() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+
+    // 1. Quota comprada no marketplace (addon_usuario ativos)
+    const { data: addons } = await db.from('pedidos_creditos')
+      .select('pacote')
+      .eq('user_id', user.id)
+      .eq('status', 'ativo')
+      .eq('pacote', 'addon_usuario');
+    _equipeQuotaMax = (addons || []).length;
+
+    // 2. Membros cadastrados
+    const { data: membros } = await db.from('usuarios_extras')
+      .select('*')
+      .eq('owner_id', user.id)
+      .eq('ativo', true)
+      .order('criado_em', { ascending: true });
+    _equipeMembros = membros || [];
+
+    // 3. Números disponíveis (da instância + extras)
+    const { data: profile } = await db.from('profiles').select('evo_instance').eq('id', user.id).single();
+    const { data: addonNums } = await db.from('pedidos_creditos')
+      .select('id').eq('user_id', user.id).eq('status', 'ativo').eq('pacote', 'addon_numero');
+    _equipeNumeros = [profile?.evo_instance || 'Número Principal'];
+    (addonNums || []).forEach((_, i) => _equipeNumeros.push(`Número Extra ${i + 1}`));
+
+    // 4. Atualiza barra de cota
+    const usados = _equipeMembros.length;
+    const pct    = _equipeQuotaMax > 0 ? Math.min(100, (usados / _equipeQuotaMax) * 100) : 0;
+    const fill   = document.getElementById('equipe-quota-fill');
+    const sub    = document.getElementById('equipe-quota-sub');
+    const label  = document.getElementById('equipe-quota-label');
+    if (fill)  { fill.style.width = pct + '%'; fill.classList.toggle('full', pct >= 100); }
+    if (sub)   sub.textContent = _equipeQuotaMax === 0
+      ? 'Nenhum usuário extra contratado — compre no Marketplace'
+      : `${usados} de ${_equipeQuotaMax} usuário${_equipeQuotaMax > 1 ? 's' : ''} utilizado${usados !== 1 ? 's' : ''}`;
+    if (label) label.textContent = _equipeQuotaMax > 0 ? `${usados}/${_equipeQuotaMax}` : '0/0';
+
+    // 5. Renderiza grid
+    renderEquipeGrid(_equipeMembros);
+  }
+
+  function renderEquipeGrid(membros) {
+    const grid = document.getElementById('equipe-grid');
+    if (!grid) return;
+    if (!membros.length) {
+      grid.innerHTML = `<div class="equipe-empty">
+        <div class="equipe-empty-icon">👥</div>
+        <div class="equipe-empty-title">Nenhum membro adicionado</div>
+        <div style="font-size:13px;">Contrate usuários extras no Marketplace e clique em "Adicionar Membro".</div>
+      </div>`;
+      return;
+    }
+    grid.innerHTML = membros.map(m => {
+      const initials = (m.nome || '?').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+      const cor = m.cor || '#6366f1';
+      const numero = m.numero_atribuido || '';
+      const numOpts = _equipeNumeros.map(n =>
+        `<option value="${escapeHtml(n)}" ${n === numero ? 'selected' : ''}>${escapeHtml(n)}</option>`
+      ).join('');
+      return `<div class="equipe-card" id="equipe-card-${m.id}">
+        <div class="equipe-card-head">
+          <div class="equipe-avatar" style="background:${cor};">${initials}</div>
+          <div class="equipe-card-meta">
+            <div class="equipe-card-name">${escapeHtml(m.nome)}</div>
+            <div class="equipe-card-cargo">
+              <span class="equipe-cargo-badge">${escapeHtml(m.cargo || 'Colaborador')}</span>
+              ${m.email ? `<span style="font-size:10px;color:#6e7681;">· ${escapeHtml(m.email)}</span>` : ''}
+            </div>
+          </div>
+          <div class="equipe-card-actions">
+            <button class="equipe-btn" onclick="abrirModalUsuario('${m.id}')">✏️</button>
+            <button class="equipe-btn danger" onclick="removerUsuario('${m.id}','${escapeHtml(m.nome)}')">🗑️</button>
+          </div>
+        </div>
+        <div class="equipe-card-body">
+          ${m.whatsapp_contato ? `<div class="equipe-field">
+            <div class="equipe-field-label">📱 WhatsApp de contato</div>
+            <div class="equipe-field-value">${escapeHtml(m.whatsapp_contato)}</div>
+          </div>` : ''}
+          <div class="equipe-field">
+            <div class="equipe-field-label">📡 Número WhatsApp atribuído</div>
+            <div class="equipe-field-value">
+              <select onchange="atribuirNumero('${m.id}', this.value)">
+                <option value="">— Sem número atribuído —</option>
+                ${numOpts}
+              </select>
+            </div>
+          </div>
+          <div class="equipe-field" id="tarefas-count-${m.id}">
+            <div class="equipe-field-label">📋 Tarefas atribuídas</div>
+            <div class="equipe-field-value" id="tarefas-val-${m.id}">
+              <span class="equipe-tarefas-count">Carregando...</span>
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+
+    // Carrega contagem de tarefas para cada membro
+    membros.forEach(m => carregarTarefasMembro(m.id));
+  }
+
+  async function carregarTarefasMembro(membroId) {
+    const { count } = await db.from('lead_tarefas')
+      .select('id', { count: 'exact', head: true })
+      .eq('atribuido_a', membroId)
+      .eq('concluida', false);
+    const el = document.getElementById('tarefas-val-' + membroId);
+    if (el) el.innerHTML = count > 0
+      ? `<span class="equipe-tarefas-count">📋 ${count} tarefa${count !== 1 ? 's' : ''} aberta${count !== 1 ? 's' : ''}</span>`
+      : `<span style="color:#6e7681;font-size:12px;">Nenhuma tarefa pendente</span>`;
+  }
+
+  async function atribuirNumero(membroId, numero) {
+    const { error } = await db.from('usuarios_extras')
+      .update({ numero_atribuido: numero || null })
+      .eq('id', membroId);
+    if (error) alert('Erro ao atribuir número.');
+  }
+
+  function abrirModalUsuario(membroId) {
+    const modal = document.getElementById('modal-usuario-extra');
+    const picker = document.getElementById('usuario-cor-picker');
+
+    // Popula select de números
+    const sel = document.getElementById('usuario-numero');
+    sel.innerHTML = '<option value="">— Sem número atribuído —</option>' +
+      _equipeNumeros.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+
+    // Cor picker — click handler
+    picker.querySelectorAll('.usuario-cor-swatch').forEach(sw => {
+      sw.onclick = () => {
+        picker.querySelectorAll('.usuario-cor-swatch').forEach(s => s.classList.remove('selected'));
+        sw.classList.add('selected');
+      };
+    });
+
+    if (membroId) {
+      // Modo edição
+      const m = _equipeMembros.find(x => x.id === membroId);
+      if (!m) return;
+      document.getElementById('usuario-modal-title-text').textContent = 'Editar Membro';
+      document.getElementById('usuario-modal-icon').textContent = '✏️';
+      document.getElementById('usuario-id').value      = m.id;
+      document.getElementById('usuario-nome').value    = m.nome || '';
+      document.getElementById('usuario-cargo').value   = m.cargo || '';
+      document.getElementById('usuario-email').value   = m.email || '';
+      document.getElementById('usuario-whatsapp').value = m.whatsapp_contato || '';
+      sel.value = m.numero_atribuido || '';
+      // Seleciona cor
+      picker.querySelectorAll('.usuario-cor-swatch').forEach(sw => {
+        sw.classList.toggle('selected', sw.dataset.cor === (m.cor || '#6366f1'));
+      });
+    } else {
+      // Modo criação
+      document.getElementById('usuario-modal-title-text').textContent = 'Adicionar Membro';
+      document.getElementById('usuario-modal-icon').textContent = '👤';
+      document.getElementById('usuario-id').value       = '';
+      document.getElementById('usuario-nome').value     = '';
+      document.getElementById('usuario-cargo').value    = '';
+      document.getElementById('usuario-email').value    = '';
+      document.getElementById('usuario-whatsapp').value = '';
+      sel.value = '';
+      picker.querySelectorAll('.usuario-cor-swatch').forEach((sw, i) =>
+        sw.classList.toggle('selected', i === 0));
+    }
+    modal.classList.add('open');
+  }
+
+  function fecharModalUsuario() {
+    document.getElementById('modal-usuario-extra').classList.remove('open');
+  }
+  document.getElementById('modal-usuario-extra').addEventListener('click', e => {
+    if (e.target === document.getElementById('modal-usuario-extra')) fecharModalUsuario();
+  });
+
+  async function salvarUsuarioExtra() {
+    const { data: { user } } = await db.auth.getUser();
+    const id     = document.getElementById('usuario-id').value.trim();
+    const nome   = document.getElementById('usuario-nome').value.trim();
+    const cargo  = document.getElementById('usuario-cargo').value.trim() || 'Colaborador';
+    const email  = document.getElementById('usuario-email').value.trim();
+    const whats  = document.getElementById('usuario-whatsapp').value.trim();
+    const numero = document.getElementById('usuario-numero').value;
+    const cor    = document.querySelector('#usuario-cor-picker .usuario-cor-swatch.selected')?.dataset.cor || '#6366f1';
+
+    if (!nome) { alert('Informe o nome do membro.'); return; }
+
+    if (!id) {
+      // Verifica cota
+      if (_equipeMembros.length >= _equipeQuotaMax) {
+        if (!confirm(`⚠️ Você atingiu o limite de ${_equipeQuotaMax} usuário${_equipeQuotaMax > 1 ? 's' : ''} contratado${_equipeQuotaMax > 1 ? 's' : ''}.\n\nDeseja ir ao Marketplace para contratar mais?`)) return;
+        fecharModalUsuario();
+        showPage('faturamento', document.querySelector('.nav-item[onclick*="faturamento"]'));
+        setTimeout(() => showBillingTab('marketplace', document.querySelectorAll('.billing-tab-btn')[1]), 400);
+        return;
+      }
+      const { error } = await db.from('usuarios_extras').insert({
+        owner_id: user.id, nome, cargo, email: email || null,
+        whatsapp_contato: whats || null, numero_atribuido: numero || null, cor
+      });
+      if (error) { alert('Erro ao adicionar membro.'); return; }
+    } else {
+      const { error } = await db.from('usuarios_extras').update({
+        nome, cargo, email: email || null,
+        whatsapp_contato: whats || null, numero_atribuido: numero || null, cor
+      }).eq('id', id);
+      if (error) { alert('Erro ao salvar.'); return; }
+    }
+
+    fecharModalUsuario();
+    loadEquipePage();
+  }
+
+  async function removerUsuario(id, nome) {
+    if (!confirm(`Remover ${nome} da equipe?\n\nAs tarefas atribuídas a este membro permanecerão, mas sem responsável.`)) return;
+    await db.from('usuarios_extras').update({ ativo: false }).eq('id', id);
+    loadEquipePage();
+  }
 
   // ── Dados de plano carregados para o designer de fluxos ─────────────
   let _fluxoNumeros  = [];    // carregado ao abrir Designer de Fluxos
