@@ -1177,16 +1177,16 @@
       <!-- Links de Referência -->
       <div class="card" style="margin-top:0;">
         <h3>🔗 Links de Referência do Agente</h3>
-        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">URLs que o agente vai priorizar ao buscar informações. Pode ser o site da sua empresa, portal do INSS, tabelas oficiais etc. Adicione quantos quiser.</p>
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">URLs que o agente vai priorizar ao buscar informações. Pode ser o site da sua empresa, catálogo de serviços, tabelas de preços, portfólio etc. Adicione quantos quiser.</p>
         <div id="web-urls-list" style="margin-bottom:14px;display:flex;flex-direction:column;gap:8px;"></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
           <div class="field-group" style="margin:0;flex:2;min-width:200px;">
             <label>URL</label>
-            <input type="url" id="web-url-input" placeholder="https://www.gov.br/inss" />
+            <input type="url" id="web-url-input" placeholder="https://www.suaempresa.com.br/servicos" />
           </div>
           <div class="field-group" style="margin:0;flex:1;min-width:140px;">
             <label>Descrição</label>
-            <input type="text" id="web-url-desc" placeholder="Ex: INSS oficial" maxlength="60" />
+            <input type="text" id="web-url-desc" placeholder="Ex: Catálogo de serviços, Site oficial" maxlength="60" />
           </div>
           <button class="btn-save" onclick="addWebUrl()" style="padding:10px 18px;white-space:nowrap;align-self:flex-end;">Adicionar</button>
         </div>
@@ -1581,7 +1581,7 @@
         <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Cole qualquer URL pública — o agente vai extrair e indexar o conteúdo automaticamente.</p>
         <div class="field-group">
           <label>URL da página</label>
-          <input type="url" id="url-link" placeholder="https://exemplo.com/artigo-inss" style="font-family:monospace;font-size:13px;" />
+          <input type="url" id="url-link" placeholder="https://exemplo.com/pagina-do-conteudo" style="font-family:monospace;font-size:13px;" />
         </div>
         <div class="field-group">
           <label>Nome / descrição</label>
@@ -5055,8 +5055,8 @@
         </label>
         <div class="etapa-report-preview" id="etapa-report-sample">
           <em>📋 Exemplo de relatório:</em><br/>
-          Lead: João Silva | Tese: Aposentadoria por idade<br/>
-          Resumo: Interessado, tem 67 anos, aguarda documentação.
+          Lead: João Silva | Serviço: Plano Premium<br/>
+          Resumo: Interessado, aguardando proposta. Perguntou sobre prazo.
         </div>
       </div>`
     },
@@ -5065,7 +5065,7 @@
       title: '🏢 Transferir Departamento', inputs: 1, outputs: 1, cls: 'node-departamento',
       html: `<div class="box">
         <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">🏢 Nome do departamento</label>
-        <input class="etapa-select" placeholder="ex: Jurídico, Financeiro, Pós-venda..." style="margin-bottom:8px;" />
+        <input class="etapa-select" placeholder="ex: Comercial, Suporte, Financeiro, Pós-venda..." style="margin-bottom:8px;" />
         <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">📱 Número do departamento</label>
         <select class="etapa-select">ETAPA_NUMEROS_OPTIONS</select>
         <label class="etapa-relatorio-wrap"><input type="checkbox" checked />📊 Enviar contexto da conversa</label>
@@ -5085,7 +5085,7 @@
       title: '🔀 Condição IF/ELSE', inputs: 1, outputs: 2, cls: 'node-condicao',
       html: `<div class="box">
         <select class="etapa-select" style="margin-bottom:6px;">
-          <option>Tese do lead contém...</option>
+          <option>Produto/Serviço de interesse contém...</option>
           <option>Nome do lead contém...</option>
           <option>Lead está qualificado</option>
           <option>Texto da mensagem contém...</option>
@@ -5116,7 +5116,7 @@
       title: '📤 Follow-up', inputs: 1, outputs: 1, cls: 'node-followup',
       html: `<div class="box">
         <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">💬 Mensagem</label>
-        <textarea class="etapa-select" style="resize:vertical;min-height:60px;font-size:12px;margin-bottom:8px;" placeholder="Olá {{nome}}! Queria acompanhar o seu caso..."></textarea>
+        <textarea class="etapa-select" style="resize:vertical;min-height:60px;font-size:12px;margin-bottom:8px;" placeholder="Olá {{nome}}! Queria acompanhar o seu interesse em {{servico}}..."></textarea>
         <div style="display:flex;align-items:center;gap:6px;">
           <span style="font-size:11px;color:#8b949e;white-space:nowrap;">⏱ Após</span>
           <input type="number" class="etapa-select" style="width:55px;margin-bottom:0;" value="0" min="0" />
@@ -5126,7 +5126,7 @@
             <option value="h">horas</option>
           </select>
         </div>
-        <div style="font-size:10px;color:#6e7681;margin-top:5px;">Variáveis: {{nome}}, {{telefone}}, {{tese}}</div>
+        <div style="font-size:10px;color:#6e7681;margin-top:5px;">Variáveis: {{nome}}, {{telefone}}, {{servico}}, {{resumo}}</div>
       </div>`
     },
     contexto: {
@@ -5156,7 +5156,7 @@
     objecao: {
       title: '🛡️ Identificar Objeção + Plano de Ação (IA)', inputs: 1, outputs: 2, cls: 'node-objecao',
       html: `<div class="box">
-        <div class="objecao-badge">⚡ Agente IA especializado em objeções previdenciárias</div>
+        <div class="objecao-badge">⚡ Agente IA especializado em objeções comerciais</div>
 
         <!-- 1. DADOS DO LEAD QUE O AGENTE USA -->
         <div class="objecao-divider"><span>1 · Dados do lead para análise</span></div>
@@ -5166,7 +5166,7 @@
           <label class="objecao-tipo-check"><input type="checkbox" checked /> O que buscava</label>
           <label class="objecao-tipo-check"><input type="checkbox" checked /> Por que não fechou</label>
           <label class="objecao-tipo-check"><input type="checkbox" checked /> Histórico completo</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Tese previdenciária</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Produto/Serviço buscado</label>
           <label class="objecao-tipo-check"><input type="checkbox" /> Aniversário / datas</label>
         </div>
 
@@ -5177,10 +5177,10 @@
           <label class="objecao-tipo-check"><input type="checkbox" checked /> Urgência / "depois"</label>
           <label class="objecao-tipo-check"><input type="checkbox" checked /> Confiança / credibilidade</label>
           <label class="objecao-tipo-check"><input type="checkbox" checked /> Necessidade / "não preciso"</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Autoridade / "consultar cônjuge"</label>
+          <label class="objecao-tipo-check"><input type="checkbox" checked /> Autoridade / "preciso consultar"</label>
           <label class="objecao-tipo-check"><input type="checkbox" checked /> Medo / risco percebido</label>
-          <label class="objecao-tipo-check"><input type="checkbox" /> Concorrência / "já tenho advogado"</label>
-          <label class="objecao-tipo-check"><input type="checkbox" /> Desconfiança no processo</label>
+          <label class="objecao-tipo-check"><input type="checkbox" /> Concorrência / "já tenho fornecedor"</label>
+          <label class="objecao-tipo-check"><input type="checkbox" /> Desconfiança no prestador</label>
         </div>
 
         <!-- 3. PARÂMETROS QUE DIFICULTARAM A CONVERSÃO -->
@@ -5238,7 +5238,7 @@
         </label>
         <div style="margin-top:6px;">
           <div style="font-size:10px;font-weight:600;color:#8b949e;margin-bottom:3px;">Instruções adicionais para o agente (opcional):</div>
-          <textarea class="objecao-textarea" placeholder="Ex: Sempre mencionar o prazo de recuperação do INSS. Focar em segurança jurídica para leads com objeção de confiança..."></textarea>
+          <textarea class="objecao-textarea" placeholder="Ex: Sempre reforçar diferenciais do serviço. Para objeção de preço, apresentar parcelamento. Para objeção de urgência, destacar vagas limitadas..."></textarea>
         </div>
 
         <!-- 5. ENVIO DO RELATÓRIO -->
