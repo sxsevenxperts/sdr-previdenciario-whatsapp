@@ -32,7 +32,11 @@ const ADDON_PRODUCT_IDS: Record<string, string> = {
   [Deno.env.get("ADDON_AGENTE_EXTRA_PRODUCT_ID")  ?? ""]: "agente_extra",
   [Deno.env.get("ADDON_NUMERO_EXTRA_PRODUCT_ID")  ?? ""]: "numero_extra",
   [Deno.env.get("ADDON_USUARIO_EXTRA_PRODUCT_ID") ?? ""]: "usuario_extra",
+  [Deno.env.get("ADDON_TOKENS_PRODUCT_ID")        ?? ""]: "tokens_extra",
 };
+
+// Quantidade de tokens por pacote (padrão: 5M — configure via ADDON_TOKENS_QTD)
+const ADDON_TOKENS_QTD = Number(Deno.env.get("ADDON_TOKENS_QTD") ?? "5000000");
 
 const adminDb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
@@ -199,6 +203,20 @@ async function applyAddon(
     case "usuario_extra":
       await adminDb.rpc("incrementar_addon", { uid: userId, coluna: "usuarios_extras_limite", qtd: 1 });
       break;
+
+    case "tokens_extra": {
+      const { data: tc } = await adminDb.from("tokens_creditos")
+        .select("saldo_tokens, total_comprado")
+        .eq("user_id", userId)
+        .maybeSingle();
+      await adminDb.from("tokens_creditos").upsert({
+        user_id: userId,
+        saldo_tokens: (tc?.saldo_tokens ?? 0) + ADDON_TOKENS_QTD,
+        total_comprado: (tc?.total_comprado ?? 0) + ADDON_TOKENS_QTD,
+        mes_referencia: new Date().toISOString().slice(0, 7),
+      }, { onConflict: "user_id" });
+      break;
+    }
 
     default:
       console.warn("Tipo de addon desconhecido:", addonType);
