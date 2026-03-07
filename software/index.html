@@ -1896,6 +1896,9 @@
             <div style="opacity:.75;font-size:12px;margin-top:4px" id="billing-next-date">Próxima cobrança: —</div>
             <div style="margin-top:6px;font-size:11px;opacity:.6;" id="billing-addons-summary"></div>
             <button class="btn-addon-buy" style="margin-top:10px;width:auto;padding:8px 16px;font-size:12px;" onclick="showBillingTab('marketplace', document.querySelectorAll('.billing-tab-btn')[1])">➕ Adicionar recursos</button>
+            <a id="btn-renovar-assinatura" href="https://pay.hotmart.com/A104782857U?bid=1772919603167" target="_blank" rel="noopener" style="display:none;margin-top:8px;text-decoration:none;">
+              <button class="btn-addon-buy" style="width:auto;padding:8px 16px;font-size:12px;background:linear-gradient(135deg,#dc2626,#b91c1c);">🔄 Renovar Assinatura via Hotmart</button>
+            </a>
           </div>
         </div>
 
@@ -4886,6 +4889,7 @@
   // Quando preenchidos, os botões redirecionam para o Hotmart e o webhook
   // ativa o recurso automaticamente após a compra (em até 5 minutos).
   const HOTMART_LINKS = {
+    main_plan:     'https://pay.hotmart.com/A104782857U?bid=1772919603167',
     tokens_mini:   '',   // ex: 'https://pay.hotmart.com/XXXXXXXX?checkoutMode=10'
     tokens_medio:  '',
     tokens_grande: '',
@@ -5298,6 +5302,14 @@
       document.getElementById('billing-next-date').textContent = assin.proxima_cobranca
         ? `Próxima cobrança: ${new Date(assin.proxima_cobranca + 'T00:00:00').toLocaleDateString('pt-BR')}`
         : 'Próxima cobrança: —';
+
+      // Mostra botão "Renovar" apenas quando assinatura está cancelada ou inadimplente
+      const btnRenovar = document.getElementById('btn-renovar-assinatura');
+      if (btnRenovar) {
+        const precisaRenovar = ['cancelada', 'inadimplente'].includes(assin.status);
+        btnRenovar.style.display = precisaRenovar ? 'block' : 'none';
+        if (HOTMART_LINKS.main_plan) btnRenovar.href = HOTMART_LINKS.main_plan;
+      }
     }
     // Histórico de cobranças
     const { data: hist } = await db.from('historico_cobrancas').select('*').order('criado_em', { ascending: false }).limit(24);
