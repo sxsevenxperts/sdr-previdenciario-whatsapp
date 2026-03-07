@@ -118,8 +118,10 @@
     #dashboard-page { display: none; min-height: 100vh; }
     .sidebar { position: fixed; top: 0; left: 0; width: 240px; height: 100vh; background: #0a0a0a; padding: 24px 0; display: flex; flex-direction: column; overflow-y: auto; }
     .sidebar .logo { padding: 0 24px 24px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-    .sidebar .logo h2 { color: #fff; font-size: 16px; font-weight: 700; }
-    .sidebar .logo p { color: #a3e635; font-size: 12px; margin-top: 2px; }
+    .sidebar .logo .logo-brand { display:flex; align-items:center; gap:9px; margin-bottom:5px; }
+    .sidebar .logo .logo-mark { width:34px; height:34px; background:linear-gradient(135deg,#a3e635 0%,#4ade80 100%); border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:#0a0a0a; flex-shrink:0; }
+    .sidebar .logo h2 { color: #fff; font-size: 16px; font-weight: 800; letter-spacing:-.3px; }
+    .sidebar .logo .logo-company { color: #a3e635; font-size: 11px; font-weight: 600; margin-top: 2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; opacity:.9; }
     .nav-section { padding: 12px 24px 4px; font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 1px; }
     .nav-item { display: flex; align-items: center; gap: 10px; padding: 12px 24px; color: rgba(255,255,255,0.6); cursor: pointer; transition: all 0.2s; font-size: 14px; border-left: 3px solid transparent; }
     .nav-item:hover { color: #fff; background: rgba(255,255,255,0.05); }
@@ -131,7 +133,9 @@
     .sidebar-bottom { margin-top: auto; padding: 16px 24px; border-top: 1px solid rgba(255,255,255,0.08); }
     .btn-logout { width: 100%; padding: 10px; background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; }
     .btn-logout:hover { background: rgba(239,68,68,0.25); }
-    .main-content { margin-left: 240px; padding: 32px; }
+    .main-content { margin-left: 240px; padding: 32px 32px 52px; }
+    .global-footer { position:fixed; bottom:0; left:240px; right:0; height:32px; background:#0a0a0a; border-top:1px solid rgba(163,230,53,0.18); display:flex; align-items:center; justify-content:center; font-size:11px; color:#a3e635; font-weight:700; letter-spacing:.5px; z-index:200; gap:8px; }
+    .global-footer span { color:rgba(255,255,255,0.35); font-weight:400; }
     .page { display: none; }
     .page.active { display: block; }
     .page-header { margin-bottom: 28px; }
@@ -529,6 +533,20 @@
     .drawflow .drawflow-node.node-mover-pipeline .title-box { background:#0f766e; }
     .drawflow .drawflow-node.node-objecao .title-box { background:linear-gradient(135deg,#dc2626,#9f1239); }
     .drawflow .drawflow-node.node-objecao { border-color:#dc2626; min-width:300px; }
+    /* Novos nós */
+    .drawflow .drawflow-node.node-entrada .title-box { background:linear-gradient(135deg,#a3e635,#4ade80); color:#0a0a0a; }
+    .drawflow .drawflow-node.node-entrada { border-color:#a3e635; }
+    .drawflow .drawflow-node.node-enviar-relatorio .title-box { background:#0369a1; }
+    .drawflow .drawflow-node.node-coletar-dados .title-box { background:#15803d; }
+    .drawflow .drawflow-node.node-anotacao .title-box { background:#a16207; }
+    .drawflow .drawflow-node.node-acao .title-box { background:#7c3aed; }
+    .drawflow .drawflow-node.node-divisao .title-box { background:#0891b2; }
+    .drawflow .drawflow-node.node-expediente .title-box { background:#0f766e; }
+    .drawflow .drawflow-node.node-expediente { border-color:#14b8a6; }
+    .drawflow .drawflow-node.node-modelo-ia .title-box { background:#1e40af; }
+    .drawflow .drawflow-node.node-voz-ia .title-box { background:#9333ea; }
+    .drawflow .drawflow-node.node-lead-score-coletor .title-box { background:linear-gradient(135deg,#d97706,#b45309); }
+    .drawflow .drawflow-node.node-lead-score-coletor { border-color:#d97706; }
     .objecao-section-label { font-size:10px; font-weight:700; color:#f87171; text-transform:uppercase; letter-spacing:.5px; margin:10px 0 4px; display:flex; align-items:center; gap:4px; }
     .objecao-section-label::before { content:''; display:block; flex:1; height:1px; background:rgba(220,38,38,.25); }
     .objecao-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(220,38,38,.12); border:1px solid rgba(220,38,38,.3); border-radius:6px; padding:3px 8px; font-size:10px; color:#fca5a5; margin-bottom:8px; }
@@ -638,8 +656,8 @@
     .nav-item .icon { font-size:17px !important; }
     .sidebar .logo h2 { font-size:16px; font-weight:800; letter-spacing:-.3px; }
     /* Powered by */
-    .sidebar-powered { padding:12px 24px 8px; font-size:10px; color:#2a3040; font-weight:600; letter-spacing:.4px; text-align:center; }
-    .sidebar-powered span { color:#3a4555; }
+    .sidebar-powered { padding:12px 24px 8px; font-size:10px; color:rgba(255,255,255,0.35); font-weight:500; letter-spacing:.3px; text-align:center; line-height:1.5; }
+    .sidebar-powered span { color:#a3e635; font-weight:700; }
 
     /* ── Tables ───────────────────────────────────────────────── */
     table th { font-size:10px !important; font-weight:700 !important; text-transform:uppercase; letter-spacing:.5px; padding:10px 14px !important; }
@@ -968,8 +986,11 @@
 <div id="dashboard-page">
   <div class="sidebar">
     <div class="logo">
-      <h2>XPERT.IA</h2>
-      <p>Painel de Administração</p>
+      <div class="logo-brand">
+        <div class="logo-mark">X✦</div>
+        <h2>XPERT.IA</h2>
+      </div>
+      <div class="logo-company" id="sidebar-company-name">Painel de Administração</div>
     </div>
     <div style="padding: 8px 0; flex: 1;">
       <div class="nav-section">Principal</div>
@@ -1034,6 +1055,11 @@
       <button class="btn-logout" onclick="logout()">Sair</button>
       <div class="sidebar-powered">Powered by <span>SX SevenXperts Business Solutions</span><br><span style="opacity:.5;font-size:9px;letter-spacing:.3px;">CNPJ: 32.794.007/0001-19</span></div>
     </div>
+  </div>
+
+  <!-- GLOBAL FOOTER — visível em todas as abas -->
+  <div class="global-footer">
+    Powered by <span style="margin:0 4px;">SX Seven Xperts</span> · <span>CNPJ 32.794.007/0001-19</span>
   </div>
 
   <div class="main-content">
@@ -1808,8 +1834,8 @@
           <input type="text" id="usuario-cargo" placeholder="Ex: Colaborador, Gerente, SDR..." />
         </div>
         <div class="field-group">
-          <label>E-mail</label>
-          <input type="email" id="usuario-email" placeholder="email@empresa.com" />
+          <label>E-mail <span id="email-invite-hint" style="font-size:11px;color:#a3e635;font-weight:500;display:none;">— convite será enviado automaticamente</span></label>
+          <input type="email" id="usuario-email" placeholder="email@empresa.com" oninput="document.getElementById('email-invite-hint').style.display=this.value?'inline':'none'" />
         </div>
         <div class="field-group">
           <label>WhatsApp de contato</label>
@@ -1954,6 +1980,17 @@
       <!-- ======================== TAB: MARKETPLACE ======================== -->
       <div class="billing-tab-pane" id="billing-pane-marketplace">
 
+        <!-- Banner Super Admin -->
+        <div id="admin-marketplace-banner" class="admin-only" style="display:none;background:linear-gradient(135deg,rgba(163,230,53,.12),rgba(74,222,128,.08));border:1.5px solid rgba(163,230,53,.4);border-radius:14px;padding:20px 24px;margin-bottom:24px;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div style="font-size:36px;">🔑</div>
+            <div>
+              <div style="font-size:16px;font-weight:800;color:#a3e635;margin-bottom:4px;">Super Admin — Acesso Ilimitado e Gratuito</div>
+              <div style="font-size:13px;color:rgba(255,255,255,.7);line-height:1.5;">Como administrador da plataforma, você possui acesso irrestrito a todos os recursos: agentes ilimitados, tokens ilimitados, números WhatsApp ilimitados, Agente de Objeção IA, usuários extras ilimitados e todas as funcionalidades do Designer de Fluxos — sem custo adicional.</div>
+            </div>
+          </div>
+        </div>
+
         <!-- O que está incluído no plano base -->
         <div class="plan-includes-banner">
           <h4>✅ Incluído no Plano Base — R$ 497/mês</h4>
@@ -2027,7 +2064,40 @@
           </div>
         </div>
 
-        <!-- SEÇÃO 2: AGENTES DE IA -->
+        <!-- SEÇÃO 2: IDENTIFICAÇÃO DE OBJEÇÃO IA (destaque) -->
+        <div class="mkt-section" style="border:1.5px solid rgba(220,38,38,.4);border-radius:14px;padding:20px;background:rgba(220,38,38,.03);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span style="background:#dc2626;color:#fff;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;">⭐ MAIS VENDIDO</span>
+          </div>
+          <div class="mkt-section-title" style="color:#fca5a5;">🛡️ Agente IA — Identificação de Objeção + Plano de Ação Completo</div>
+          <div class="mkt-section-sub">Um agente de IA especializado analisa toda a conversa com o lead, identifica a objeção com precisão, avalia o que dificultou a conversão (tempo de resposta, tom, engajamento), gera um plano de ação personalizado e envia o relatório completo + script de follow-up direto no WhatsApp do responsável.</div>
+          <div class="mkt-qty-card" style="border-color:#dc2626;">
+            <div class="mkt-qty-left">
+              <div style="font-size:42px;flex-shrink:0;">🛡️</div>
+              <div>
+                <div class="mkt-addon-name" style="font-size:16px;margin-bottom:6px;">Agente IA — Objeção + Diagnóstico + Plano de Ação</div>
+                <ul class="mkt-addon-features" style="margin:0;">
+                  <li><strong>Dados do lead:</strong> analisa nome, celular, o que buscava e por que não fechou</li>
+                  <li><strong>Detecta 8 tipos de objeção:</strong> preço, urgência, confiança, necessidade, autoridade, medo, concorrência, desconfiança</li>
+                  <li><strong>Diagnostica o que dificultou:</strong> tempo de resposta do agente, horário, desengajamento, tom, informações insuficientes, abandono da conversa</li>
+                  <li><strong>Plano de ação preciso:</strong> argumentos personalizados + melhor momento para retomar + aponta falhas do atendimento</li>
+                  <li><strong>Script de follow-up pronto</strong> gerado pela IA para envio imediato</li>
+                  <li><strong>Relatório completo via WhatsApp</strong> com todos os dados + plano + script</li>
+                  <li>Nó exclusivo no Designer de Fluxos com 2 saídas (com/sem objeção)</li>
+                </ul>
+              </div>
+            </div>
+            <div class="mkt-qty-right">
+              <div class="mkt-unit-price" style="color:#fca5a5;">R$ 127<span>/mês</span></div>
+              <div class="mkt-addon-recurrence" style="background:rgba(220,38,38,.08);color:#fca5a5;">🔄 Recorrente</div>
+              <button class="btn-addon-buy" style="background:#dc2626;" onclick="showAddonModal('objecao')">
+                🛡️ Ativar Agente de Objeção IA
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SEÇÃO 3: AGENTES DE IA -->
         <div class="mkt-section">
           <div class="mkt-section-title">🤖 Agentes de IA Extras</div>
           <div class="mkt-section-sub">Cada agente é independente: prompt, tom e base de conhecimento próprios. Escolha quantos precisa — todos aparecem no Designer de Fluxos. Acrescido à mensalidade.</div>
@@ -2060,7 +2130,7 @@
           </div>
         </div>
 
-        <!-- SEÇÃO 3: NÚMEROS WHATSAPP -->
+        <!-- SEÇÃO 4: NÚMEROS WHATSAPP -->
         <div class="mkt-section">
           <div class="mkt-section-title">📱 Números WhatsApp Extras</div>
           <div class="mkt-section-sub">Cada número é um canal separado — pode ter agente próprio, receber leads e atuar em etapas distintas no Designer de Fluxos. Acrescido à mensalidade.</div>
@@ -2093,7 +2163,7 @@
           </div>
         </div>
 
-        <!-- SEÇÃO 4: USUÁRIOS EXTRAS -->
+        <!-- SEÇÃO 5: USUÁRIOS EXTRAS -->
         <div class="mkt-section">
           <div class="mkt-section-title">👥 Usuários Extras da Equipe</div>
           <div class="mkt-section-sub">O plano base inclui 1 usuário (proprietário). Adicione membros da equipe para atribuir tarefas de leads, números de WhatsApp e responsabilidades de atendimento. Cada usuário extra tem acesso à página Equipe para ver suas atribuições.</div>
@@ -2123,36 +2193,6 @@
               <div class="mkt-total-price">Total: <strong id="total-usuario">R$ 57/mês</strong></div>
               <button class="btn-addon-buy" style="background:#6366f1;" onclick="showAddonModal('usuario')">
                 Contratar <span id="qty-label-usuario">1 usuário</span>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- SEÇÃO 5: IDENTIFICAÇÃO DE OBJEÇÃO -->
-        <div class="mkt-section">
-          <div class="mkt-section-title">🛡️ Agente IA — Identificação de Objeção + Plano de Ação Completo</div>
-          <div class="mkt-section-sub">Um agente de IA especializado analisa toda a conversa com o lead, identifica a objeção com precisão, avalia o que dificultou a conversão (tempo de resposta, tom, engajamento), gera um plano de ação personalizado e envia o relatório completo + script de follow-up direto no WhatsApp do responsável.</div>
-          <div class="mkt-qty-card">
-            <div class="mkt-qty-left">
-              <div style="font-size:42px;flex-shrink:0;">🛡️</div>
-              <div>
-                <div class="mkt-addon-name" style="font-size:16px;margin-bottom:6px;">Agente IA — Objeção + Diagnóstico + Plano de Ação</div>
-                <ul class="mkt-addon-features" style="margin:0;">
-                  <li><strong>Dados do lead:</strong> analisa nome, celular, o que buscava e por que não fechou</li>
-                  <li><strong>Detecta 8 tipos de objeção:</strong> preço, urgência, confiança, necessidade, autoridade, medo, concorrência, desconfiança</li>
-                  <li><strong>Diagnostica o que dificultou:</strong> tempo de resposta do agente, horário, desengajamento, tom, informações insuficientes, abandono da conversa</li>
-                  <li><strong>Plano de ação preciso:</strong> argumentos personalizados + melhor momento para retomar + aponta falhas do atendimento</li>
-                  <li><strong>Script de follow-up pronto</strong> gerado pela IA para envio imediato</li>
-                  <li><strong>Relatório completo via WhatsApp</strong> com todos os dados + plano + script</li>
-                  <li>Nó exclusivo no Designer de Fluxos com 2 saídas (com/sem objeção)</li>
-                </ul>
-              </div>
-            </div>
-            <div class="mkt-qty-right">
-              <div class="mkt-unit-price" style="color:#fca5a5;">R$ 127<span>/mês</span></div>
-              <div class="mkt-addon-recurrence" style="background:rgba(220,38,38,.08);color:#fca5a5;">🔄 Recorrente</div>
-              <button class="btn-addon-buy" style="background:#dc2626;" onclick="showAddonModal('objecao')">
-                Ativar Identificação de Objeção
               </button>
             </div>
           </div>
@@ -2262,24 +2302,42 @@
             Quer mais? <a style="color:#58a6ff;cursor:pointer;text-decoration:none;" onclick="showPage('faturamento',document.querySelector('.nav-item[onclick*=faturamento]'));setTimeout(()=>showBillingTab('marketplace',document.querySelectorAll('.billing-tab-btn')[1]),400);">Comprar no Marketplace ↗</a>
           </div>
 
-          <h4>Etapas de Atendimento</h4>
+          <h4>Gatilhos</h4>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'entrada')" style="background:rgba(163,230,53,.08);border-color:rgba(163,230,53,.3);">📨 Entrada WhatsApp</div>
+
+          <h4 style="margin-top:14px">Etapas de Atendimento</h4>
           <div class="palette-node-etapa" draggable="true" ondragstart="drag(event,'etapa')"
                title="Cada etapa escolhe um número e um agente de forma independente">
             <div class="etapa-pal-num">📞 Etapa de Atendimento</div>
             <div class="etapa-pal-agt" id="flow-etapa-hint">Arraste para o canvas</div>
           </div>
 
-          <h4 style="margin-top:14px">Ações</h4>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'departamento')">🏢 Transferir Departamento</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'captura')">📋 Captura de Dados</div>
+          <h4 style="margin-top:14px">Coleta &amp; Dados</h4>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'coletar_dados')">📝 Coletar Dados</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'captura')">📋 Captura Rápida</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'lead_score_coletor')">🎯 Colhedor de Lead Score</div>
+
+          <h4 style="margin-top:14px">Lógica &amp; Fluxo</h4>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'condicao')">🔀 Condição IF/ELSE</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'divisao')">🔱 Divisão de Fluxo</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'expediente')">🕐 Verificar Expediente</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'aguardar')">⏳ Aguardar / Wait</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'followup')">📤 Follow-up</div>
+
+          <h4 style="margin-top:14px">IA &amp; Automação</h4>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'modelo_ia')">🤖 Escolha Modelo IA</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'voz_ia')">🎙️ Enviar Voz por IA</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'contexto')">🧠 Contextualizar</div>
-          <div class="palette-node" draggable="true" ondragstart="drag(event,'mover_pipeline')">🗂️ Mover no CRM</div>
           <div class="palette-node node-acao-pago" id="palette-objecao" draggable="true"
                ondragstart="dragObjecao(event)"
                title="Agente IA — Identificar Objeção + Gerar Plano de Ação + Enviar relatório via WhatsApp — R$ 127/mês">🛡️ Identificar Objeção + Plano IA</div>
+
+          <h4 style="margin-top:14px">Ações</h4>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'departamento')">🏢 Transferir Departamento</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'enviar_relatorio')">📊 Enviar Relatório</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'followup')">📤 Follow-up</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'acao')">⚡ Ação / Webhook</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'anotacao')">🗒️ Anotação Interna</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'mover_pipeline')">🗂️ Mover no CRM</div>
 
           <h4 style="margin-top:14px">Terminadores</h4>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'inicio')">🟢 Início</div>
@@ -2724,6 +2782,9 @@
       if (nameEl) nameEl.textContent = profile?.display_name || user.email;
       const roleEl = document.getElementById('sidebar-user-role');
       if (roleEl) roleEl.textContent = profile?.role === 'admin' ? '🔑 Super Admin' : '👤 Cliente';
+      // Exibe nome da empresa no logo
+      const compEl = document.getElementById('sidebar-company-name');
+      if (compEl && profile?.display_name) compEl.textContent = profile.display_name;
     }
 
     loadConfigs(); loadStats(); loadOverviewLeads(); loadPDFList();
@@ -2755,6 +2816,8 @@
         document.getElementById('admin-pedidos-card').classList.add('visible');
         loadAdminBilling();
         loadAdminPedidos();
+        const adminBanner = document.getElementById('admin-marketplace-banner');
+        if (adminBanner) adminBanner.style.display = 'flex';
       }
     }
     if (name === 'equipe') loadEquipePage();
@@ -5298,14 +5361,15 @@
       title: '⏳ Aguardar / Wait', inputs: 1, outputs: 1, cls: 'node-aguardar',
       html: `<div class="box">
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-          <input type="number" class="etapa-select" style="width:65px;margin-bottom:0;font-size:14px;font-weight:700;" value="1" min="1" />
+          <input type="number" class="etapa-select" style="width:65px;margin-bottom:0;font-size:14px;font-weight:700;" value="5" min="1" />
           <select class="etapa-select" style="flex:1;margin-bottom:0;">
-            <option value="min">minutos</option>
-            <option value="h" selected>horas</option>
+            <option value="s">segundos</option>
+            <option value="min" selected>minutos</option>
+            <option value="h">horas</option>
             <option value="d">dias</option>
           </select>
         </div>
-        <div style="font-size:10px;color:#6e7681;">Pausa o fluxo até receber mensagem ou o tempo esgotar</div>
+        <div style="font-size:10px;color:#6e7681;">Pausa o fluxo pelo tempo definido antes de seguir</div>
       </div>`
     },
     followup: {
@@ -5451,6 +5515,187 @@
         </div>
       </div>`
     },
+
+    // ── NOVOS NÓS ──────────────────────────────────────────────────────────
+
+    entrada: {
+      title: '📨 Entrada WhatsApp', inputs: 0, outputs: 1, cls: 'node-entrada',
+      html: `<div class="box">
+        <div style="font-size:11px;font-weight:700;color:#a3e635;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Gatilho de entrada</div>
+        <select class="etapa-select" style="margin-bottom:6px;">
+          <option>Qualquer mensagem recebida</option>
+          <option>Primeira mensagem do lead</option>
+          <option>Mensagem contém palavra-chave</option>
+          <option>Lead envia áudio</option>
+          <option>Lead envia imagem</option>
+          <option>Lead envia documento</option>
+        </select>
+        <input class="etapa-select" placeholder="Palavra-chave (se aplicável)" style="margin-bottom:0;" />
+      </div>`
+    },
+
+    enviar_relatorio: {
+      title: '📊 Enviar Relatório', inputs: 1, outputs: 1, cls: 'node-enviar-relatorio',
+      html: `<div class="box">
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">📊 Conteúdo do relatório</label>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" checked style="accent-color:#0ea5e9;" /> Dados do lead</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" checked style="accent-color:#0ea5e9;" /> Resumo da conversa</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" checked style="accent-color:#0ea5e9;" /> Resultado da qualificação</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" style="accent-color:#0ea5e9;" /> Score do lead</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" style="accent-color:#0ea5e9;" /> Transcrição completa</label>
+        </div>
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">📱 Enviar para (WhatsApp)</label>
+        <input class="etapa-select" placeholder="5511999999999" style="margin-bottom:0;" />
+      </div>`
+    },
+
+    coletar_dados: {
+      title: '📝 Coletar Dados do Lead', inputs: 1, outputs: 1, cls: 'node-coletar-dados',
+      html: `<div class="box">
+        <div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:6px;">Campos a coletar (arraste para reordenar):</div>
+        <div id="coletar-campos-list" style="display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input type="text" class="etapa-select" style="flex:1;margin-bottom:0;font-size:12px;" value="Nome completo" />
+            <input type="checkbox" checked style="accent-color:#a3e635;" title="Obrigatório" />
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input type="text" class="etapa-select" style="flex:1;margin-bottom:0;font-size:12px;" value="Telefone" />
+            <input type="checkbox" checked style="accent-color:#a3e635;" title="Obrigatório" />
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input type="text" class="etapa-select" style="flex:1;margin-bottom:0;font-size:12px;" value="Idade" />
+            <input type="checkbox" style="accent-color:#a3e635;" title="Obrigatório" />
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input type="text" class="etapa-select" style="flex:1;margin-bottom:0;font-size:12px;" value="Motivo do contato" />
+            <input type="checkbox" checked style="accent-color:#a3e635;" title="Obrigatório" />
+          </div>
+        </div>
+        <button onclick="this.closest('.drawflow-node').querySelector('#coletar-campos-list').insertAdjacentHTML('beforeend','<div style=\\'display:flex;align-items:center;gap:4px;\\'><input type=\\'text\\' class=\\'etapa-select\\' style=\\'flex:1;margin-bottom:0;font-size:12px;\\' placeholder=\\'Novo campo...\\' /><input type=\\'checkbox\\' style=\\'accent-color:#a3e635;\\' /></div>')" style="margin-top:6px;width:100%;padding:5px;background:rgba(163,230,53,.1);color:#a3e635;border:1px dashed rgba(163,230,53,.4);border-radius:6px;cursor:pointer;font-size:11px;">+ Adicionar campo</button>
+      </div>`
+    },
+
+    anotacao: {
+      title: '🗒️ Anotação Interna', inputs: 1, outputs: 1, cls: 'node-anotacao',
+      html: `<div class="box">
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">📝 Nota interna (não enviada ao lead)</label>
+        <textarea class="etapa-select" style="resize:vertical;min-height:70px;font-size:12px;background:rgba(250,204,21,.05);border-color:rgba(250,204,21,.3);" placeholder="Ex: Lead chegou pelo tráfego pago. Verificar se tem histórico de atendimento anterior..."></textarea>
+        <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;margin-top:5px;"><input type="checkbox" style="accent-color:#facc15;" /> Adicionar ao CRM</label>
+      </div>`
+    },
+
+    acao: {
+      title: '⚡ Ação / Webhook', inputs: 1, outputs: 1, cls: 'node-acao',
+      html: `<div class="box">
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">⚡ Tipo de ação</label>
+        <select class="etapa-select" style="margin-bottom:6px;" onchange="this.closest('.box').querySelector('.webhook-url-wrap').style.display=this.value==='webhook'?'block':'none'">
+          <option value="tag">Adicionar tag ao lead</option>
+          <option value="campo">Atualizar campo do lead</option>
+          <option value="webhook">Chamar webhook externo</option>
+          <option value="crm">Criar oportunidade no CRM</option>
+        </select>
+        <input class="etapa-select" placeholder="Nome da tag ou campo..." style="margin-bottom:4px;" />
+        <div class="webhook-url-wrap" style="display:none;">
+          <input class="etapa-select" placeholder="https://seu-webhook.com/endpoint" style="margin-bottom:0;font-size:11px;" />
+        </div>
+      </div>`
+    },
+
+    divisao: {
+      title: '🔱 Divisão de Fluxo', inputs: 1, outputs: 3, cls: 'node-divisao',
+      html: `<div class="box">
+        <div style="font-size:12px;color:#c9d1d9;margin-bottom:6px;">Divide o fluxo em múltiplos caminhos paralelos.</div>
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Saídas:</label>
+        <select class="etapa-select">
+          <option value="2">2 caminhos</option>
+          <option value="3" selected>3 caminhos</option>
+          <option value="4">4 caminhos</option>
+        </select>
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:#6e7681;margin-top:8px;">
+          <span>Saída 1</span><span>Saída 2</span><span>Saída 3</span>
+        </div>
+      </div>`
+    },
+
+    expediente: {
+      title: '🕐 Verificar Expediente', inputs: 1, outputs: 2, cls: 'node-expediente',
+      html: `<div class="box">
+        <div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:6px;">Horário de funcionamento:</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:6px;">
+          <div>
+            <div style="font-size:10px;color:#6e7681;margin-bottom:2px;">Das</div>
+            <input type="time" class="etapa-select" value="08:00" style="margin-bottom:0;font-size:12px;" />
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6e7681;margin-bottom:2px;">Às</div>
+            <input type="time" class="etapa-select" value="18:00" style="margin-bottom:0;font-size:12px;" />
+          </div>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:4px;">Dias da semana:</div>
+        <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;">
+          ${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map((d,i) => `<label style="display:flex;align-items:center;gap:2px;font-size:10px;color:#c9d1d9;cursor:pointer;background:rgba(255,255,255,.05);padding:2px 5px;border-radius:4px;"><input type="checkbox" ${i<5?'checked':''} style="accent-color:#a3e635;" />${d}</label>`).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:4px;">
+          <span style="color:#16a34a;font-weight:600;">✅ Dentro do expediente → saída 1</span>
+          <span style="color:#dc2626;font-weight:600;">❌ Fora → saída 2</span>
+        </div>
+      </div>`
+    },
+
+    modelo_ia: {
+      title: '🤖 Escolha o Modelo de IA', inputs: 1, outputs: 1, cls: 'node-modelo-ia',
+      html: `<div class="box">
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Modelo ChatGPT para esta etapa:</label>
+        <select class="etapa-select" style="margin-bottom:6px;">
+          <option value="gpt-4o">GPT-4o — Melhor qualidade (padrão)</option>
+          <option value="gpt-4o-mini">GPT-4o mini — Rápido e econômico</option>
+          <option value="gpt-4-turbo">GPT-4 Turbo — Alta performance</option>
+          <option value="o1-mini">o1-mini — Raciocínio avançado</option>
+        </select>
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Temperatura (criatividade 0–1):</label>
+        <input type="range" min="0" max="1" step="0.1" value="0.7" class="etapa-select" style="padding:0;background:none;border:none;" oninput="this.nextElementSibling.textContent=this.value" />
+        <span style="font-size:11px;color:#a3e635;font-weight:700;">0.7</span>
+      </div>`
+    },
+
+    voz_ia: {
+      title: '🎙️ Enviar Voz por IA', inputs: 1, outputs: 1, cls: 'node-voz-ia',
+      html: `<div class="box">
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">💬 Texto a converter em voz</label>
+        <textarea class="etapa-select" style="resize:vertical;min-height:60px;font-size:12px;margin-bottom:6px;" placeholder="Olá {{nome}}! Preparamos uma mensagem especial para você...&#10;Variáveis: {{nome}}, {{telefone}}, {{servico}}"></textarea>
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">🎤 Voz</label>
+        <select class="etapa-select" style="margin-bottom:4px;">
+          <option>Alloy — Neutro</option>
+          <option>Echo — Masculino profissional</option>
+          <option>Fable — Expressivo</option>
+          <option>Onyx — Grave e firme</option>
+          <option>Nova — Feminino amigável</option>
+          <option>Shimmer — Feminino suave</option>
+        </select>
+      </div>`
+    },
+
+    lead_score_coletor: {
+      title: '🎯 Colhedor de Lead Score', inputs: 1, outputs: 2, cls: 'node-lead-score-coletor',
+      html: `<div class="box">
+        <div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:6px;">Pontuar lead baseado em critérios:</div>
+        <label class="objecao-check-full"><input type="checkbox" checked /> 📱 Lead respondeu todas as perguntas</label>
+        <label class="objecao-check-full"><input type="checkbox" checked /> ⏱️ Tempo de resposta rápido (&lt;2min)</label>
+        <label class="objecao-check-full"><input type="checkbox" checked /> ✅ Lead confirmou interesse</label>
+        <label class="objecao-check-full"><input type="checkbox" checked /> 📍 Lead dentro do perfil ideal</label>
+        <label class="objecao-check-full"><input type="checkbox" /> 💰 Mencionou orçamento disponível</label>
+        <label class="objecao-check-full"><input type="checkbox" /> 📅 Agendou reunião ou visita</label>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:#8b949e;white-space:nowrap;">Mín. pontos para qualificar:</span>
+          <input type="number" class="etapa-select" style="width:55px;margin-bottom:0;font-weight:700;" value="3" min="1" max="6" />
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:8px;">
+          <span style="color:#16a34a;font-weight:600;">✅ Acima do mín → saída 1</span>
+          <span style="color:#dc2626;font-weight:600;">❌ Abaixo → saída 2</span>
+        </div>
+      </div>`
+    },
   };
 
   // =====================================================================
@@ -5465,13 +5710,17 @@
     const { data: { user } } = await db.auth.getUser();
     if (!user) return;
 
-    // 1. Quota comprada no marketplace (addon_usuario ativos)
-    const { data: addons } = await db.from('pedidos_creditos')
-      .select('pacote')
-      .eq('user_id', user.id)
-      .eq('status', 'ativo')
-      .eq('pacote', 'addon_usuario');
-    _equipeQuotaMax = (addons || []).length;
+    // 1. Quota comprada no marketplace (addon_usuario ativos) — admin: ilimitado
+    if (currentProfile?.role === 'admin') {
+      _equipeQuotaMax = 9999;
+    } else {
+      const { data: addons } = await db.from('pedidos_creditos')
+        .select('pacote')
+        .eq('user_id', user.id)
+        .eq('status', 'ativo')
+        .eq('pacote', 'addon_usuario');
+      _equipeQuotaMax = (addons || []).length;
+    }
 
     // 2. Membros cadastrados
     const { data: membros } = await db.from('usuarios_extras')
@@ -5533,8 +5782,9 @@
             </div>
           </div>
           <div class="equipe-card-actions">
-            <button class="equipe-btn" onclick="abrirModalUsuario('${m.id}')">✏️</button>
-            <button class="equipe-btn danger" onclick="removerUsuario('${m.id}','${escapeHtml(m.nome)}')">🗑️</button>
+            <button class="equipe-btn" onclick="abrirModalUsuario('${m.id}')" title="Editar membro">✏️</button>
+            ${m.email ? `<button class="equipe-btn" onclick="reenviarConvite('${m.id}','${escapeHtml(m.email)}','${escapeHtml(m.nome)}')" title="Reenviar convite por e-mail">📧</button>` : ''}
+            <button class="equipe-btn danger" onclick="removerUsuario('${m.id}','${escapeHtml(m.nome)}')" title="Cancelar acesso e remover membro">🗑️</button>
           </div>
         </div>
         <div class="equipe-card-body">
@@ -5665,6 +5915,21 @@
         whatsapp_contato: whats || null, numero_atribuido: numero || null, cor
       });
       if (error) { alert('Erro ao adicionar membro.'); return; }
+      // Envia convite por email se o campo foi preenchido
+      if (email) {
+        try {
+          const { data: { session } } = await db.auth.getSession();
+          await fetch(`${SUPABASE_URL}/functions/v1/invite-user`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session?.access_token}`,
+              'apikey': SUPABASE_KEY
+            },
+            body: JSON.stringify({ email, nome, owner_id: user.id })
+          });
+        } catch(e) { console.warn('Convite não enviado:', e); }
+      }
     } else {
       const { error } = await db.from('usuarios_extras').update({
         nome, cargo, email: email || null,
@@ -5678,9 +5943,34 @@
   }
 
   async function removerUsuario(id, nome) {
-    if (!confirm(`Remover ${nome} da equipe?\n\nAs tarefas atribuídas a este membro permanecerão, mas sem responsável.`)) return;
+    if (!confirm(`Cancelar acesso de ${nome}?\n\nO membro será removido da equipe. As tarefas atribuídas a ele permanecerão, mas sem responsável.\n\nEssa ação não pode ser desfeita.`)) return;
     await db.from('usuarios_extras').update({ ativo: false }).eq('id', id);
     loadEquipePage();
+  }
+
+  async function reenviarConvite(id, email, nome) {
+    if (!confirm(`Reenviar convite por e-mail para ${nome} (${email})?`)) return;
+    try {
+      const { data: { user } } = await db.auth.getUser();
+      const { data: { session } } = await db.auth.getSession();
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/invite-user`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`,
+          'apikey': SUPABASE_KEY
+        },
+        body: JSON.stringify({ email, nome, owner_id: user.id })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert(`✅ Convite reenviado para ${email}!\n\nO membro receberá um e-mail para criar sua senha de acesso.`);
+      } else {
+        alert(`Erro ao reenviar convite: ${data.error || 'Tente novamente.'}`);
+      }
+    } catch(e) {
+      alert('Erro ao reenviar convite. Verifique a conexão.');
+    }
   }
 
   // ── Dados de plano carregados para o designer de fluxos ─────────────
@@ -5699,16 +5989,22 @@
 
     const { data: profile } = await db.from('profiles').select('evo_instance').eq('id', user.id).single();
 
-    // 3. Conta add-ons ativos
-    const { data: addons } = await db.from('pedidos_creditos')
-      .select('pacote')
-      .eq('user_id', user.id)
-      .eq('status', 'ativo')
-      .in('pacote', ['addon_agente', 'addon_numero', 'addon_objecao']);
-
-    const extraNums = (addons || []).filter(a => a.pacote === 'addon_numero').length;
-    const extraAgts = (addons || []).filter(a => a.pacote === 'addon_agente').length;
-    _fluxoObjecao   = (addons || []).some(a => a.pacote === 'addon_objecao');
+    // 3. Conta add-ons ativos (Super Admin tem tudo ilimitado e gratuito)
+    const isAdmin = currentProfile?.role === 'admin';
+    let extraNums = 0, extraAgts = 0;
+    if (isAdmin) {
+      _fluxoObjecao = true;
+      extraNums = 4; extraAgts = 4; // admin vê exemplos expandidos
+    } else {
+      const { data: addons } = await db.from('pedidos_creditos')
+        .select('pacote')
+        .eq('user_id', user.id)
+        .eq('status', 'ativo')
+        .in('pacote', ['addon_agente', 'addon_numero', 'addon_objecao']);
+      extraNums = (addons || []).filter(a => a.pacote === 'addon_numero').length;
+      extraAgts = (addons || []).filter(a => a.pacote === 'addon_agente').length;
+      _fluxoObjecao = (addons || []).some(a => a.pacote === 'addon_objecao');
+    }
 
     // 4. Monta listas
     const instBase = profile?.evo_instance || 'Número Principal';
