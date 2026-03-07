@@ -332,17 +332,18 @@ async function activateClient(
       .maybeSingle();
 
     // Renovação de tokens:
-    //   - Plano base (5M) → sempre reposto a cada renovação (tokens do mês expiram)
-    //   - Extras comprados → nunca expiram; calculamos quantos ainda restam e preservamos
+    //   - Tokens extras (comprados) são consumidos PRIMEIRO (preferência do cliente)
+    //   - Plano base (5M) é consumido por último → expira ao renovar se sobrar
     //
-    // extras_restantes = MIN(saldo_atual, tokens_extras_comprados)
-    //   Lógica: assumimos que o base é consumido antes dos extras.
-    //   Se o saldo atual ainda é >= total de extras, significa que os extras
-    //   estão todos intactos. Se é menor, o que sobrou é tudo extras.
-    const saldoAtual     = tc?.saldo_tokens   ?? 0;
-    const totalExtras    = tc?.tokens_extras   ?? 0;
-    const extrasRestantes = Math.min(saldoAtual, totalExtras);
-    const novoSaldo      = tokensIniciais + extrasRestantes;  // 5M base + extras restantes
+    // Se saldo > 5M: extras ainda intactos → extras_restantes = saldo - 5M
+    // Se saldo ≤ 5M: todos os extras foram consumidos → extras_restantes = 0
+    //
+    // extras_restantes = MAX(0, saldo_atual - BASE_MENSAL)
+    const BASE_MENSAL     = tokensIniciais;          // 5.000.000
+    const saldoAtual      = tc?.saldo_tokens ?? 0;
+    const totalExtras     = tc?.tokens_extras ?? 0;  // total comprado (para histórico/display)
+    const extrasRestantes = Math.max(0, saldoAtual - BASE_MENSAL);
+    const novoSaldo       = BASE_MENSAL + extrasRestantes;  // 5M novo base + extras restantes
 
     await adminDb.from("tokens_creditos").upsert({
       user_id: existingId,
