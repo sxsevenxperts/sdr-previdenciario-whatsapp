@@ -1126,7 +1126,7 @@
       ],
       "parameters": {
         "method": "GET",
-        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/equipe_membros",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/usuarios_extras",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -1148,7 +1148,7 @@
         "queryParameters": {
           "parameters": [
             {
-              "name": "user_id",
+              "name": "owner_id",
               "value": "={{ $('Calcula Score do Lead').first().json.userId }}"
             },
             {
@@ -1183,7 +1183,7 @@
         680
       ],
       "parameters": {
-        "jsCode": "// Seleciona membro da equipe ou cai no número padrão\nconst dados = $('Calcula Score do Lead').first().json;\nconst membros = $input.first().json;\n\nlet numeroDestino = dados.numeroDestino; // fallback config\nlet membroId = null;\nlet membroNome = 'Responsável padrão';\n\nif (Array.isArray(membros) && membros.length > 0) {\n  const m = membros[0];\n  numeroDestino = m.whatsapp || m.telefone || dados.numeroDestino;\n  membroId = m.id;\n  membroNome = m.nome || m.name || 'Membro da equipe';\n}\n\nreturn [{ json: { ...dados, numeroDestino, membroId, membroNome } }];\n"
+        "jsCode": "// Seleciona membro da equipe ou cai no número padrão\nconst dados = $('Calcula Score do Lead').first().json;\nconst membros = $input.first().json;\n\nlet numeroDestino = dados.numeroDestino; // fallback config\nlet membroId = null;\nlet membroNome = 'Responsável padrão';\n\nif (Array.isArray(membros) && membros.length > 0) {\n  const m = membros[0];\n  // usuarios_extras usa numero_atribuido\n  numeroDestino = m.numero_atribuido || dados.numeroDestino;\n  membroId = m.id;\n  membroNome = m.nome || 'Membro da equipe';\n}\n\nreturn [{ json: { ...dados, numeroDestino, membroId, membroNome } }];\n"
       },
       "notes": "Resolve o número de destino: membro da equipe (round-robin) ou fallback para numero_destino da config"
     },
@@ -1198,7 +1198,7 @@
       ],
       "parameters": {
         "method": "PATCH",
-        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/equipe_membros",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/usuarios_extras",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -1231,7 +1231,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={ JSON.stringify({ ultimo_atendimento: new Date().toISOString() }) }",
+        "jsonBody": "={{ JSON.stringify({ ultimo_atendimento: new Date().toISOString() }) }}",
         "options": {}
       },
       "notes": "Atualiza ultimo_atendimento do membro selecionado para manter round-robin justo"
@@ -1247,7 +1247,7 @@
       ],
       "parameters": {
         "method": "POST",
-        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/tarefas",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/create_lead_tarefa",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -1262,19 +1262,15 @@
             {
               "name": "Content-Type",
               "value": "application/json"
-            },
-            {
-              "name": "Prefer",
-              "value": "return=minimal"
             }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({\n  user_id: $('Calcula Score do Lead').first().json.userId,\n  numero_whatsapp: $('Calcula Score do Lead').first().json.numero,\n  titulo: 'Follow-up: ' + ($('Calcula Score do Lead').first().json.dadosQualificacao?.nome || $('Calcula Score do Lead').first().json.numero),\n  descricao: 'Lead qualificado automaticamente. Interesse: ' + ($('Calcula Score do Lead').first().json.dadosQualificacao?.tese || 'Não informado') + '. Score: ' + $('Calcula Score do Lead').first().json.score + '/100.',\n  prazo: new Date(Date.now() + 24*60*60*1000).toISOString(),\n  status: 'pendente',\n  prioridade: $('Calcula Score do Lead').first().json.score >= 70 ? 'alta' : 'media',\n  criado_por: 'agente_ia'\n}) }}",
+        "jsonBody": "={{ JSON.stringify({\n  p_user_id: $('Calcula Score do Lead').first().json.userId,\n  p_numero_whatsapp: $('Calcula Score do Lead').first().json.numero,\n  p_descricao: 'Follow-up: ' + ($('Calcula Score do Lead').first().json.dadosQualificacao?.nome || $('Calcula Score do Lead').first().json.numero) + '. Interesse: ' + ($('Calcula Score do Lead').first().json.dadosQualificacao?.tese || 'Não informado') + '. Score: ' + $('Calcula Score do Lead').first().json.score + '/100.',\n  p_prazo: new Date(Date.now() + 24*60*60*1000).toISOString().split('T')[0],\n  p_prioridade: $('Calcula Score do Lead').first().json.score >= 70 ? 'alta' : 'media'\n}) }}",
         "options": {}
       },
-      "notes": "Cria tarefa de follow-up automaticamente para leads qualificados. Prioridade alta se score >= 70."
+      "notes": "Cria tarefa via RPC create_lead_tarefa (busca lead por numero_whatsapp internamente)"
     }
   ],
   "connections": {
