@@ -16,7 +16,7 @@
  * ADDONS (identificados pelo offer code da Hotmart — todas as ofertas pertencem ao produto 7336568):
  *   → atualiza assinatura do cliente existente
  *   → Offer codes hardcoded: cjszocj0 (agente), 8ivu9gbb (objeção), w17oc1q3 (número),
- *     vhne1box (usuário), f623v6bt (tokens Médio 5M)/z9f5y7h3 (Mini 10M)/yfbmox0t (Grande 20M)/e23bospr (Max 50M)
+ *     vhne1box (usuário), f623v6bt/z9f5y7h3/yfbmox0t/e23bospr (tokens)
  *
  * Endpoint público (verify_jwt: false).
  * Segurança: token secreto via HOTMART_WEBHOOK_SECRET (query param ?token= ou header X-Hotmart-Webhook-Token).
@@ -46,10 +46,10 @@ const ADDON_OFFERS: Record<string, { type: string; tokens?: number }> = {
   "8ivu9gbb": { type: "objecao" },                   // R$127/mês
   "w17oc1q3": { type: "numero_extra" },               // R$97/mês
   "vhne1box": { type: "usuario_extra" },              // R$57/mês
-  "f623v6bt": { type: "tokens_extra", tokens:  5_000_000 },  // Médio  R$97  (pay.hotmart.com/V104801379S)
-  "z9f5y7h3": { type: "tokens_extra", tokens: 10_000_000 },  // Mini  R$177  (pay.hotmart.com/U104799604W)
-  "yfbmox0t": { type: "tokens_extra", tokens: 20_000_000 },  // Grande R$297  (pay.hotmart.com/W104801398L)
-  "e23bospr": { type: "tokens_extra", tokens: 50_000_000 },  // Max   R$597  (pay.hotmart.com/U104801421X)
+  "f623v6bt": { type: "tokens_extra", tokens:  5_000_000 },  // Mini  R$97
+  "z9f5y7h3": { type: "tokens_extra", tokens: 10_000_000 },  // Médio R$177
+  "yfbmox0t": { type: "tokens_extra", tokens: 20_000_000 },  // Grande R$297
+  "e23bospr": { type: "tokens_extra", tokens: 50_000_000 },  // Max   R$597
 };
 
 const adminDb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
@@ -180,7 +180,7 @@ async function applyAddon(
   transactionId: string,
   valor: number,
   recurrenceNumber: number,  // 1 = primeira compra, > 1 = renovação
-  tokenQtd?: number,         // quantidade de tokens (Médio=5M, Mini=10M, Grande=20M, Max=50M)
+  tokenQtd?: number,         // quantidade de tokens (Mini=5M, Médio=10M, Grande=20M, Max=50M)
 ): Promise<{ action: string; userId: string | null }> {
   const userId = await findUserByEmail(buyerEmail);
 
