@@ -982,6 +982,18 @@
     </div>
     <button class="btn-primary" id="btn-login" onclick="login()">Entrar</button>
     <div class="error-msg" id="login-error"></div>
+    <div style="text-align:center;margin-top:16px;">
+      <a href="#" id="link-forgot" onclick="showForgotPassword(event)" style="color:#8b949e;font-size:13px;text-decoration:none;">Esqueceu sua senha?</a>
+    </div>
+    <!-- Painel de recuperação de senha (oculto por padrão) -->
+    <div id="forgot-panel" style="display:none;margin-top:20px;border-top:1px solid #30363d;padding-top:20px;">
+      <p style="color:#8b949e;font-size:13px;margin-bottom:12px;">Digite seu e-mail para receber o link de redefinição:</p>
+      <div class="form-group">
+        <input type="email" id="reset-email" placeholder="seu@email.com" />
+      </div>
+      <button class="btn-primary" id="btn-reset" onclick="sendResetEmail()">Enviar link de recuperação</button>
+      <div id="reset-msg" style="margin-top:10px;font-size:13px;text-align:center;"></div>
+    </div>
   </div>
 </div>
 
@@ -2733,6 +2745,38 @@
   // =====================
   // AUTH
   // =====================
+  function showForgotPassword(e) {
+    e.preventDefault();
+    const panel = document.getElementById('forgot-panel');
+    const link  = document.getElementById('link-forgot');
+    const isOpen = panel.style.display !== 'none';
+    panel.style.display = isOpen ? 'none' : 'block';
+    link.textContent = isOpen ? 'Esqueceu sua senha?' : 'Voltar ao login';
+    // Pré-preenche o e-mail se já digitado
+    const emailLogin = document.getElementById('login-email').value;
+    if (!isOpen && emailLogin) document.getElementById('reset-email').value = emailLogin;
+    document.getElementById('reset-msg').textContent = '';
+  }
+
+  async function sendResetEmail() {
+    const email = document.getElementById('reset-email').value.trim();
+    const btn   = document.getElementById('btn-reset');
+    const msg   = document.getElementById('reset-msg');
+    if (!email) { msg.style.color = '#f85149'; msg.textContent = 'Informe seu e-mail.'; return; }
+    btn.disabled = true; btn.textContent = 'Enviando...'; msg.textContent = '';
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + window.location.pathname
+    });
+    btn.disabled = false; btn.textContent = 'Enviar link de recuperação';
+    if (error) {
+      msg.style.color = '#f85149';
+      msg.textContent = 'Erro ao enviar. Verifique o e-mail e tente novamente.';
+    } else {
+      msg.style.color = '#4ade80';
+      msg.textContent = '✅ Link enviado! Verifique sua caixa de entrada.';
+    }
+  }
+
   async function login() {
     const email = document.getElementById('login-email').value;
     const pass  = document.getElementById('login-password').value;
