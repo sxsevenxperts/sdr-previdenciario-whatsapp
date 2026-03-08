@@ -78,7 +78,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer SUA_CHAVE_OPENAI_AQUI"
+              "value": "={{ 'Bearer ' + $env.OPENAI_API_KEY }}"
             }
           ]
         },
@@ -378,14 +378,14 @@
         }
       },
       "id": "node-agente-ia",
-      "name": "Agente SDR — IA",
+      "name": "Agente SDR — IA (OpenAI)",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.7,
       "position": [
-        3080,
-        540
+        3300,
+        380
       ],
-      "notes": "Configure a credencial OpenAI."
+      "notes": "Agente via OpenAI (GPT). Ativo quando ai_provider != 'claude'."
     },
     {
       "parameters": {
@@ -464,9 +464,10 @@
     },
     {
       "parameters": {
-        "model": "gpt-4o",
+        "model": "={{ $('Monta system prompt com config').first().json.config?.openai_model || 'gpt-4o' }}",
         "options": {
-          "temperature": 0.3
+          "temperature": "={{ parseFloat($('Monta system prompt com config').first().json.config?.openai_temperature || '0.3') }}",
+          "maxTokens": "={{ parseInt($('Monta system prompt com config').first().json.config?.openai_max_tokens || '1024') }}"
         }
       },
       "id": "node-llm-openai",
@@ -503,8 +504,18 @@
                 "type": "boolean",
                 "operation": "equal"
               }
+            },
+            {
+              "id": "cond-audio-contextual",
+              "leftValue": "={{ $('Monta system prompt com config').first().json.mensagemOriginalAudio === true }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
             }
-          ]
+          ],
+          "combinator": "and"
         }
       },
       "id": "node-switch-audio-resp",
@@ -525,7 +536,7 @@
           "parameters": [
             {
               "name": "Authorization",
-              "value": "=Bearer SUA_CHAVE_OPENAI_AQUI"
+              "value": "={{ 'Bearer ' + $env.OPENAI_API_KEY }}"
             },
             {
               "name": "Content-Type",
@@ -624,7 +635,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const dados = $('Processa resposta e qualificação').first().json;\n// Usa saldo do nó 'Tokens disponíveis?' que tem o valor real\nconst saldoAtual = $('Tokens disponíveis?').first().json.saldoTokens || 0;\n\n// Estima tokens usados nesta interação (~37037 tokens por lead interaction)\nconst tokensEstimado = 37037;\nconst novoSaldo = Math.max(0, saldoAtual - tokensEstimado);\n\nreturn [{ json: { ...dados, tokensUsados: tokensEstimado, novoSaldo } }];"
+        "jsCode": "const dados = $('Processa resposta e qualificação').first().json;\nconst saldoAtual = $('Tokens disponíveis?').first().json.saldoTokens || 0;\nconst config = $('Monta system prompt com config').first().json.config || {};\n\n// Estimativa bruta de tokens (≈4 chars por token)\nconst historicoTexto = $('Monta histórico da conversa').first().json.historicoTexto || '';\nconst systemPrompt = $('Monta system prompt com config').first().json.systemPrompt || '';\nconst respostaLen = (dados.textoParaLead || '').length;\nconst tokensRaw = Math.max(500, Math.round((historicoTexto.length + systemPrompt.length + respostaLen) / 4));\n\n// Multiplicador de custo relativo ao gpt-4o-mini (base = 1.0)\n// Garante que modelos premium debitam mais créditos proporcionalmente ao custo real\nconst CUSTO_MODELO = {\n  'gpt-4.1-nano':              0.3,\n  'gpt-4.1-mini':              0.8,\n  'gpt-4.1':                   5.5,\n  'gpt-4o-mini':               1.0,\n  'gpt-4o':                    8.0,\n  'o4-mini':                   2.0,\n  'o3-mini':                   3.0,\n  'o3':                       12.0,\n  'gpt-4-turbo':               6.0,\n  'gpt-3.5-turbo':             0.2,\n  'claude-haiku-4-5-20251001': 0.9,\n  'claude-sonnet-4-6':        10.0,\n  'claude-opus-4-6':          50.0,\n  'claude-3-5-haiku-20241022':  0.9,\n  'claude-3-5-sonnet-20241022':10.0,\n  'claude-3-opus-20240229':   40.0,\n};\n\nconst provider = config.ai_provider || 'openai';\nconst modeloAtivo = provider === 'claude'\n  ? (config.claude_model || 'claude-haiku-4-5-20251001')\n  : (config.openai_model || 'gpt-4o-mini');\n\nconst multiplicador = CUSTO_MODELO[modeloAtivo] ?? 1.0;\nconst tokensEstimado = Math.round(tokensRaw * multiplicador);\nconst novoSaldo = Math.max(0, saldoAtual - tokensEstimado);\n\nreturn [{ json: { ...dados, tokensUsados: tokensEstimado, novoSaldo, modeloAtivo, multiplicador } }];"
       },
       "id": "node-desconta-tokens",
       "name": "Desconta tokens do saldo",
@@ -638,7 +649,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/update_token_balance",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/decrementar_tokens",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -658,7 +669,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ p_user_id: $json.userId, p_novo_saldo: $json.novoSaldo, p_tokens_usados_mes: ($('Verifica saldo de tokens').first().json[0]?.tokens_usados_mes || 0) + $json.tokensUsados }) }}",
+        "jsonBody": "={{ JSON.stringify({ p_user_id: $json.userId, p_tokens: $json.tokensUsados }) }}",
         "options": {}
       },
       "id": "node-update-saldo",
@@ -669,7 +680,7 @@
         4400,
         540
       ],
-      "notes": "Desconta tokens usados do saldo do cliente."
+      "notes": "Desconta tokens atomicamente via RPC decrementar_tokens (sem race condition)."
     },
     {
       "parameters": {
@@ -977,7 +988,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const dados = $input.first().json;\nconst apiKey = 'SUA_CHAVE_OPENAI_AQUI';\n\n// Monta o conteúdo da mensagem para Vision\nconst imageContent = dados.imagemBase64\n  ? { type: 'image_url', image_url: { url: `data:${dados.imagemMimetype};base64,${dados.imagemBase64}`, detail: 'high' } }\n  : dados.imagemUrl\n    ? { type: 'image_url', image_url: { url: dados.imagemUrl, detail: 'high' } }\n    : null;\n\nif (!imageContent) {\n  const descricao = dados.imagemCaption ? `Lead enviou uma imagem com a legenda: \"${dados.imagemCaption}\"` : 'Lead enviou uma imagem (sem conteúdo disponível)';\n  return [{ json: { ...dados, mensagem: descricao, ehImagem: true } }];\n}\n\nconst messages = [\n  { role: 'system', content: 'Você é um assistente que descreve imagens enviadas por clientes para uma empresa. Descreva o que vê na imagem de forma objetiva, mencionando qualquer documento, proposta, contrato, comprovante ou material relevante que apareça. Se for um documento, leia e transcreva o conteúdo principal.' },\n  { role: 'user', content: [\n    { type: 'text', text: dados.imagemCaption ? `O cliente enviou esta imagem com o comentário: \"${dados.imagemCaption}\". Descreva e analise.` : 'O cliente enviou esta imagem. Descreva e analise o conteúdo.' },\n    imageContent\n  ] }\n];\n\nconst response = await $helpers.request({\n  method: 'POST',\n  url: 'https://api.openai.com/v1/chat/completions',\n  headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },\n  body: JSON.stringify({ model: 'gpt-4o', messages, max_tokens: 1024 }),\n  responseType: 'json'\n});\n\nconst descricao = response.choices?.[0]?.message?.content || 'Imagem recebida mas não foi possível analisar.';\nconst mensagemFinal = `📷 [Lead enviou uma imagem]:\\n${descricao}`;\n\nreturn [{ json: { ...dados, mensagem: mensagemFinal, ehImagem: true } }];"
+        "jsCode": "const dados = $input.first().json;\nconst apiKey = $env.OPENAI_API_KEY;\n\n// Monta o conteúdo da mensagem para Vision\nconst imageContent = dados.imagemBase64\n  ? { type: 'image_url', image_url: { url: `data:${dados.imagemMimetype};base64,${dados.imagemBase64}`, detail: 'high' } }\n  : dados.imagemUrl\n    ? { type: 'image_url', image_url: { url: dados.imagemUrl, detail: 'high' } }\n    : null;\n\nif (!imageContent) {\n  const descricao = dados.imagemCaption ? `Lead enviou uma imagem com a legenda: \"${dados.imagemCaption}\"` : 'Lead enviou uma imagem (sem conteúdo disponível)';\n  return [{ json: { ...dados, mensagem: descricao, ehImagem: true } }];\n}\n\nconst messages = [\n  { role: 'system', content: 'Você é um assistente que descreve imagens enviadas por clientes para uma empresa. Descreva o que vê na imagem de forma objetiva, mencionando qualquer documento, proposta, contrato, comprovante ou material relevante que apareça. Se for um documento, leia e transcreva o conteúdo principal.' },\n  { role: 'user', content: [\n    { type: 'text', text: dados.imagemCaption ? `O cliente enviou esta imagem com o comentário: \"${dados.imagemCaption}\". Descreva e analise.` : 'O cliente enviou esta imagem. Descreva e analise o conteúdo.' },\n    imageContent\n  ] }\n];\n\nconst response = await $helpers.request({\n  method: 'POST',\n  url: 'https://api.openai.com/v1/chat/completions',\n  headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },\n  body: JSON.stringify({ model: 'gpt-4o', messages, max_tokens: 1024 }),\n  responseType: 'json'\n});\n\nconst descricao = response.choices?.[0]?.message?.content || 'Imagem recebida mas não foi possível analisar.';\nconst mensagemFinal = `📷 [Lead enviou uma imagem]:\\n${descricao}`;\n\nreturn [{ json: { ...dados, mensagem: mensagemFinal, ehImagem: true } }];"
       },
       "id": "node-descreve-imagem",
       "name": "Descreve imagem (Vision)",
@@ -1015,7 +1026,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const dados = $input.first().json;\nconst apiKey = 'SUA_CHAVE_OPENAI_AQUI';\nconst isPdf = dados.docMimetype?.includes('pdf');\n\nif (!dados.docBase64 && !dados.docUrl) {\n  const mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\"]:\\n(Arquivo recebido mas sem conteúdo legível disponível. Pergunte ao lead sobre o conteúdo.)`;\n  return [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];\n}\n\nif (isPdf && dados.docBase64) {\n  // Chama GPT-4o com o PDF como base64 para extrair texto\n  const response = await $helpers.request({\n    method: 'POST',\n    url: 'https://api.openai.com/v1/chat/completions',\n    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      model: 'gpt-4o',\n      messages: [\n        { role: 'system', content: 'Você é um assistente que extrai e resume o conteúdo de documentos enviados por clientes. Leia o documento e forneça um resumo objetivo do conteúdo principal, incluindo datas, nomes, valores, códigos ou qualquer informação relevante para o atendimento.' },\n        { role: 'user', content: [\n          { type: 'text', text: `O cliente enviou o arquivo \"${dados.docFileName}\". Extraia e resuma o conteúdo principal.` },\n          { type: 'file', file: { filename: dados.docFileName, file_data: `data:${dados.docMimetype};base64,${dados.docBase64}` } }\n        ] }\n      ],\n      max_tokens: 2048\n    }),\n    responseType: 'json'\n  });\n  const texto = response.choices?.[0]?.message?.content || 'Não foi possível extrair o conteúdo.';\n  const mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\"]:\\n${texto}`;\n  return [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];\n}\n\n// Arquivo não-PDF ou sem base64 — menciona ao agente\nconst mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\" (${dados.docMimetype})]:\\n(Arquivo recebido. Responda ao lead solicitando o conteúdo em formato de texto ou peça que descreva o documento.)`;\nreturn [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];"
+        "jsCode": "const dados = $input.first().json;\nconst apiKey = $env.OPENAI_API_KEY;\nconst isPdf = dados.docMimetype?.includes('pdf');\n\nif (!dados.docBase64 && !dados.docUrl) {\n  const mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\"]:\\n(Arquivo recebido mas sem conteúdo legível disponível. Pergunte ao lead sobre o conteúdo.)`;\n  return [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];\n}\n\nif (isPdf && dados.docBase64) {\n  // Chama GPT-4o com o PDF como base64 para extrair texto\n  const response = await $helpers.request({\n    method: 'POST',\n    url: 'https://api.openai.com/v1/chat/completions',\n    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      model: 'gpt-4o',\n      messages: [\n        { role: 'system', content: 'Você é um assistente que extrai e resume o conteúdo de documentos enviados por clientes. Leia o documento e forneça um resumo objetivo do conteúdo principal, incluindo datas, nomes, valores, códigos ou qualquer informação relevante para o atendimento.' },\n        { role: 'user', content: [\n          { type: 'text', text: `O cliente enviou o arquivo \"${dados.docFileName}\". Extraia e resuma o conteúdo principal.` },\n          { type: 'file', file: { filename: dados.docFileName, file_data: `data:${dados.docMimetype};base64,${dados.docBase64}` } }\n        ] }\n      ],\n      max_tokens: 2048\n    }),\n    responseType: 'json'\n  });\n  const texto = response.choices?.[0]?.message?.content || 'Não foi possível extrair o conteúdo.';\n  const mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\"]:\\n${texto}`;\n  return [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];\n}\n\n// Arquivo não-PDF ou sem base64 — menciona ao agente\nconst mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\" (${dados.docMimetype})]:\\n(Arquivo recebido. Responda ao lead solicitando o conteúdo em formato de texto ou peça que descreva o documento.)`;\nreturn [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];"
       },
       "id": "node-extrai-doc",
       "name": "Extrai texto documento",
@@ -1100,6 +1111,86 @@
         4620,
         760
       ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond-provider-claude",
+              "leftValue": "={{ $json.config?.ai_provider }}",
+              "rightValue": "claude",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "node-if-provider",
+      "name": "Provider IA?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3080,
+        540
+      ],
+      "notes": "True → Claude (Anthropic) | False → OpenAI (GPT)"
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "=Histórico da conversa:\n{{ $json.historicoTexto }}\n\nNova mensagem do lead: {{ $json.mensagem }}",
+        "options": {
+          "systemMessage": "={{ $json.systemPrompt }}",
+          "maxIterations": 5
+        }
+      },
+      "id": "node-agente-ia-claude",
+      "name": "Agente SDR — IA (Claude)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        3300,
+        700
+      ],
+      "notes": "Agente via Claude (Anthropic). Ativo quando ai_provider = 'claude'."
+    },
+    {
+      "parameters": {
+        "model": "={{ $('Monta system prompt com config').first().json.config?.claude_model || 'claude-opus-4-6' }}",
+        "options": {
+          "temperature": "={{ parseFloat($('Monta system prompt com config').first().json.config?.claude_temperature || '0.3') }}",
+          "maxTokensToSample": "={{ parseInt($('Monta system prompt com config').first().json.config?.claude_max_tokens || '1024') }}"
+        }
+      },
+      "id": "node-llm-claude",
+      "name": "LLM — Claude",
+      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
+      "typeVersion": 1.3,
+      "position": [
+        3080,
+        900
+      ],
+      "notes": "Configure credencial Anthropic no n8n. Modelo e temperatura lidos do agente_config."
+    },
+    {
+      "parameters": {
+        "mode": "chooseBranch",
+        "chooseBranchMode": "waitForAll",
+        "output": "firstFound"
+      },
+      "id": "node-merge-ia-output",
+      "name": "Merge — Saída IA",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        3520,
+        540
+      ],
+      "notes": "Une saída do Agent OpenAI ou Claude (apenas um executa por rodada)."
     }
   ],
   "connections": {
@@ -1275,7 +1366,25 @@
       "main": [
         [
           {
-            "node": "Agente SDR — IA",
+            "node": "Provider IA?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Provider IA?": {
+      "main": [
+        [
+          {
+            "node": "Agente SDR — IA (Claude)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente SDR — IA (OpenAI)",
             "type": "main",
             "index": 0
           }
@@ -1286,7 +1395,12 @@
       "ai_tool": [
         [
           {
-            "node": "Agente SDR — IA",
+            "node": "Agente SDR — IA (OpenAI)",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Agente SDR — IA (Claude)",
             "type": "ai_tool",
             "index": 0
           }
@@ -1297,7 +1411,12 @@
       "ai_tool": [
         [
           {
-            "node": "Agente SDR — IA",
+            "node": "Agente SDR — IA (OpenAI)",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Agente SDR — IA (Claude)",
             "type": "ai_tool",
             "index": 0
           }
@@ -1319,14 +1438,47 @@
       "ai_languageModel": [
         [
           {
-            "node": "Agente SDR — IA",
+            "node": "Agente SDR — IA (OpenAI)",
             "type": "ai_languageModel",
             "index": 0
           }
         ]
       ]
     },
-    "Agente SDR — IA": {
+    "LLM — Claude": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente SDR — IA (Claude)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente SDR — IA (OpenAI)": {
+      "main": [
+        [
+          {
+            "node": "Merge — Saída IA",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Agente SDR — IA (Claude)": {
+      "main": [
+        [
+          {
+            "node": "Merge — Saída IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge — Saída IA": {
       "main": [
         [
           {
@@ -1650,7 +1802,7 @@
     "tts"
   ],
   "meta": {
-    "description": "XPERT.IA — Agente SDR WhatsApp com suporte a áudio (Whisper STT + OpenAI TTS). Multi-tenant com verificação de saldo de tokens. Cada cliente tem dados isolados.",
-    "version": "5.0.0"
+    "description": "XPERT.IA — Agente SDR WhatsApp com suporte a áudio (Whisper STT + OpenAI TTS). Multi-tenant com verificação de saldo de tokens. Suporte a OpenAI (GPT) e Claude (Anthropic) configuráveis por cliente.",
+    "version": "6.0.0"
   }
 }
