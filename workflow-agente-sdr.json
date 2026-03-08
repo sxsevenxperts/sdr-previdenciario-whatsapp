@@ -635,7 +635,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const dados = $('Processa resposta e qualificação').first().json;\nconst saldoAtual = $('Tokens disponíveis?').first().json.saldoTokens || 0;\nconst config = $('Monta system prompt com config').first().json.config || {};\n\n// Estimativa bruta de tokens (≈4 chars por token)\nconst historicoTexto = $('Monta histórico da conversa').first().json.historicoTexto || '';\nconst systemPrompt = $('Monta system prompt com config').first().json.systemPrompt || '';\nconst respostaLen = (dados.textoParaLead || '').length;\nconst tokensRaw = Math.max(500, Math.round((historicoTexto.length + systemPrompt.length + respostaLen) / 4));\n\n// Multiplicador de custo relativo ao gpt-4o-mini (base = 1.0)\n// Garante que modelos premium debitam mais créditos proporcionalmente ao custo real\nconst CUSTO_MODELO = {\n  'gpt-4.1-nano':              0.3,\n  'gpt-4.1-mini':              0.8,\n  'gpt-4.1':                   5.5,\n  'gpt-4o-mini':               1.0,\n  'gpt-4o':                    8.0,\n  'o4-mini':                   2.0,\n  'o3-mini':                   3.0,\n  'o3':                       12.0,\n  'gpt-4-turbo':               6.0,\n  'gpt-3.5-turbo':             0.2,\n  'claude-haiku-4-5-20251001': 0.9,\n  'claude-sonnet-4-6':        10.0,\n  'claude-opus-4-6':          50.0,\n  'claude-3-5-haiku-20241022':  0.9,\n  'claude-3-5-sonnet-20241022':10.0,\n  'claude-3-opus-20240229':   40.0,\n};\n\nconst provider = config.ai_provider || 'openai';\nconst modeloAtivo = provider === 'claude'\n  ? (config.claude_model || 'claude-haiku-4-5-20251001')\n  : (config.openai_model || 'gpt-4o-mini');\n\nconst multiplicador = CUSTO_MODELO[modeloAtivo] ?? 1.0;\nconst tokensEstimado = Math.round(tokensRaw * multiplicador);\nconst novoSaldo = Math.max(0, saldoAtual - tokensEstimado);\n\nreturn [{ json: { ...dados, tokensUsados: tokensEstimado, novoSaldo, modeloAtivo, multiplicador } }];"
+        "jsCode": "const dados = $('Processa resposta e qualificação').first().json;\nconst saldoAtual = $('Tokens disponíveis?').first().json.saldoTokens || 0;\nconst config = $('Monta system prompt com config').first().json.config || {};\n\n// Estimativa bruta de tokens (≈4 chars por token)\nconst historicoTexto = $('Monta histórico da conversa').first().json.historicoTexto || '';\nconst systemPrompt = $('Monta system prompt com config').first().json.systemPrompt || '';\nconst respostaLen = (dados.textoParaLead || '').length;\nconst tokensRaw = Math.max(500, Math.round((historicoTexto.length + systemPrompt.length + respostaLen) / 4));\n\n// Multiplicador de custo relativo ao gpt-4o-mini (base = 1.0)\n// Garante que modelos premium debitam mais créditos proporcionalmente ao custo real\nconst CUSTO_MODELO = {\n  'gpt-4.1-nano':              0.3,\n  'gpt-4.1-mini':              0.8,\n  'gpt-4.1':                   5.5,\n  'gpt-4o-mini':               1.0,\n  'gpt-4o':                    8.0,\n  'o4-mini':                   2.0,\n  'o3-mini':                   3.0,\n  'o3':                       12.0,\n  'gpt-4-turbo':               6.0,\n  'gpt-3.5-turbo':             0.2,\n  'claude-haiku-4-5-20251001': 0.9,\n  'claude-sonnet-4-6':        10.0,\n  'claude-opus-4-6':          50.0,\n  'claude-3-5-haiku-20241022':  0.9,\n  'claude-3-5-sonnet-20241022':10.0,\n  'claude-3-opus-20240229':   40.0,\n  // Google Gemini (via AI Studio — gratuito com rate limit)\n  'gemini-2.0-flash-lite':    0.1,\n  'gemini-2.0-flash':         0.2,\n  'gemini-1.5-flash':         0.2,\n  'gemini-1.5-pro':           1.5,\n  'gemini-2.5-pro-exp-03-25': 5.0,\n};\n\nconst provider = config.ai_provider || 'openai';\nconst modeloAtivo = provider === 'claude'\n  ? (config.claude_model || 'claude-haiku-4-5-20251001')\n  : (config.openai_model || 'gpt-4o-mini');\n\nconst multiplicador = CUSTO_MODELO[modeloAtivo] ?? 1.0;\nconst tokensEstimado = Math.round(tokensRaw * multiplicador);\nconst novoSaldo = Math.max(0, saldoAtual - tokensEstimado);\n\nreturn [{ json: { ...dados, tokensUsados: tokensEstimado, novoSaldo, modeloAtivo, multiplicador } }];"
       },
       "id": "node-desconta-tokens",
       "name": "Desconta tokens do saldo",
@@ -1191,6 +1191,69 @@
         540
       ],
       "notes": "Une saída do Agent OpenAI ou Claude (apenas um executa por rodada)."
+    },
+    {
+      "id": "node-if-provider-google",
+      "name": "Provider Google?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        3080,
+        700
+      ],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond-provider-google",
+              "leftValue": "={{ $json.config?.ai_provider }}",
+              "rightValue": "google",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-llm-gemini",
+      "name": "LLM — Gemini",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        3080,
+        1080
+      ],
+      "parameters": {
+        "modelName": "={{ $('Monta system prompt com config').first().json.config?.google_model || 'gemini-2.0-flash' }}",
+        "options": {
+          "temperature": "={{ parseFloat($('Monta system prompt com config').first().json.config?.google_temperature || '0.3') }}",
+          "maxOutputTokens": "={{ parseInt($('Monta system prompt com config').first().json.config?.google_max_tokens || '1024') }}"
+        }
+      },
+      "credentials": {}
+    },
+    {
+      "parameters": {
+        "agent": "conversationalAgent",
+        "promptType": "define",
+        "text": "=Histórico da conversa:\n{{ $json.historicoTexto }}\n\nNova mensagem do lead: {{ $json.mensagem }}",
+        "options": {
+          "systemMessage": "={{ $json.systemPrompt }}",
+          "maxIterations": 5
+        }
+      },
+      "id": "node-agente-ia-google",
+      "name": "Agente SDR — IA (Google)",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        3300,
+        920
+      ],
+      "notes": "Agente via Claude (Anthropic). Ativo quando ai_provider = 'claude'."
     }
   ],
   "connections": {
@@ -1384,7 +1447,7 @@
         ],
         [
           {
-            "node": "Agente SDR — IA (OpenAI)",
+            "node": "Provider Google?",
             "type": "main",
             "index": 0
           }
@@ -1403,6 +1466,11 @@
             "node": "Agente SDR — IA (Claude)",
             "type": "ai_tool",
             "index": 0
+          },
+          {
+            "node": "Agente SDR — IA (Google)",
+            "type": "ai_tool",
+            "index": 0
           }
         ]
       ]
@@ -1417,6 +1485,11 @@
           },
           {
             "node": "Agente SDR — IA (Claude)",
+            "type": "ai_tool",
+            "index": 0
+          },
+          {
+            "node": "Agente SDR — IA (Google)",
             "type": "ai_tool",
             "index": 0
           }
@@ -1785,6 +1858,46 @@
           }
         ],
         []
+      ]
+    },
+    "Provider Google?": {
+      "main": [
+        [
+          {
+            "node": "Agente SDR — IA (Google)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente SDR — IA (OpenAI)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente SDR — IA (Google)": {
+      "main": [
+        [
+          {
+            "node": "Merge — Saída IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LLM — Gemini": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente SDR — IA (Google)",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
       ]
     }
   },

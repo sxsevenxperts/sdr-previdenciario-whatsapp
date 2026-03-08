@@ -86,6 +86,8 @@
     .ai-provider-btn { display:flex; align-items:center; gap:7px; padding:8px 16px; border-radius:8px; border:1px solid var(--border); background:var(--bg-card2); color:var(--text2); font-size:13px; font-weight:600; cursor:pointer; transition:all .15s; }
     .ai-provider-btn:hover { border-color:var(--lime); color:var(--text); }
     .ai-provider-btn.active { border-color:var(--lime); background:var(--lime-bg); color:var(--lime); }
+    .ai-model-row:hover { background:rgba(255,255,255,.04) !important; }
+    .ai-model-row.ai-model-selected { font-weight:600; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); }
 
@@ -1534,97 +1536,253 @@
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M4.95 3h14.1L24 12l-4.95 9H4.95L0 12z"/></svg>
             Claude (Anthropic)
           </button>
+          <button class="ai-provider-btn" id="btn-provider-google" onclick="switchAiProvider('google')" style="background:rgba(66,133,244,.12);border-color:rgba(66,133,244,.3);color:#93c5fd;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Google (Gemini)
+          </button>
         </div>
 
         <!-- OpenAI config -->
         <div id="ai-config-openai">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-            <div class="field-group" style="margin:0;">
-              <label>Chave de API OpenAI</label>
-              <input type="password" id="cfg-openai_api_key" placeholder="sk-..." autocomplete="new-password" />
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+            <!-- Esquerda: campos -->
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div class="field-group" style="margin:0;">
+                <label>Chave de API OpenAI</label>
+                <input type="password" id="cfg-openai_api_key" placeholder="sk-..." autocomplete="new-password" />
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="field-group" style="margin:0;">
+                  <label>Temperature <span style="color:var(--text3);font-weight:400;">(0–2)</span></label>
+                  <input type="number" id="cfg-openai_temperature" value="0.7" min="0" max="2" step="0.1" />
+                </div>
+                <div class="field-group" style="margin:0;">
+                  <label>Max tokens</label>
+                  <input type="number" id="cfg-openai_max_tokens" value="1024" min="64" max="4096" step="64" />
+                </div>
+              </div>
+              <div class="ai-model-info" id="openai-model-info" style="background:rgba(16,163,127,.08);border:1px solid rgba(16,163,127,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:#6ee7b7;margin:0;">
+                💰 <strong>gpt-4o-mini:</strong> ~$0.15/M input + $0.60/M output — custo ~R$4 por 5M tokens · margem ~<strong>92%</strong>
+              </div>
             </div>
-            <div class="field-group" style="margin:0;">
-              <label>Modelo</label>
-              <select id="cfg-openai_model">
-                <optgroup label="GPT-4.1 (abril 2025)">
-                  <option value="gpt-4.1-nano">gpt-4.1-nano — fator 0.3×</option>
-                  <option value="gpt-4.1-mini">gpt-4.1-mini — fator 0.8× (recomendado)</option>
-                  <option value="gpt-4.1">gpt-4.1 — fator 5.5×</option>
-                </optgroup>
-                <optgroup label="GPT-4o">
-                  <option value="gpt-4o-mini">gpt-4o-mini — fator 1.0× (base)</option>
-                  <option value="gpt-4o">gpt-4o — fator 8.0×</option>
-                </optgroup>
-                <optgroup label="Reasoning (o-series)">
-                  <option value="o4-mini">o4-mini — fator 2.0×</option>
-                  <option value="o3-mini">o3-mini — fator 3.0×</option>
-                  <option value="o3">o3 — fator 12×</option>
-                </optgroup>
-                <optgroup label="Legado">
-                  <option value="gpt-4-turbo">gpt-4-turbo — fator 6.0×</option>
-                  <option value="gpt-3.5-turbo">gpt-3.5-turbo — fator 0.2×</option>
-                </optgroup>
+            <!-- Direita: tabela de seleção -->
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;">Modelo <span style="color:var(--text3);font-weight:400;">(clique para selecionar)</span></label>
+              <select id="cfg-openai_model" style="display:none;">
+                <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                <option value="gpt-4.1-nano">gpt-4.1-nano</option>
+                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                <option value="gpt-4o-mini" selected>gpt-4o-mini</option>
+                <option value="o4-mini">o4-mini</option>
+                <option value="o3-mini">o3-mini</option>
+                <option value="gpt-4.1">gpt-4.1</option>
+                <option value="gpt-4-turbo">gpt-4-turbo</option>
+                <option value="gpt-4o">gpt-4o</option>
+                <option value="o3">o3</option>
               </select>
+              <div style="overflow:hidden;border-radius:8px;border:1px solid var(--border);max-height:260px;overflow-y:auto;">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                  <thead>
+                    <tr style="background:var(--bg-card2);position:sticky;top:0;z-index:1;">
+                      <th style="text-align:left;padding:7px 10px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);">Modelo</th>
+                      <th style="text-align:right;padding:7px 10px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);">Multiplicador</th>
+                    </tr>
+                  </thead>
+                  <tbody id="openai-model-rows">
+                    <tr class="ai-model-row" data-provider="openai" data-model="gpt-3.5-turbo" onclick="selectAiModel('openai','gpt-3.5-turbo')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">gpt-3.5-turbo</code> <span style="font-size:10px;color:var(--text3);">legado</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#6ee7b7;">0.2×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="openai" data-model="gpt-4.1-nano" onclick="selectAiModel('openai','gpt-4.1-nano')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">gpt-4.1-nano</code></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#6ee7b7;">0.3×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="openai" data-model="gpt-4.1-mini" onclick="selectAiModel('openai','gpt-4.1-mini')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">gpt-4.1-mini</code> <span style="color:#6ee7b7;font-size:10px;">⭐</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#6ee7b7;">0.8×</td>
+                    </tr>
+                    <tr class="ai-model-row ai-model-selected" data-provider="openai" data-model="gpt-4o-mini" onclick="selectAiModel('openai','gpt-4o-mini')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;background:rgba(16,163,127,.1);">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">gpt-4o-mini</code> <span style="font-size:10px;color:var(--text3);font-style:italic;">base</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#6ee7b7;">1.0×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="openai" data-model="o4-mini" onclick="selectAiModel('openai','o4-mini')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">o4-mini</code> <span style="font-size:10px;color:var(--text3);">reasoning</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#fde68a;">2.0×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="openai" data-model="o3-mini" onclick="selectAiModel('openai','o3-mini')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">o3-mini</code> <span style="font-size:10px;color:var(--text3);">reasoning</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#fde68a;">3.0×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="openai" data-model="gpt-4.1" onclick="selectAiModel('openai','gpt-4.1')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">gpt-4.1</code></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#fb923c;">5.5×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="openai" data-model="gpt-4-turbo" onclick="selectAiModel('openai','gpt-4-turbo')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">gpt-4-turbo</code> <span style="font-size:10px;color:var(--text3);">legado</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#fb923c;">6.0×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="openai" data-model="gpt-4o" onclick="selectAiModel('openai','gpt-4o')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">gpt-4o</code></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#f87171;">8.0×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="openai" data-model="o3" onclick="selectAiModel('openai','o3')" style="cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">o3</code> <span style="font-size:10px;color:var(--text3);">reasoning</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#f87171;">12×</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-            <div class="field-group" style="margin:0;">
-              <label>Temperature <span style="color:var(--text3);font-weight:400;">(0–2)</span></label>
-              <input type="number" id="cfg-openai_temperature" value="0.7" min="0" max="2" step="0.1" />
-            </div>
-            <div class="field-group" style="margin:0;">
-              <label>Max tokens resposta</label>
-              <input type="number" id="cfg-openai_max_tokens" value="1024" min="64" max="4096" step="64" />
-            </div>
-            <div class="field-group" style="margin:0;">
-              <label>Campo tokens no n8n</label>
-              <input type="text" id="cfg-openai_token_field" value="usage.total_tokens" readonly style="opacity:.6;cursor:default;" />
-            </div>
-          </div>
-          <div class="ai-model-info" style="background:rgba(16,163,127,.08);border:1px solid rgba(16,163,127,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:#6ee7b7;">
-            💰 <strong>gpt-4o-mini:</strong> ~$0.15/M input + $0.60/M output — custo ~R$4 por pacote de 5M tokens · margem estimada <strong>~92%</strong>
           </div>
         </div>
 
         <!-- Claude config -->
         <div id="ai-config-claude" style="display:none;">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-            <div class="field-group" style="margin:0;">
-              <label>Chave de API Anthropic</label>
-              <input type="password" id="cfg-claude_api_key" placeholder="sk-ant-..." autocomplete="new-password" />
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+            <!-- Esquerda: campos -->
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div class="field-group" style="margin:0;">
+                <label>Chave de API Anthropic</label>
+                <input type="password" id="cfg-claude_api_key" placeholder="sk-ant-..." autocomplete="new-password" />
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="field-group" style="margin:0;">
+                  <label>Temperature <span style="color:var(--text3);font-weight:400;">(0–1)</span></label>
+                  <input type="number" id="cfg-claude_temperature" value="0.7" min="0" max="1" step="0.1" />
+                </div>
+                <div class="field-group" style="margin:0;">
+                  <label>Max tokens</label>
+                  <input type="number" id="cfg-claude_max_tokens" value="1024" min="64" max="8192" step="64" />
+                </div>
+              </div>
+              <div class="ai-model-info" id="claude-model-info" style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:#a5b4fc;margin:0;">
+                💜 <strong>claude-haiku-4-5:</strong> ~$0.25/M input + $1.25/M output — custo ~R$8 por 5M tokens · margem ~<strong>92%</strong>
+              </div>
             </div>
-            <div class="field-group" style="margin:0;">
-              <label>Modelo</label>
-              <select id="cfg-claude_model">
-                <optgroup label="Claude 4.x (mais recentes)">
-                  <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 — fator 0.9× (recomendado)</option>
-                  <option value="claude-sonnet-4-6">claude-sonnet-4-6 — fator 10×</option>
-                  <option value="claude-opus-4-6">claude-opus-4-6 — fator 50×</option>
-                </optgroup>
-                <optgroup label="Claude 3.x">
-                  <option value="claude-3-5-haiku-20241022">claude-3-5-haiku — fator 0.9×</option>
-                  <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet — fator 10×</option>
-                  <option value="claude-3-opus-20240229">claude-3-opus — fator 40×</option>
-                </optgroup>
+            <!-- Direita: tabela de seleção -->
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;">Modelo <span style="color:var(--text3);font-weight:400;">(clique para selecionar)</span></label>
+              <select id="cfg-claude_model" style="display:none;">
+                <option value="claude-haiku-4-5-20251001" selected>claude-haiku-4-5-20251001</option>
+                <option value="claude-3-5-haiku-20241022">claude-3-5-haiku-20241022</option>
+                <option value="claude-sonnet-4-6">claude-sonnet-4-6</option>
+                <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet-20241022</option>
+                <option value="claude-3-opus-20240229">claude-3-opus-20240229</option>
+                <option value="claude-opus-4-6">claude-opus-4-6</option>
               </select>
+              <div style="overflow:hidden;border-radius:8px;border:1px solid var(--border);">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                  <thead>
+                    <tr style="background:var(--bg-card2);">
+                      <th style="text-align:left;padding:7px 10px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);">Modelo</th>
+                      <th style="text-align:right;padding:7px 10px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);">Multiplicador</th>
+                    </tr>
+                  </thead>
+                  <tbody id="claude-model-rows">
+                    <tr class="ai-model-row ai-model-selected" data-provider="claude" data-model="claude-haiku-4-5-20251001" onclick="selectAiModel('claude','claude-haiku-4-5-20251001')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;background:rgba(99,102,241,.1);">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">claude-haiku-4-5</code> <span style="color:#a5b4fc;font-size:10px;">⭐ Claude 4</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#a5b4fc;">0.9×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="claude" data-model="claude-3-5-haiku-20241022" onclick="selectAiModel('claude','claude-3-5-haiku-20241022')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">claude-3-5-haiku</code> <span style="font-size:10px;color:var(--text3);">Claude 3</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#a5b4fc;">0.9×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="claude" data-model="claude-sonnet-4-6" onclick="selectAiModel('claude','claude-sonnet-4-6')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">claude-sonnet-4-6</code> <span style="font-size:10px;color:var(--text3);">Claude 4</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#fde68a;">10×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="claude" data-model="claude-3-5-sonnet-20241022" onclick="selectAiModel('claude','claude-3-5-sonnet-20241022')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">claude-3-5-sonnet</code> <span style="font-size:10px;color:var(--text3);">Claude 3</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#fde68a;">10×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="claude" data-model="claude-3-opus-20240229" onclick="selectAiModel('claude','claude-3-opus-20240229')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">claude-3-opus</code> <span style="font-size:10px;color:var(--text3);">Claude 3</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#f87171;">40×</td>
+                    </tr>
+                    <tr class="ai-model-row" data-provider="claude" data-model="claude-opus-4-6" onclick="selectAiModel('claude','claude-opus-4-6')" style="cursor:pointer;transition:background .15s;">
+                      <td style="padding:6px 10px;"><code style="background:var(--bg-card2);padding:2px 5px;border-radius:4px;font-size:11px;">claude-opus-4-6</code> <span style="font-size:10px;color:var(--text3);">Claude 4</span></td>
+                      <td style="padding:6px 10px;text-align:right;font-weight:800;color:#f87171;">50×</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
-            <div class="field-group" style="margin:0;">
-              <label>Temperature <span style="color:var(--text3);font-weight:400;">(0–1)</span></label>
-              <input type="number" id="cfg-claude_temperature" value="0.7" min="0" max="1" step="0.1" />
+        </div>
+
+        <!-- Google Gemini config -->
+        <div id="ai-config-google" style="display:none;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
+            <!-- Coluna esquerda: campos de configuração -->
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div class="field-group" style="margin:0;">
+                <label>Chave de API Google AI Studio</label>
+                <input type="password" id="cfg-google_api_key" placeholder="AIza..." autocomplete="new-password" />
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="field-group" style="margin:0;">
+                  <label>Temperature <span style="color:var(--text3);font-weight:400;">(0–1)</span></label>
+                  <input type="number" id="cfg-google_temperature" value="0.7" min="0" max="1" step="0.1" />
+                </div>
+                <div class="field-group" style="margin:0;">
+                  <label>Max tokens</label>
+                  <input type="number" id="cfg-google_max_tokens" value="1024" min="64" max="8192" step="64" />
+                </div>
+              </div>
+              <a href="https://aistudio.google.com/app/apikey" target="_blank" style="display:block;padding:8px 12px;background:rgba(66,133,244,.12);border:1px solid rgba(66,133,244,.3);border-radius:6px;color:#93c5fd;font-size:12px;text-align:center;text-decoration:none;">🔑 Obter chave gratuita — AI Studio →</a>
+              <div class="ai-model-info" id="google-model-info" style="background:rgba(66,133,244,.08);border:1px solid rgba(66,133,244,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:#93c5fd;margin:0;">
+                🆓 <strong>gemini-2.0-flash:</strong> gratuito no AI Studio (rate limit: 15 req/min, 1M tokens/dia) — custo ~R$0 · margem estimada <strong>~100%</strong>
+              </div>
             </div>
-            <div class="field-group" style="margin:0;">
-              <label>Max tokens resposta</label>
-              <input type="number" id="cfg-claude_max_tokens" value="1024" min="64" max="8192" step="64" />
+            <!-- Coluna direita: tabela de seleção de modelo -->
+            <div>
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;">Modelo <span style="color:var(--text3);font-weight:400;">(clique para selecionar)</span></label>
+              <select id="cfg-google_model" style="display:none;">
+                <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite</option>
+                <option value="gemini-2.0-flash" selected>gemini-2.0-flash</option>
+                <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                <option value="gemini-1.5-pro">gemini-1.5-pro</option>
+                <option value="gemini-2.5-pro-exp-03-25">gemini-2.5-pro-exp-03-25</option>
+              </select>
+              <div style="overflow:hidden;border-radius:8px;border:1px solid var(--border);">
+                <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                  <thead>
+                    <tr style="background:var(--bg-card2);">
+                      <th style="text-align:left;padding:7px 12px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);">Modelo</th>
+                      <th style="text-align:center;padding:7px 8px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);">Tipo</th>
+                      <th style="text-align:right;padding:7px 12px;color:var(--text2);font-weight:600;border-bottom:1px solid var(--border);">Multiplicador</th>
+                    </tr>
+                  </thead>
+                  <tbody id="gemini-model-rows">
+                    <tr class="gemini-ref-row" data-model="gemini-2.0-flash-lite" onclick="selectGeminiModel('gemini-2.0-flash-lite')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:8px 12px;"><code style="background:var(--bg-card2);padding:2px 6px;border-radius:4px;font-size:11px;">gemini-2.0-flash-lite</code></td>
+                      <td style="padding:8px;text-align:center;"><span style="background:#16a34a;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">🆓 Grátis</span></td>
+                      <td style="padding:8px 12px;text-align:right;font-weight:800;color:#4ade80;">0.1×</td>
+                    </tr>
+                    <tr class="gemini-ref-row gemini-model-selected" data-model="gemini-2.0-flash" onclick="selectGeminiModel('gemini-2.0-flash')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;background:rgba(66,133,244,.1);">
+                      <td style="padding:8px 12px;"><code style="background:var(--bg-card2);padding:2px 6px;border-radius:4px;font-size:11px;">gemini-2.0-flash</code> <span style="color:#4ade80;font-size:10px;">⭐</span></td>
+                      <td style="padding:8px;text-align:center;"><span style="background:#16a34a;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">🆓 Grátis</span></td>
+                      <td style="padding:8px 12px;text-align:right;font-weight:800;color:#4ade80;">0.2×</td>
+                    </tr>
+                    <tr class="gemini-ref-row" data-model="gemini-1.5-flash" onclick="selectGeminiModel('gemini-1.5-flash')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:8px 12px;"><code style="background:var(--bg-card2);padding:2px 6px;border-radius:4px;font-size:11px;">gemini-1.5-flash</code></td>
+                      <td style="padding:8px;text-align:center;"><span style="background:#16a34a;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">🆓 Grátis</span></td>
+                      <td style="padding:8px 12px;text-align:right;font-weight:800;color:#4ade80;">0.2×</td>
+                    </tr>
+                    <tr class="gemini-ref-row" data-model="gemini-1.5-pro" onclick="selectGeminiModel('gemini-1.5-pro')" style="border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;">
+                      <td style="padding:8px 12px;"><code style="background:var(--bg-card2);padding:2px 6px;border-radius:4px;font-size:11px;">gemini-1.5-pro</code></td>
+                      <td style="padding:8px;text-align:center;"><span style="background:#ea580c;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">💰 Pago</span></td>
+                      <td style="padding:8px 12px;text-align:right;font-weight:800;color:#fb923c;">1.5×</td>
+                    </tr>
+                    <tr class="gemini-ref-row" data-model="gemini-2.5-pro-exp-03-25" onclick="selectGeminiModel('gemini-2.5-pro-exp-03-25')" style="cursor:pointer;transition:background .15s;">
+                      <td style="padding:8px 12px;"><code style="background:var(--bg-card2);padding:2px 6px;border-radius:4px;font-size:11px;">gemini-2.5-pro-exp</code></td>
+                      <td style="padding:8px;text-align:center;"><span style="background:#7c3aed;color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;">🧪 Beta</span></td>
+                      <td style="padding:8px 12px;text-align:right;font-weight:800;color:#c084fc;">5.0×</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
-            <div class="field-group" style="margin:0;">
-              <label>Campo tokens no n8n</label>
-              <input type="text" id="cfg-claude_token_field" value="usage.input_tokens + usage.output_tokens" readonly style="opacity:.6;cursor:default;" />
-            </div>
-          </div>
-          <div class="ai-model-info" style="background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.2);border-radius:8px;padding:10px 14px;font-size:12px;color:#a5b4fc;">
-            💜 <strong>claude-haiku-4-5:</strong> ~$0.25/M input + $1.25/M output — custo ~R$8 por pacote de 5M tokens · margem estimada <strong>~92%</strong>
           </div>
         </div>
 
@@ -4890,19 +5048,80 @@
     'claude_api_key',  'claude_model',  'claude_temperature',  'claude_max_tokens',
   ];
 
+  // Infos de cada modelo para os banners dinâmicos
+  const AI_MODEL_INFO = {
+    // OpenAI
+    'gpt-3.5-turbo':   { color:'#6ee7b7', html:'💰 <strong>gpt-3.5-turbo:</strong> ~$0.50/M — custo ~R$1 por 5M tokens · margem ~<strong>99%</strong>' },
+    'gpt-4.1-nano':    { color:'#6ee7b7', html:'💰 <strong>gpt-4.1-nano:</strong> ~$0.10/M input + $0.40/M output — custo ~R$1.50 por 5M tokens · margem ~<strong>98%</strong>' },
+    'gpt-4.1-mini':    { color:'#6ee7b7', html:'⭐ <strong>gpt-4.1-mini:</strong> ~$0.40/M input + $1.60/M output — custo ~R$3 por 5M tokens · margem ~<strong>97%</strong>' },
+    'gpt-4o-mini':     { color:'#6ee7b7', html:'💰 <strong>gpt-4o-mini:</strong> ~$0.15/M input + $0.60/M output — custo ~R$4 por 5M tokens · margem ~<strong>92%</strong>' },
+    'o4-mini':         { color:'#fde68a', html:'🧠 <strong>o4-mini:</strong> ~$1.10/M input + $4.40/M output — custo ~R$15 por 5M tokens · margem ~<strong>85%</strong>' },
+    'o3-mini':         { color:'#fde68a', html:'🧠 <strong>o3-mini:</strong> ~$1.10/M input + $4.40/M output — custo ~R$20 por 5M tokens · margem ~<strong>80%</strong>' },
+    'gpt-4.1':         { color:'#fb923c', html:'💰 <strong>gpt-4.1:</strong> ~$2/M input + $8/M output — custo ~R$30 por 5M tokens · margem ~<strong>70%</strong>' },
+    'gpt-4-turbo':     { color:'#fb923c', html:'💰 <strong>gpt-4-turbo:</strong> ~$10/M input + $30/M output — custo ~R$80 por 5M tokens · margem ~<strong>20%</strong>' },
+    'gpt-4o':          { color:'#f87171', html:'💰 <strong>gpt-4o:</strong> ~$2.50/M input + $10/M output — custo ~R$38 por 5M tokens · margem ~<strong>62%</strong>' },
+    'o3':              { color:'#f87171', html:'🧠 <strong>o3:</strong> ~$10/M input + $40/M output — custo ~R$150+ por 5M tokens · margem negativa possível' },
+    // Claude
+    'claude-haiku-4-5-20251001':  { color:'#a5b4fc', html:'⭐ <strong>claude-haiku-4-5:</strong> ~$0.25/M input + $1.25/M output — custo ~R$8 por 5M tokens · margem ~<strong>92%</strong>' },
+    'claude-3-5-haiku-20241022':  { color:'#a5b4fc', html:'💜 <strong>claude-3-5-haiku:</strong> ~$0.25/M input + $1.25/M output — custo ~R$8 por 5M tokens · margem ~<strong>92%</strong>' },
+    'claude-sonnet-4-6':          { color:'#fde68a', html:'💜 <strong>claude-sonnet-4-6:</strong> ~$3/M input + $15/M output — custo ~R$50 por 5M tokens · margem ~<strong>50%</strong>' },
+    'claude-3-5-sonnet-20241022': { color:'#fde68a', html:'💜 <strong>claude-3-5-sonnet:</strong> ~$3/M input + $15/M output — custo ~R$50 por 5M tokens · margem ~<strong>50%</strong>' },
+    'claude-3-opus-20240229':     { color:'#f87171', html:'💜 <strong>claude-3-opus:</strong> ~$15/M input + $75/M output — custo ~R$240 por 5M tokens · margem negativa possível' },
+    'claude-opus-4-6':            { color:'#f87171', html:'💜 <strong>claude-opus-4-6:</strong> ~$15/M input + $75/M output — custo ~R$240 por 5M tokens · margem negativa possível' },
+    // Google
+    'gemini-2.0-flash-lite':    { color:'#4ade80', html:'🆓 <strong>gemini-2.0-flash-lite:</strong> gratuito no AI Studio (30 req/min) — custo ~R$0 · margem ~<strong>100%</strong>' },
+    'gemini-2.0-flash':         { color:'#4ade80', html:'🆓 <strong>gemini-2.0-flash:</strong> gratuito no AI Studio (15 req/min, 1M tokens/dia) — custo ~R$0 · margem ~<strong>100%</strong>' },
+    'gemini-1.5-flash':         { color:'#4ade80', html:'🆓 <strong>gemini-1.5-flash:</strong> gratuito no AI Studio (15 req/min, 1M tokens/dia) — custo ~R$0 · margem ~<strong>100%</strong>' },
+    'gemini-1.5-pro':           { color:'#fb923c', html:'💰 <strong>gemini-1.5-pro:</strong> ~$3.50/M input + $10.50/M output — custo ~R$35 por 5M tokens · margem ~<strong>73%</strong>' },
+    'gemini-2.5-pro-exp-03-25': { color:'#c084fc', html:'🧪 <strong>gemini-2.5-pro-exp:</strong> experimental/beta — custo variável (~fator 5×) · pode virar pago a qualquer momento' },
+  };
+
+  function selectAiModel(provider, model) {
+    // Atualiza o select oculto
+    const sel = document.getElementById('cfg-' + provider + '_model');
+    if (sel) sel.value = model;
+
+    // Destaca linha na tabela
+    document.querySelectorAll(`.ai-model-row[data-provider="${provider}"]`).forEach(row => {
+      const isSelected = row.dataset.model === model;
+      row.classList.toggle('ai-model-selected', isSelected);
+      row.style.background = isSelected
+        ? (provider === 'openai' ? 'rgba(16,163,127,.1)' : provider === 'claude' ? 'rgba(99,102,241,.1)' : 'rgba(66,133,244,.1)')
+        : '';
+    });
+
+    // Atualiza banner de custo
+    const info = AI_MODEL_INFO[model];
+    const bannerId = provider === 'openai' ? 'openai-model-info' : provider === 'claude' ? 'claude-model-info' : 'google-model-info';
+    const banner = document.getElementById(bannerId);
+    if (banner && info) {
+      banner.style.color = info.color;
+      banner.innerHTML = info.html;
+    }
+  }
+
+  // Alias para compatibilidade com chamadas antigas nos atributos HTML
+  function selectGeminiModel(model) { selectAiModel('google', model); }
+
   async function loadAiConfig() {
     const { data } = await db.from('agente_config')
       .select('chave, valor').in('chave', AI_KEYS);
     if (!data) return;
     const cfg = Object.fromEntries(data.map(r => [r.chave, r.valor]));
 
-    // Preencher campos
-    const fields = ['openai_api_key','openai_model','openai_temperature','openai_max_tokens',
-                    'claude_api_key','claude_model','claude_temperature','claude_max_tokens'];
+    // Preencher campos de texto/password/number
+    const fields = ['openai_api_key','openai_temperature','openai_max_tokens',
+                    'claude_api_key','claude_temperature','claude_max_tokens',
+                    'google_api_key','google_temperature','google_max_tokens'];
     fields.forEach(k => {
       const el = document.getElementById('cfg-' + k);
       if (el && cfg[k] != null) el.value = cfg[k];
     });
+
+    // Sincronizar seleções nas tabelas (destaca linha + atualiza banner)
+    selectAiModel('openai',  cfg.openai_model  || 'gpt-4o-mini');
+    selectAiModel('claude',  cfg.claude_model  || 'claude-haiku-4-5-20251001');
+    selectAiModel('google',  cfg.google_model  || 'gemini-2.0-flash');
 
     // Ativar provider correto
     const provider = cfg.ai_provider || 'openai';
@@ -4911,16 +5130,18 @@
 
   function switchAiProvider(provider, save = false) {
     document.getElementById('ai-config-openai').style.display = provider === 'openai' ? '' : 'none';
-    document.getElementById('ai-config-claude').style.display = provider === 'claude'  ? '' : 'none';
+    document.getElementById('ai-config-claude').style.display  = provider === 'claude'  ? '' : 'none';
+    document.getElementById('ai-config-google').style.display  = provider === 'google'  ? '' : 'none';
     document.getElementById('btn-provider-openai').classList.toggle('active', provider === 'openai');
     document.getElementById('btn-provider-claude').classList.toggle('active', provider === 'claude');
+    document.getElementById('btn-provider-google').classList.toggle('active', provider === 'google');
     if (save) saveAiConfig();
   }
 
   async function saveAiConfig() {
-    const provider = document.getElementById('btn-provider-openai').classList.contains('active') ? 'openai' : 'claude';
+    const active = ['openai','claude','google'].find(p => document.getElementById('btn-provider-'+p)?.classList.contains('active')) || 'openai';
     const toSave = {
-      ai_provider:          provider,
+      ai_provider:          active,
       openai_api_key:       document.getElementById('cfg-openai_api_key').value.trim(),
       openai_model:         document.getElementById('cfg-openai_model').value,
       openai_temperature:   document.getElementById('cfg-openai_temperature').value,
@@ -4929,6 +5150,10 @@
       claude_model:         document.getElementById('cfg-claude_model').value,
       claude_temperature:   document.getElementById('cfg-claude_temperature').value,
       claude_max_tokens:    document.getElementById('cfg-claude_max_tokens').value,
+      google_api_key:       document.getElementById('cfg-google_api_key').value.trim(),
+      google_model:         document.getElementById('cfg-google_model').value,
+      google_temperature:   document.getElementById('cfg-google_temperature').value,
+      google_max_tokens:    document.getElementById('cfg-google_max_tokens').value,
     };
 
     const rows = Object.entries(toSave)
@@ -6746,6 +6971,7 @@
         <div style="display:flex;gap:4px;margin-bottom:8px;">
           <button class="node-prov-btn active" onclick="(function(btn){const box=btn.closest('.box');box.querySelectorAll('[data-prov]').forEach(e=>e.style.display='none');box.querySelector('[data-prov=openai]').style.display='block';box.querySelectorAll('.node-prov-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');})(this)" style="flex:1;padding:4px 0;font-size:11px;font-weight:600;border-radius:5px;border:1px solid rgba(16,163,127,.4);background:rgba(16,163,127,.15);color:#6ee7b7;cursor:pointer;">OpenAI</button>
           <button class="node-prov-btn" onclick="(function(btn){const box=btn.closest('.box');box.querySelectorAll('[data-prov]').forEach(e=>e.style.display='none');box.querySelector('[data-prov=claude]').style.display='block';box.querySelectorAll('.node-prov-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');})(this)" style="flex:1;padding:4px 0;font-size:11px;font-weight:600;border-radius:5px;border:1px solid rgba(210,140,80,.3);background:rgba(210,140,80,.08);color:#fdba74;cursor:pointer;">Claude</button>
+          <button class="node-prov-btn" onclick="(function(btn){const box=btn.closest('.box');box.querySelectorAll('[data-prov]').forEach(e=>e.style.display='none');box.querySelector('[data-prov=google]').style.display='block';box.querySelectorAll('.node-prov-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');})(this)" style="flex:1;padding:4px 0;font-size:11px;font-weight:600;border-radius:5px;border:1px solid rgba(66,133,244,.3);background:rgba(66,133,244,.08);color:#93c5fd;cursor:pointer;">Google</button>
         </div>
         <div data-prov="openai">
           <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Modelo OpenAI:</label>
@@ -6767,6 +6993,16 @@
             <option value="claude-sonnet-4-6">claude-sonnet-4-6 — fator 10×</option>
             <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet — fator 10×</option>
             <option value="claude-opus-4-6">claude-opus-4-6 — fator 50×</option>
+          </select>
+        </div>
+        <div data-prov="google" style="display:none;">
+          <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Modelo Gemini:</label>
+          <select class="etapa-select" style="margin-bottom:6px;">
+            <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite — fator 0.1× 🆓</option>
+            <option value="gemini-2.0-flash">gemini-2.0-flash — fator 0.2× 🆓</option>
+            <option value="gemini-1.5-flash">gemini-1.5-flash — fator 0.2× 🆓</option>
+            <option value="gemini-1.5-pro">gemini-1.5-pro — fator 1.5×</option>
+            <option value="gemini-2.5-pro-exp-03-25">gemini-2.5-pro-exp — fator 5.0×</option>
           </select>
         </div>
         <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Temperatura (criatividade 0–1):</label>
