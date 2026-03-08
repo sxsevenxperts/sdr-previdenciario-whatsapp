@@ -3,7 +3,7 @@
  * Proxy seguro para a Evolution API — nunca expõe a chave no frontend.
  * Resolve a instância do usuário automaticamente pelo JWT.
  *
- * GET/POST ?action=status|connect|logout|send-text
+ * GET/POST ?action=status|connect|logout|send-text|send-media|send-audio
  *
  * Requer: Authorization: Bearer <JWT do usuário>
  * Env vars: EVOLUTION_API_URL, EVOLUTION_API_KEY
@@ -84,8 +84,38 @@ Deno.serve(async (req) => {
         return json(res, 200, cors);
       }
 
+      // Envia imagem, vídeo ou documento via WhatsApp
+      case "send-media": {
+        const body = await req.json();
+        if (!body.number || !body.media || !body.mediatype) {
+          return json({ error: "number, media e mediatype são obrigatórios" }, 400, cors);
+        }
+        const res = await evoFetch(`/message/sendMedia/${instance}`, "POST", {
+          number:    body.number,
+          mediatype: body.mediatype,   // "image" | "video" | "document"
+          media:     body.media,       // base64
+          fileName:  body.fileName || "arquivo",
+          caption:   body.caption  || "",
+        });
+        return json(res, 200, cors);
+      }
+
+      // Envia áudio como mensagem de voz no WhatsApp
+      case "send-audio": {
+        const body = await req.json();
+        if (!body.number || !body.audio) {
+          return json({ error: "number e audio são obrigatórios" }, 400, cors);
+        }
+        const res = await evoFetch(`/message/sendWhatsAppAudio/${instance}`, "POST", {
+          number:   body.number,
+          audio:    body.audio,  // base64
+          encoding: true,
+        });
+        return json(res, 200, cors);
+      }
+
       default:
-        return json({ error: `Action "${action}" não suportada. Use: status, connect, logout, send-text` }, 400, cors);
+        return json({ error: `Action "${action}" não suportada. Use: status, connect, logout, send-text, send-media, send-audio` }, 400, cors);
     }
 
   } catch (e: any) {
