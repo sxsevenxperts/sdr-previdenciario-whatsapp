@@ -6274,22 +6274,23 @@
   const CORES_USUARIO = ['#6366f1','#0ea5e9','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6'];
   let _equipeNumeros = [];   // números disponíveis para atribuição
   let _equipeMembros = [];   // cache local dos membros carregados
-  let _equipeQuotaMax = 0;   // usuários contratados no marketplace
+  let _equipeQuotaMax = 0;       // usuários extras contratados (assinaturas.usuarios_extras_limite)
+  let _equipeNumerosExtras = 0;  // números extras contratados (assinaturas.numeros_extras)
 
   async function loadEquipePage() {
     const { data: { user } } = await db.auth.getUser();
     if (!user) return;
 
-    // 1. Quota comprada no marketplace (addon_usuario ativos) — admin: ilimitado
+    // 1. Quota comprada no marketplace — lê de assinaturas (Hotmart) — admin: ilimitado
     if (currentProfile?.role === 'admin') {
       _equipeQuotaMax = 9999;
     } else {
-      const { data: addons } = await db.from('pedidos_creditos')
-        .select('pacote')
+      const { data: sub } = await db.from('assinaturas')
+        .select('usuarios_extras_limite, numeros_extras')
         .eq('user_id', user.id)
-        .eq('status', 'ativo')
-        .eq('pacote', 'addon_usuario');
-      _equipeQuotaMax = (addons || []).length;
+        .maybeSingle();
+      _equipeQuotaMax = sub?.usuarios_extras_limite ?? 0;
+      _equipeNumerosExtras = sub?.numeros_extras ?? 0;
     }
 
     // 2. Membros cadastrados
@@ -6300,12 +6301,11 @@
       .order('criado_em', { ascending: true });
     _equipeMembros = membros || [];
 
-    // 3. Números disponíveis (da instância + extras)
+    // 3. Números disponíveis (da instância + extras de assinaturas)
     const { data: profile } = await db.from('profiles').select('evo_instance').eq('id', user.id).single();
-    const { data: addonNums } = await db.from('pedidos_creditos')
-      .select('id').eq('user_id', user.id).eq('status', 'ativo').eq('pacote', 'addon_numero');
     _equipeNumeros = [profile?.evo_instance || 'Número Principal'];
-    (addonNums || []).forEach((_, i) => _equipeNumeros.push(`Número Extra ${i + 1}`));
+    const numExtras = (currentProfile?.role === 'admin') ? 0 : (_equipeNumerosExtras ?? 0);
+    for (let i = 1; i <= numExtras; i++) _equipeNumeros.push(`Número Extra ${i}`);
 
     // 4. Atualiza barra de cota
     const usados = _equipeMembros.length;
