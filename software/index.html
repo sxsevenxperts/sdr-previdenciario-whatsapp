@@ -6688,13 +6688,32 @@
     modelo_ia: {
       title: '🤖 Escolha o Modelo de IA', inputs: 1, outputs: 1, cls: 'node-modelo-ia',
       html: `<div class="box">
-        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Modelo ChatGPT para esta etapa:</label>
-        <select class="etapa-select" style="margin-bottom:6px;">
-          <option value="gpt-4o">GPT-4o — Melhor qualidade (padrão)</option>
-          <option value="gpt-4o-mini">GPT-4o mini — Rápido e econômico</option>
-          <option value="gpt-4-turbo">GPT-4 Turbo — Alta performance</option>
-          <option value="o1-mini">o1-mini — Raciocínio avançado</option>
-        </select>
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:5px;">Provedor de IA:</label>
+        <div style="display:flex;gap:4px;margin-bottom:8px;">
+          <button class="node-prov-btn active" onclick="(function(btn){const box=btn.closest('.box');box.querySelectorAll('[data-prov]').forEach(e=>e.style.display='none');box.querySelector('[data-prov=openai]').style.display='block';box.querySelectorAll('.node-prov-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');})(this)" style="flex:1;padding:4px 0;font-size:11px;font-weight:600;border-radius:5px;border:1px solid rgba(16,163,127,.4);background:rgba(16,163,127,.15);color:#6ee7b7;cursor:pointer;">OpenAI</button>
+          <button class="node-prov-btn" onclick="(function(btn){const box=btn.closest('.box');box.querySelectorAll('[data-prov]').forEach(e=>e.style.display='none');box.querySelector('[data-prov=claude]').style.display='block';box.querySelectorAll('.node-prov-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');})(this)" style="flex:1;padding:4px 0;font-size:11px;font-weight:600;border-radius:5px;border:1px solid rgba(210,140,80,.3);background:rgba(210,140,80,.08);color:#fdba74;cursor:pointer;">Claude</button>
+        </div>
+        <div data-prov="openai">
+          <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Modelo OpenAI:</label>
+          <select class="etapa-select" style="margin-bottom:6px;">
+            <option value="gpt-4.1-mini">gpt-4.1-mini — Recomendado</option>
+            <option value="gpt-4.1-nano">gpt-4.1-nano — Mais barato</option>
+            <option value="gpt-4.1">gpt-4.1 — Premium</option>
+            <option value="gpt-4o">gpt-4o — Clássico</option>
+            <option value="gpt-4o-mini">gpt-4o-mini — Econômico</option>
+            <option value="o4-mini">o4-mini — Raciocínio</option>
+          </select>
+        </div>
+        <div data-prov="claude" style="display:none;">
+          <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Modelo Claude:</label>
+          <select class="etapa-select" style="margin-bottom:6px;">
+            <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 — Recomendado</option>
+            <option value="claude-sonnet-4-6">claude-sonnet-4-6 — Equilíbrio</option>
+            <option value="claude-opus-4-6">claude-opus-4-6 — Premium</option>
+            <option value="claude-3-5-haiku-20241022">claude-3-5-haiku</option>
+            <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet</option>
+          </select>
+        </div>
         <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Temperatura (criatividade 0–1):</label>
         <input type="range" min="0" max="1" step="0.1" value="0.7" class="etapa-select" style="padding:0;background:none;border:none;" oninput="this.nextElementSibling.textContent=this.value" />
         <span style="font-size:11px;color:#a3e635;font-weight:700;">0.7</span>
