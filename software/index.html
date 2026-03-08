@@ -6686,7 +6686,7 @@
         <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">💬 Texto a converter em voz</label>
         <textarea class="etapa-select" style="resize:vertical;min-height:60px;font-size:12px;margin-bottom:6px;" placeholder="Olá {{nome}}! Preparamos uma mensagem especial para você...&#10;Variáveis: {{nome}}, {{telefone}}, {{servico}}"></textarea>
         <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">🎤 Voz</label>
-        <select class="etapa-select" style="margin-bottom:4px;">
+        <select class="etapa-select" style="margin-bottom:8px;">
           <option>Alloy — Neutro</option>
           <option>Echo — Masculino profissional</option>
           <option>Fable — Expressivo</option>
@@ -6694,6 +6694,10 @@
           <option>Nova — Feminino amigável</option>
           <option>Shimmer — Feminino suave</option>
         </select>
+        <label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;background:rgba(147,51,234,.08);border:1px solid rgba(147,51,234,.2);border-radius:7px;padding:8px 10px;font-size:11px;color:#c4b5fd;line-height:1.4;">
+          <input type="checkbox" checked style="accent-color:#9333ea;margin-top:1px;flex-shrink:0;cursor:pointer;" />
+          <span><strong style="display:block;margin-bottom:2px;">Modo contextual</strong>Envia áudio <em>somente</em> quando o lead também enviou um áudio. Se a mensagem for texto, responde em texto.</span>
+        </label>
       </div>`
     },
 
