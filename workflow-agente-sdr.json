@@ -369,119 +369,35 @@
     },
     {
       "parameters": {
-        "agent": "conversationalAgent",
-        "promptType": "define",
-        "text": "=Histórico da conversa:\n{{ $json.historicoTexto }}\n\nNova mensagem do lead: {{ $json.mensagem }}",
-        "options": {
-          "systemMessage": "={{ $json.systemPrompt }}",
-          "maxIterations": 5
-        }
-      },
-      "id": "node-agente-ia",
-      "name": "Agente SDR — IA (OpenAI)",
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 1.7,
-      "position": [
-        3300,
-        380
-      ],
-      "notes": "Agente via OpenAI (GPT). Ativo quando ai_provider != 'claude'."
-    },
-    {
-      "parameters": {
-        "toolDescription": "Busca informações atualizadas na web. Use para buscar notícias, leis, jurisprudência ou qualquer informação recente que não esteja na base de conhecimento interna.",
-        "method": "GET",
-        "url": "https://serpapi.com/search",
-        "sendQuery": true,
-        "queryParameters": {
+        "method": "POST",
+        "url": "={{ `https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/llm-proxy?provider=${$json.config?.ai_provider || 'openai'}&user_id=${$json.userId}&model=${$json.config?.ai_provider === 'claude' ? ($json.config?.claude_model || 'claude-haiku-4-5-20251001') : $json.config?.ai_provider === 'google' ? ($json.config?.google_model || 'gemini-2.0-flash') : ($json.config?.openai_model || 'gpt-4o-mini')}` }}",
+        "sendHeaders": true,
+        "headerParameters": {
           "parameters": [
             {
-              "name": "q",
-              "value": "={{ $fromAI('query', 'O que pesquisar na web') }}"
-            },
-            {
-              "name": "api_key",
-              "value": "265bc2130412d8df13b09e6e01acac17f95496ad5fd03c141101a192a532baa0"
-            },
-            {
-              "name": "hl",
-              "value": "pt"
-            },
-            {
-              "name": "gl",
-              "value": "br"
-            },
-            {
-              "name": "num",
-              "value": "5"
+              "name": "Content-Type",
+              "value": "application/json"
             }
           ]
         },
-        "sendHeaders": false,
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messages: $json.historico.map(h => ({ role: h.role, content: h.content })), system: $json.systemPrompt }) }}",
         "options": {}
       },
-      "id": "node-tool-serpapi",
-      "name": "Tool: Busca na Web (SerpAPI)",
-      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
-      "typeVersion": 1.1,
+      "id": "node-chama-llm-proxy",
+      "name": "Chama IA via llm-proxy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        2960,
-        760
-      ]
+        3080,
+        540
+      ],
+      "notes": "Proxy unificado: detecta ai_provider (openai/claude/google), chama llm-proxy no Supabase, verifica saldo e desconta tokens automaticamente. Retorna { content, tokens_used, cost_factor, deducted_tokens }."
     },
     {
       "parameters": {
-        "mode": "retrieve-as-tool",
-        "toolName": "base_conhecimento_pdf",
-        "toolDescription": "Consulta a base de conhecimento interna com documentos, materiais e procedimentos da empresa.",
-        "tableName": "documentos_conhecimento",
-        "options": {
-          "queryFilter": "={{ { user_id: $('Monta system prompt com config').first().json.userId } }}"
-        }
-      },
-      "id": "node-tool-vectorstore",
-      "name": "Tool: Base de Conhecimento PDF",
-      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
-      "typeVersion": 1,
-      "position": [
-        3200,
-        760
-      ]
-    },
-    {
-      "parameters": {
-        "model": "text-embedding-3-small",
-        "options": {}
-      },
-      "id": "node-embeddings-busca",
-      "name": "Embeddings para busca",
-      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
-      "typeVersion": 1.2,
-      "position": [
-        3200,
-        920
-      ]
-    },
-    {
-      "parameters": {
-        "model": "={{ $('Monta system prompt com config').first().json.config?.openai_model || 'gpt-4o' }}",
-        "options": {
-          "temperature": "={{ parseFloat($('Monta system prompt com config').first().json.config?.openai_temperature || '0.3') }}",
-          "maxTokens": "={{ parseInt($('Monta system prompt com config').first().json.config?.openai_max_tokens || '1024') }}"
-        }
-      },
-      "id": "node-llm-openai",
-      "name": "LLM — GPT-4o",
-      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
-      "typeVersion": 1.2,
-      "position": [
-        2960,
-        920
-      ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const respostaAgente = $input.first().json.output || '';\nconst configData = $('Monta system prompt com config').first().json;\nconst dadosMsg = configData;\nconst config = configData.config;\nconst userId = configData.userId;\nconst evoInstance = configData.evoInstance;\nconst responderEmAudio = configData.responderEmAudio;\n\nlet dadosQualificacao = null;\nlet qualificado = null;\n\ntry {\n  const match = respostaAgente.match(/```json([\\s\\S]*?)```/);\n  if (match) {\n    dadosQualificacao = JSON.parse(match[1].trim());\n    qualificado = dadosQualificacao.qualificado === true;\n  }\n} catch(e) {}\n\nconst textoParaLead = respostaAgente.replace(/```json[\\s\\S]*?```/g, '').trim();\n\nlet relatorio = null;\nif (qualificado && dadosQualificacao) {\n  const agora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\n  relatorio = `🟢 *LEAD QUALIFICADO*\\n\\n`\n    + `👤 *Nome:* ${dadosQualificacao.nome || 'Não informado'}\\n`\n    + `📱 *Celular:* ${dadosQualificacao.celular || dadosMsg.numero}\\n`\n    + `🎯 *Interesse:* ${dadosQualificacao.tese || 'Não identificado'}\\n`\n    + `📋 *Resumo:* ${dadosQualificacao.resumo || 'Ver histórico'}\\n`\n    + `🕐 *Atendimento:* ${agora}`;\n}\n\n// Notif destination config\nconst notifDestino = config?.notif_destino || 'ambos';\n// If only sending to número, zero out grupo so \"Tem grupo configurado?\" returns false\nconst grupoDestinoFinal = (notifDestino === 'numero') ? '' : (config?.grupo_destino || '');\n\nreturn [{ json: { numero: dadosMsg.numero, textoParaLead, qualificado, dadosQualificacao, relatorio, numeroDestino: config?.numero_destino, grupoDestino: grupoDestinoFinal, notifDestino, userId, evoInstance, responderEmAudio } }];"
+        "jsCode": "const respostaAgente = $input.first().json.content || '';\nconst configData = $('Monta system prompt com config').first().json;\nconst dadosMsg = configData;\nconst config = configData.config;\nconst userId = configData.userId;\nconst evoInstance = configData.evoInstance;\nconst responderEmAudio = configData.responderEmAudio;\n\nlet dadosQualificacao = null;\nlet qualificado = null;\n\ntry {\n  const match = respostaAgente.match(/```json([\\s\\S]*?)```/);\n  if (match) {\n    dadosQualificacao = JSON.parse(match[1].trim());\n    qualificado = dadosQualificacao.qualificado === true;\n  }\n} catch(e) {}\n\nconst textoParaLead = respostaAgente.replace(/```json[\\s\\S]*?```/g, '').trim();\n\nlet relatorio = null;\nif (qualificado && dadosQualificacao) {\n  const agora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });\n  relatorio = `🟢 *LEAD QUALIFICADO*\\n\\n`\n    + `👤 *Nome:* ${dadosQualificacao.nome || 'Não informado'}\\n`\n    + `📱 *Celular:* ${dadosQualificacao.celular || dadosMsg.numero}\\n`\n    + `🎯 *Interesse:* ${dadosQualificacao.tese || 'Não identificado'}\\n`\n    + `📋 *Resumo:* ${dadosQualificacao.resumo || 'Ver histórico'}\\n`\n    + `🕐 *Atendimento:* ${agora}`;\n}\n\n// Notif destination config\nconst notifDestino = config?.notif_destino || 'ambos';\n// If only sending to número, zero out grupo so \"Tem grupo configurado?\" returns false\nconst grupoDestinoFinal = (notifDestino === 'numero') ? '' : (config?.grupo_destino || '');\n\nreturn [{ json: { numero: dadosMsg.numero, textoParaLead, qualificado, dadosQualificacao, relatorio, numeroDestino: config?.numero_destino, grupoDestino: grupoDestinoFinal, notifDestino, userId, evoInstance, responderEmAudio } }];"
       },
       "id": "node-processa-resposta",
       "name": "Processa resposta e qualificação",
@@ -632,55 +548,6 @@
         3740,
         540
       ]
-    },
-    {
-      "parameters": {
-        "jsCode": "const dados = $('Processa resposta e qualificação').first().json;\nconst saldoAtual = $('Tokens disponíveis?').first().json.saldoTokens || 0;\nconst config = $('Monta system prompt com config').first().json.config || {};\n\n// Estimativa bruta de tokens (≈4 chars por token)\nconst historicoTexto = $('Monta histórico da conversa').first().json.historicoTexto || '';\nconst systemPrompt = $('Monta system prompt com config').first().json.systemPrompt || '';\nconst respostaLen = (dados.textoParaLead || '').length;\nconst tokensRaw = Math.max(500, Math.round((historicoTexto.length + systemPrompt.length + respostaLen) / 4));\n\n// Multiplicador de custo relativo ao gpt-4o-mini (base = 1.0)\n// Garante que modelos premium debitam mais créditos proporcionalmente ao custo real\nconst CUSTO_MODELO = {\n  'gpt-4.1-nano':              0.3,\n  'gpt-4.1-mini':              0.8,\n  'gpt-4.1':                   5.5,\n  'gpt-4o-mini':               1.0,\n  'gpt-4o':                    8.0,\n  'o4-mini':                   2.0,\n  'o3-mini':                   3.0,\n  'o3':                       12.0,\n  'gpt-4-turbo':               6.0,\n  'gpt-3.5-turbo':             0.2,\n  'claude-haiku-4-5-20251001': 0.9,\n  'claude-sonnet-4-6':        10.0,\n  'claude-opus-4-6':          50.0,\n  'claude-3-5-haiku-20241022':  0.9,\n  'claude-3-5-sonnet-20241022':10.0,\n  'claude-3-opus-20240229':   40.0,\n  // Google Gemini (via AI Studio — gratuito com rate limit)\n  'gemini-2.0-flash-lite':    0.1,\n  'gemini-2.0-flash':         0.2,\n  'gemini-1.5-flash':         0.2,\n  'gemini-1.5-pro':           1.5,\n  'gemini-2.5-pro-exp-03-25': 5.0,\n};\n\nconst provider = config.ai_provider || 'openai';\nconst modeloAtivo = provider === 'claude'\n  ? (config.claude_model || 'claude-haiku-4-5-20251001')\n  : (config.openai_model || 'gpt-4o-mini');\n\nconst multiplicador = CUSTO_MODELO[modeloAtivo] ?? 1.0;\nconst tokensEstimado = Math.round(tokensRaw * multiplicador);\nconst novoSaldo = Math.max(0, saldoAtual - tokensEstimado);\n\nreturn [{ json: { ...dados, tokensUsados: tokensEstimado, novoSaldo, modeloAtivo, multiplicador } }];"
-      },
-      "id": "node-desconta-tokens",
-      "name": "Desconta tokens do saldo",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        4180,
-        540
-      ]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/decrementar_tokens",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ p_user_id: $json.userId, p_tokens: $json.tokensUsados }) }}",
-        "options": {}
-      },
-      "id": "node-update-saldo",
-      "name": "Atualiza saldo tokens",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        4400,
-        540
-      ],
-      "notes": "Desconta tokens atomicamente via RPC decrementar_tokens (sem race condition)."
     },
     {
       "parameters": {
@@ -899,7 +766,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const historico = $('Monta histórico da conversa').first().json.historico;\nconst respostaAgente = $('Agente SDR — IA').first().json.output || '';\nconst configData = $('Monta system prompt com config').first().json;\nconst responderEmAudio = configData.responderEmAudio;\n\nhistorico.push({ role: 'assistant', content: respostaAgente, type: responderEmAudio ? 'audio' : 'text' });\nconst historicoTrimmed = historico.slice(-20);\n\nreturn [{ json: { numero_whatsapp: configData.numero, user_id: configData.userId, historico: JSON.stringify(historicoTrimmed), atualizado_em: new Date().toISOString() } }];"
+        "jsCode": "const historico = $('Monta histórico da conversa').first().json.historico;\nconst respostaAgente = $('Processa resposta e qualificação').first().json.textoParaLead || '';\nconst configData = $('Monta system prompt com config').first().json;\nconst responderEmAudio = configData.responderEmAudio;\n\nhistorico.push({ role: 'assistant', content: respostaAgente, type: responderEmAudio ? 'audio' : 'text' });\nconst historicoTrimmed = historico.slice(-20);\n\nreturn [{ json: { numero_whatsapp: configData.numero, user_id: configData.userId, historico: JSON.stringify(historicoTrimmed), atualizado_em: new Date().toISOString() } }];"
       },
       "id": "node-prepara-redis",
       "name": "Prepara sessão para salvar",
@@ -1111,149 +978,6 @@
         4620,
         760
       ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "conditions": [
-            {
-              "id": "cond-provider-claude",
-              "leftValue": "={{ $json.config?.ai_provider }}",
-              "rightValue": "claude",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        }
-      },
-      "id": "node-if-provider",
-      "name": "Provider IA?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        3080,
-        540
-      ],
-      "notes": "True → Claude (Anthropic) | False → OpenAI (GPT)"
-    },
-    {
-      "parameters": {
-        "agent": "conversationalAgent",
-        "promptType": "define",
-        "text": "=Histórico da conversa:\n{{ $json.historicoTexto }}\n\nNova mensagem do lead: {{ $json.mensagem }}",
-        "options": {
-          "systemMessage": "={{ $json.systemPrompt }}",
-          "maxIterations": 5
-        }
-      },
-      "id": "node-agente-ia-claude",
-      "name": "Agente SDR — IA (Claude)",
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 1.7,
-      "position": [
-        3300,
-        700
-      ],
-      "notes": "Agente via Claude (Anthropic). Ativo quando ai_provider = 'claude'."
-    },
-    {
-      "parameters": {
-        "model": "={{ $('Monta system prompt com config').first().json.config?.claude_model || 'claude-opus-4-6' }}",
-        "options": {
-          "temperature": "={{ parseFloat($('Monta system prompt com config').first().json.config?.claude_temperature || '0.3') }}",
-          "maxTokensToSample": "={{ parseInt($('Monta system prompt com config').first().json.config?.claude_max_tokens || '1024') }}"
-        }
-      },
-      "id": "node-llm-claude",
-      "name": "LLM — Claude",
-      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
-      "typeVersion": 1.3,
-      "position": [
-        3080,
-        900
-      ],
-      "notes": "Configure credencial Anthropic no n8n. Modelo e temperatura lidos do agente_config."
-    },
-    {
-      "parameters": {
-        "mode": "chooseBranch",
-        "chooseBranchMode": "waitForAll",
-        "output": "firstFound"
-      },
-      "id": "node-merge-ia-output",
-      "name": "Merge — Saída IA",
-      "type": "n8n-nodes-base.merge",
-      "typeVersion": 3,
-      "position": [
-        3520,
-        540
-      ],
-      "notes": "Une saída do Agent OpenAI ou Claude (apenas um executa por rodada)."
-    },
-    {
-      "id": "node-if-provider-google",
-      "name": "Provider Google?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2,
-      "position": [
-        3080,
-        700
-      ],
-      "parameters": {
-        "conditions": {
-          "conditions": [
-            {
-              "id": "cond-provider-google",
-              "leftValue": "={{ $json.config?.ai_provider }}",
-              "rightValue": "google",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
-            }
-          ]
-        }
-      }
-    },
-    {
-      "id": "node-llm-gemini",
-      "name": "LLM — Gemini",
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1,
-      "position": [
-        3080,
-        1080
-      ],
-      "parameters": {
-        "modelName": "={{ $('Monta system prompt com config').first().json.config?.google_model || 'gemini-2.0-flash' }}",
-        "options": {
-          "temperature": "={{ parseFloat($('Monta system prompt com config').first().json.config?.google_temperature || '0.3') }}",
-          "maxOutputTokens": "={{ parseInt($('Monta system prompt com config').first().json.config?.google_max_tokens || '1024') }}"
-        }
-      },
-      "credentials": {}
-    },
-    {
-      "parameters": {
-        "agent": "conversationalAgent",
-        "promptType": "define",
-        "text": "=Histórico da conversa:\n{{ $json.historicoTexto }}\n\nNova mensagem do lead: {{ $json.mensagem }}",
-        "options": {
-          "systemMessage": "={{ $json.systemPrompt }}",
-          "maxIterations": 5
-        }
-      },
-      "id": "node-agente-ia-google",
-      "name": "Agente SDR — IA (Google)",
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 1.7,
-      "position": [
-        3300,
-        920
-      ],
-      "notes": "Agente via Claude (Anthropic). Ativo quando ai_provider = 'claude'."
     }
   ],
   "connections": {
@@ -1429,129 +1153,14 @@
       "main": [
         [
           {
-            "node": "Provider IA?",
+            "node": "Chama IA via llm-proxy",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Provider IA?": {
-      "main": [
-        [
-          {
-            "node": "Agente SDR — IA (Claude)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Provider Google?",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Tool: Busca na Web (SerpAPI)": {
-      "ai_tool": [
-        [
-          {
-            "node": "Agente SDR — IA (OpenAI)",
-            "type": "ai_tool",
-            "index": 0
-          },
-          {
-            "node": "Agente SDR — IA (Claude)",
-            "type": "ai_tool",
-            "index": 0
-          },
-          {
-            "node": "Agente SDR — IA (Google)",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Tool: Base de Conhecimento PDF": {
-      "ai_tool": [
-        [
-          {
-            "node": "Agente SDR — IA (OpenAI)",
-            "type": "ai_tool",
-            "index": 0
-          },
-          {
-            "node": "Agente SDR — IA (Claude)",
-            "type": "ai_tool",
-            "index": 0
-          },
-          {
-            "node": "Agente SDR — IA (Google)",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Embeddings para busca": {
-      "ai_embedding": [
-        [
-          {
-            "node": "Tool: Base de Conhecimento PDF",
-            "type": "ai_embedding",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "LLM — GPT-4o": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Agente SDR — IA (OpenAI)",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "LLM — Claude": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Agente SDR — IA (Claude)",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Agente SDR — IA (OpenAI)": {
-      "main": [
-        [
-          {
-            "node": "Merge — Saída IA",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Agente SDR — IA (Claude)": {
-      "main": [
-        [
-          {
-            "node": "Merge — Saída IA",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Merge — Saída IA": {
+    "Chama IA via llm-proxy": {
       "main": [
         [
           {
@@ -1567,11 +1176,6 @@
         [
           {
             "node": "Responder em áudio?",
-            "type": "main",
-            "index": 0
-          },
-          {
-            "node": "Desconta tokens do saldo",
             "type": "main",
             "index": 0
           },
@@ -1644,17 +1248,6 @@
         [
           {
             "node": "Responde 200 OK",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Desconta tokens do saldo": {
-      "main": [
-        [
-          {
-            "node": "Atualiza saldo tokens",
             "type": "main",
             "index": 0
           }
@@ -1858,46 +1451,6 @@
           }
         ],
         []
-      ]
-    },
-    "Provider Google?": {
-      "main": [
-        [
-          {
-            "node": "Agente SDR — IA (Google)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Agente SDR — IA (OpenAI)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Agente SDR — IA (Google)": {
-      "main": [
-        [
-          {
-            "node": "Merge — Saída IA",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "LLM — Gemini": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Agente SDR — IA (Google)",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
       ]
     }
   },
