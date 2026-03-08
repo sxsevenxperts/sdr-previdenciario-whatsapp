@@ -344,9 +344,15 @@
     .chat-input-area { padding: 16px; border-top: 1px solid #f1f5f9; display: flex; gap: 10px; align-items: flex-end; background: #161b22; }
     .chat-input { flex: 1; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 20px; font-size: 14px; font-family: inherit; resize: none; max-height: 100px; line-height: 1.5; }
     .chat-input:focus { outline: none; border-color: #a3e635; }
-    .btn-send { width: 42px; height: 42px; background: #a3e635; color: #fff; border: none; border-radius: 50%; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; }
+    .btn-send { width: 42px; height: 42px; background: #a3e635; color: #0d1117; border: none; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s; font-weight: 700; }
     .btn-send:hover { background: #84cc16; }
-    .btn-send:disabled { background: #4d7c0f; }
+    .btn-send:disabled { background: #4d7c0f; opacity: .6; }
+    .btn-attach { width: 36px; height: 36px; background: transparent; border: 1px solid #30363d; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s; }
+    .btn-attach:hover { background: #21262d; }
+    .btn-mic { width: 36px; height: 36px; background: transparent; border: 1px solid #30363d; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background .2s; }
+    .btn-mic:hover { background: #21262d; }
+    .btn-mic.recording { background: rgba(239,68,68,.2); border-color: #ef4444; animation: pulse-rec .8s infinite; }
+    @keyframes pulse-rec { 0%,100%{opacity:1} 50%{opacity:.5} }
     .chat-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #6e7681; gap: 8px; }
     .chat-empty .icon { font-size: 48px; }
     .auto-refresh-badge { display: inline-flex; align-items: center; gap: 5px; background: #052e16; color: #4ade80; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
@@ -1211,10 +1217,15 @@
             </div>
             <div class="messages-area" id="messages-area"></div>
             <div class="chat-input-area">
+              <input type="file" id="chat-file-input" style="display:none"
+                accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
+                onchange="handleFileSelect(this)" />
+              <button class="btn-attach" onclick="document.getElementById('chat-file-input').click()" title="Enviar arquivo ou foto">📎</button>
               <textarea class="chat-input" id="chat-input" placeholder="Digite uma mensagem para enviar direto ao WhatsApp..." rows="1"
                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendManualMessage();}"
                 oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-              <button class="btn-send" id="btn-send" onclick="sendManualMessage()" title="Enviar">Enviar</button>
+              <button id="btn-mic" class="btn-mic" onclick="toggleRecording()" title="Gravar áudio">🎤</button>
+              <button class="btn-send" id="btn-send" onclick="sendManualMessage()" title="Enviar">➤</button>
             </div>
           </div>
         </div>
@@ -3182,6 +3193,92 @@
       alert('Erro ao enviar mensagem: ' + e.message);
     }
     btn.disabled = false;
+  }
+
+  // ── Envio de arquivo / foto ───────────────────────────────────────────────
+  async function handleFileSelect(input) {
+    const file = input.files[0];
+    input.value = '';
+    if (!file || !selectedConv) return;
+    if (file.size > 15 * 1024 * 1024) { alert('Arquivo muito grande (máximo 15 MB).'); return; }
+
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    const mediatype = isImage ? 'image' : isVideo ? 'video' : 'document';
+
+    const btn = document.getElementById('btn-send');
+    btn.disabled = true;
+    try {
+      const base64 = await fileToBase64(file);
+      await evoProxy('send-media', {
+        number: selectedConv,
+        media: base64,
+        mediatype,
+        fileName: file.name,
+      });
+      await loadConversations();
+    } catch(e) {
+      alert('Erro ao enviar arquivo: ' + e.message);
+    }
+    btn.disabled = false;
+  }
+
+  function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ── Gravação e envio de áudio ─────────────────────────────────────────────
+  let _mediaRecorder = null;
+  let _audioChunks   = [];
+  let _isRecording   = false;
+
+  async function toggleRecording() {
+    if (!selectedConv) { alert('Selecione uma conversa primeiro.'); return; }
+    const btn = document.getElementById('btn-mic');
+
+    if (_isRecording) {
+      _mediaRecorder.stop();
+      _isRecording = false;
+      btn.textContent = '🎤';
+      btn.classList.remove('recording');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus' : 'audio/ogg;codecs=opus';
+      _mediaRecorder = new MediaRecorder(stream, { mimeType });
+      _audioChunks   = [];
+
+      _mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) _audioChunks.push(e.data); };
+      _mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(_audioChunks, { type: mimeType });
+        const base64 = await fileToBase64(blob);
+        const sendBtn = document.getElementById('btn-send');
+        sendBtn.disabled = true;
+        try {
+          await evoProxy('send-audio', { number: selectedConv, audio: base64 });
+          await loadConversations();
+        } catch(e) {
+          alert('Erro ao enviar áudio: ' + e.message);
+        }
+        sendBtn.disabled = false;
+      };
+
+      _mediaRecorder.start();
+      _isRecording = true;
+      btn.textContent = '⏹';
+      btn.classList.add('recording');
+    } catch(e) {
+      alert('Microfone não disponível: ' + e.message);
+    }
   }
 
   async function clearSession() {
