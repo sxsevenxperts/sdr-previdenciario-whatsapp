@@ -1896,6 +1896,9 @@
             <div style="opacity:.75;font-size:12px;margin-top:4px" id="billing-next-date">Próxima cobrança: —</div>
             <div style="margin-top:6px;font-size:11px;opacity:.6;" id="billing-addons-summary"></div>
             <button class="btn-addon-buy" style="margin-top:10px;width:auto;padding:8px 16px;font-size:12px;" onclick="showBillingTab('marketplace', document.querySelectorAll('.billing-tab-btn')[1])">➕ Adicionar recursos</button>
+            <a id="btn-renovar-assinatura" href="https://pay.hotmart.com/A104782857U?off=xj0983i2" target="_blank" rel="noopener" style="display:none;margin-top:8px;text-decoration:none;">
+              <button class="btn-addon-buy" style="width:auto;padding:8px 16px;font-size:12px;background:linear-gradient(135deg,#dc2626,#b91c1c);">🔄 Renovar Assinatura via Hotmart</button>
+            </a>
           </div>
         </div>
 
@@ -2020,7 +2023,7 @@
                 <li>Soma ao saldo atual</li>
                 <li>Sem prazo de validade</li>
               </ul>
-              <button class="btn-buy" onclick="openAddonCheckout('tokens_mini')">Adicionar via Hotmart</button>
+              <button id="btn-buy-mini" class="btn-buy" onclick="showBuyModal('mini')">Adicionar</button>
             </div>
             <div class="pricing-card popular">
               <div class="pop-badge">Mais Popular</div>
@@ -2034,7 +2037,7 @@
                 <li>Sem prazo de validade</li>
                 <li>Melhor custo/benefício</li>
               </ul>
-              <button class="btn-buy" onclick="openAddonCheckout('tokens_medio')">Adicionar via Hotmart</button>
+              <button id="btn-buy-medio" class="btn-buy" onclick="showBuyModal('medio')">Adicionar</button>
             </div>
             <div class="pricing-card">
               <div class="pkg-name">Grande</div>
@@ -2047,7 +2050,7 @@
                 <li>Sem prazo de validade</li>
                 <li>Suporte prioritário</li>
               </ul>
-              <button class="btn-buy" onclick="openAddonCheckout('tokens_grande')">Adicionar via Hotmart</button>
+              <button id="btn-buy-grande" class="btn-buy" onclick="showBuyModal('grande')">Adicionar</button>
             </div>
             <div class="pricing-card">
               <div class="pkg-name">Max</div>
@@ -2060,7 +2063,7 @@
                 <li>Sem prazo de validade</li>
                 <li>Suporte dedicado</li>
               </ul>
-              <button class="btn-buy" onclick="openAddonCheckout('tokens_max')">Adicionar via Hotmart</button>
+              <button id="btn-buy-max" class="btn-buy" onclick="showBuyModal('max')">Adicionar</button>
             </div>
           </div>
         </div>
@@ -2091,8 +2094,7 @@
             <div class="mkt-qty-right">
               <div class="mkt-unit-price" style="color:#fca5a5;">R$ 127<span>/mês</span></div>
               <div class="mkt-addon-recurrence" style="background:rgba(220,38,38,.08);color:#fca5a5;">🔄 Recorrente</div>
-              <div id="addon-objecao-ativo" style="display:none;background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.4);border-radius:8px;padding:8px 14px;font-size:13px;font-weight:700;color:#4ade80;text-align:center;margin-bottom:8px;">✅ Ativo</div>
-              <button id="btn-addon-objecao" class="btn-addon-buy" style="background:#dc2626;" onclick="openAddonCheckout('addon_objecao')">
+              <button id="btn-addon-objecao" class="btn-addon-buy" style="background:#dc2626;" onclick="showAddonModal('objecao')">
                 🛡️ Ativar Agente de Objeção IA
               </button>
             </div>
@@ -2125,8 +2127,7 @@
                 <button onclick="changeAddonQty('agente',+1)">+</button>
               </div>
               <div class="mkt-total-price">Total: <strong id="total-agente">R$ 197/mês</strong></div>
-              <div id="addon-agente-ativo" style="display:none;background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.35);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#4ade80;text-align:center;margin-bottom:6px;" id="addon-agente-label"></div>
-              <button class="btn-addon-buy" onclick="openAddonCheckout('addon_agente', _addonQty.agente)">
+              <button id="btn-addon-agente" class="btn-addon-buy" onclick="showAddonModal('agente')">
                 Contratar <span id="qty-label-agente">1 agente</span>
               </button>
             </div>
@@ -2159,8 +2160,7 @@
                 <button onclick="changeAddonQty('numero',+1)">+</button>
               </div>
               <div class="mkt-total-price">Total: <strong id="total-numero">R$ 97/mês</strong></div>
-              <div id="addon-numero-ativo" style="display:none;background:rgba(22,163,74,.12);border:1px solid rgba(22,163,74,.35);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#4ade80;text-align:center;margin-bottom:6px;"></div>
-              <button class="btn-addon-buy" onclick="openAddonCheckout('addon_numero', _addonQty.numero)">
+              <button id="btn-addon-numero" class="btn-addon-buy" onclick="showAddonModal('numero')">
                 Contratar <span id="qty-label-numero">1 número</span>
               </button>
             </div>
@@ -2195,8 +2195,7 @@
                 <button onclick="changeAddonQty('usuario',+1)">+</button>
               </div>
               <div class="mkt-total-price">Total: <strong id="total-usuario">R$ 57/mês</strong></div>
-              <div id="addon-usuario-ativo" style="display:none;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.35);border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;color:#818cf8;text-align:center;margin-bottom:6px;"></div>
-              <button class="btn-addon-buy" style="background:#6366f1;" onclick="openAddonCheckout('addon_usuario', _addonQty.usuario)">
+              <button id="btn-addon-usuario" class="btn-addon-buy" style="background:#6366f1;" onclick="showAddonModal('usuario')">
                 Contratar <span id="qty-label-usuario">1 usuário</span>
               </button>
             </div>
@@ -2515,6 +2514,37 @@
   </div>
 </div>
 
+<!-- MODAL COMPRAR CRÉDITOS -->
+<div class="modal-backdrop" id="modal-buy-credits" onclick="if(event.target===this)closeBuyModal()">
+  <div class="modal-box">
+    <h2 id="buy-modal-title">Comprar Créditos</h2>
+    <div class="buy-modal-pkg-info">
+      <div class="buy-modal-pkg-row">
+        <span id="buy-pkg-name" style="font-weight:700;font-size:16px;"></span>
+        <span id="buy-pkg-price" style="font-size:22px;font-weight:800;color:#a3e635;"></span>
+      </div>
+      <div class="buy-modal-pkg-grid">
+        <div id="buy-pkg-leads"></div>
+        <div id="buy-pkg-tokens"></div>
+        <div>IA ativa 24/7</div>
+        <div>Relatórios completos</div>
+      </div>
+    </div>
+    <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:10px;padding:14px 16px;margin-bottom:12px;">
+      <div style="font-weight:700;font-size:13px;color:#16a34a;margin-bottom:6px;">Como pagar</div>
+      <div style="font-size:12px;color:#374151;line-height:1.7;">
+        1. Clique em <strong>Confirmar Pedido</strong> abaixo<br>
+        2. Aguarde o contato do administrador com a chave PIX<br>
+        3. Após confirmação do pagamento, os tokens serão adicionados em até 2h
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" id="btn-confirm-buy" onclick="confirmBuy()">Confirmar Pedido</button>
+      <button class="btn-secondary" onclick="closeBuyModal()">Cancelar</button>
+    </div>
+    <div id="buy-modal-error" class="error-msg" style="margin-top:10px;"></div>
+  </div>
+</div>
 
 <!-- MODAL ADICIONAR CRÉDITOS (admin) -->
 <div class="modal-backdrop" id="modal-add-credits" onclick="if(event.target===this)closeAddCreditsModal()">
@@ -4854,6 +4884,23 @@
     max:    { nome: '💼 Max',     leads: 1350,  tokens: 50000000,  preco_brl: 597, moeda: 'BRL' },
   };
 
+  // ── Links de Checkout Hotmart ─────────────────────────────────────────────
+  // Substitua as strings vazias pelos links de checkout gerados na Hotmart.
+  // Quando preenchidos, os botões redirecionam para o Hotmart e o webhook
+  // ativa o recurso automaticamente após a compra (em até 5 minutos).
+  const HOTMART_LINKS = {
+    main_plan:     'https://pay.hotmart.com/A104782857U?off=xj0983i2',
+    tokens_mini:   'https://pay.hotmart.com/V104801379S',  // 5M  R$97
+    tokens_medio:  'https://pay.hotmart.com/U104799604W',  // 10M R$177
+    tokens_grande: 'https://pay.hotmart.com/W104801398L',  // 20M R$297
+    tokens_max:    'https://pay.hotmart.com/U104801421X',  // 50M R$597
+    addon_objecao: 'https://pay.hotmart.com/A104782857U?off=8ivu9gbb',   // R$127/mês
+    addon_agente:  'https://pay.hotmart.com/A104782857U?off=cjszocj0',   // R$197/mês
+    addon_numero:  'https://pay.hotmart.com/A104782857U?off=w17oc1q3',   // R$97/mês
+    addon_usuario: 'https://pay.hotmart.com/A104782857U?off=vhne1box',   // R$57/mês
+  };
+
+  let buyPacoteAtual = null;
   let addCreditsUserId = null;
 
   async function loadCredits() {
@@ -4876,54 +4923,21 @@
     loadMeusPedidos(user.id);
   }
 
-  const ADDON_NOMES = {
-    tokens_mini:   '➕ Tokens Mini (5M)',
-    tokens_medio:  '➕➕ Tokens Médio (10M)',
-    tokens_grande: '🚀 Tokens Grande (20M)',
-    tokens_max:    '💼 Tokens Max (50M)',
-    addon_objecao: '🛡️ Agente de Objeção IA',
-    addon_agente:  '🤖 Agente Extra',
-    addon_numero:  '📱 Número Extra',
-    addon_usuario: '👤 Usuário Extra',
-  };
-
   async function loadMeusPedidos(userId) {
     const el = document.getElementById('pedidos-cliente-table');
     if (!el) return;
-    const [{ data: creditos }, { data: addons }] = await Promise.all([
-      db.from('pedidos_creditos').select('*').eq('user_id', userId).order('criado_em', { ascending: false }).limit(10),
-      db.from('addon_purchases').select('*').eq('user_id', userId).order('criado_em', { ascending: false }).limit(10),
-    ]);
-    const rows = [
-      ...(creditos || []).map(p => ({
-        data: p.criado_em, tipo: 'tokens',
-        nome: PACOTES_CREDITOS[p.pacote]?.nome || p.pacote,
-        detalhe: `${(p.tokens/1000000).toFixed(1)}M tokens`,
-        valor: p.preco_brl ? 'R$ '+p.preco_brl : p.preco_usd ? '$'+p.preco_usd : '—',
-        status: p.status,
-        statusLabel: p.status === 'pendente' ? '⏳ Pendente' : p.status === 'aprovado' ? '✅ Aprovado' : '❌ Recusado',
-      })),
-      ...(addons || []).map(a => ({
-        data: a.criado_em, tipo: 'addon',
-        nome: ADDON_NOMES[a.offer_code] || a.offer_code,
-        detalhe: a.quantidade > 1 ? `x${a.quantidade}` : '—',
-        valor: a.valor ? 'R$ '+a.valor : '—',
-        status: a.status,
-        statusLabel: a.status === 'ativo' ? '✅ Ativo' : a.status === 'cancelado' ? '❌ Cancelado' : '🔄 ' + a.status,
-      })),
-    ].sort((a, b) => new Date(b.data) - new Date(a.data)).slice(0, 15);
-
-    if (!rows.length) {
+    const { data } = await db.from('pedidos_creditos').select('*').eq('user_id', userId).order('criado_em', { ascending: false }).limit(10);
+    if (!data || !data.length) {
       el.innerHTML = '<p class="empty-state" style="padding:20px;">Nenhum pedido realizado ainda.</p>'; return;
     }
     el.innerHTML = `<table>
-      <thead><tr><th>Data</th><th>Produto</th><th>Detalhe</th><th>Valor</th><th>Status</th></tr></thead>
-      <tbody>${rows.map(p => `<tr>
-        <td style="font-size:12px;color:#6e7681">${new Date(p.data).toLocaleDateString('pt-BR')}</td>
-        <td style="font-weight:600">${p.nome}</td>
-        <td style="color:#94a3b8">${p.detalhe}</td>
-        <td style="font-weight:700;color:#a3e635">${p.valor}</td>
-        <td><span class="pedidos-badge ${p.status}">${p.statusLabel}</span></td>
+      <thead><tr><th>Data</th><th>Pacote</th><th>Tokens</th><th>Valor</th><th>Status</th></tr></thead>
+      <tbody>${data.map(p => `<tr>
+        <td style="font-size:12px;color:#6e7681">${new Date(p.criado_em).toLocaleDateString('pt-BR')}</td>
+        <td style="font-weight:600">${PACOTES_CREDITOS[p.pacote]?.nome || p.pacote}</td>
+        <td>${(p.tokens/1000000).toFixed(1)}M tokens</td>
+        <td style="font-weight:700;color:#a3e635">${p.preco_brl ? 'R$ '+p.preco_brl : p.preco_usd ? '$'+p.preco_usd : '—'}</td>
+        <td><span class="pedidos-badge ${p.status}">${p.status === 'pendente' ? '⏳ Pendente' : p.status === 'aprovado' ? '✅ Aprovado' : '❌ Recusado'}</span></td>
       </tr>`).join('')}</tbody>
     </table>`;
   }
@@ -4987,11 +5001,16 @@
 
   function buyFromAlert() {
     dismissTokenAlert();
-    // Navega para faturamento → Marketplace e abre modal do Médio diretamente
+    // Se link Hotmart do Médio configurado → abre direto no checkout
+    if (HOTMART_LINKS.tokens_medio) {
+      window.open(HOTMART_LINKS.tokens_medio, '_blank');
+      return;
+    }
+    // Fallback: navega para Marketplace e abre modal do Médio
     showPage('faturamento', document.querySelector('.nav-item[onclick*="faturamento"]'));
     setTimeout(() => {
       showBillingTab('marketplace', document.querySelectorAll('.billing-tab-btn')[1]);
-      setTimeout(() => openAddonCheckout('tokens_medio'), 150);
+      setTimeout(() => showBuyModal('medio'), 150);
     }, 400);
   }
 
@@ -5009,99 +5028,26 @@
     if (btn) btn.classList.add('active');
     const pane = document.getElementById('billing-pane-' + tab);
     if (pane) pane.classList.add('active');
-    if (tab === 'marketplace') loadAddonStatus();
+    if (tab === 'marketplace') updateMarketplaceButtons();
   }
 
-  // =====================
-  // HOTMART MARKETPLACE — URLs de checkout
-  // Configure com os links reais das Ofertas criadas no Hotmart
-  // =====================
-  const HOTMART_CHECKOUT_URLS = {
-    // Pacotes de tokens — Produtos Tokens XPERT.IA
-    tokens_mini:   'https://pay.hotmart.com/V104801379S',  // Tokens Mini   5M  R$97
-    tokens_medio:  'https://pay.hotmart.com/U104799604W',  // Tokens Médio  10M R$177
-    tokens_grande: 'https://pay.hotmart.com/W104801398L',  // Tokens Grande 20M R$297
-    tokens_max:    'https://pay.hotmart.com/U104801421X',  // Tokens Max    50M R$597
-    // Addons recorrentes — Produto XPERT.IA (ID 7336568)
-    addon_objecao: 'https://pay.hotmart.com/A104782857U?off=8ivu9qbb',  // Objeção IA     R$127/mês
-    addon_agente:  'https://pay.hotmart.com/A104782857U?off=cjszocj0',  // Agente Extra   R$197/mês
-    addon_numero:  'https://pay.hotmart.com/A104782857U?off=w17oc1q3',  // WhatsApp Extra R$97/mês
-    addon_usuario: 'https://pay.hotmart.com/A104782857U?off=vhne1box',  // Usuário Extra  R$57/mês
-  };
+  function updateMarketplaceButtons() {
+    // Atualiza labels dos botões de compra conforme Hotmart configurado
+    const tokenMap = { mini: 'btn-buy-mini', medio: 'btn-buy-medio', grande: 'btn-buy-grande', max: 'btn-buy-max' };
+    const addonMap = { objecao: 'btn-addon-objecao', agente: 'btn-addon-agente', numero: 'btn-addon-numero', usuario: 'btn-addon-usuario' };
 
-  function openAddonCheckout(offerCode, qty) {
-    const url = HOTMART_CHECKOUT_URLS[offerCode];
-    if (!url || url.includes('CONFIGURE_AQUI')) {
-      alert('⚠️ Link de checkout ainda não configurado.\n\nPor favor, configure as URLs do Hotmart na constante HOTMART_CHECKOUT_URLS no código do painel.');
-      return;
-    }
-    if (qty && qty > 1) {
-      const confirmed = confirm(`Você selecionou ${qty} unidade(s).\n\nComo cada compra adiciona 1 unidade, você precisará completar o checkout ${qty} vez(es).\n\nDeseja abrir o checkout agora?`);
-      if (!confirmed) return;
-    }
-    window.open(url, '_blank');
-  }
-
-  async function loadAddonStatus() {
-    try {
-      const { data: { user } } = await db.auth.getUser();
-      if (!user) return;
-      const { data: sub } = await db.from('assinaturas')
-        .select('addon_objecao, agentes_extras, numeros_extras, usuarios_extras_limite')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (!sub) return;
-
-      // Agente de Objeção
-      const ativoBadge = document.getElementById('addon-objecao-ativo');
-      const btnObjecao = document.getElementById('btn-addon-objecao');
-      if (ativoBadge && btnObjecao) {
-        if (sub.addon_objecao) {
-          ativoBadge.style.display = 'block';
-          btnObjecao.textContent = '✅ Ativo — Renovar';
-          btnObjecao.style.background = '#16a34a';
-        } else {
-          ativoBadge.style.display = 'none';
-          btnObjecao.textContent = '🛡️ Ativar Agente de Objeção IA';
-          btnObjecao.style.background = '#dc2626';
-        }
-      }
-
-      // Agentes extras
-      const agenteEl = document.getElementById('addon-agente-ativo');
-      if (agenteEl) {
-        if (sub.agentes_extras > 0) {
-          agenteEl.style.display = 'block';
-          agenteEl.textContent = `✅ ${sub.agentes_extras} agente(s) extra(s) ativo(s)`;
-        } else {
-          agenteEl.style.display = 'none';
-        }
-      }
-
-      // Números extras
-      const numeroEl = document.getElementById('addon-numero-ativo');
-      if (numeroEl) {
-        if (sub.numeros_extras > 0) {
-          numeroEl.style.display = 'block';
-          numeroEl.textContent = `✅ ${sub.numeros_extras} número(s) extra(s) ativo(s)`;
-        } else {
-          numeroEl.style.display = 'none';
-        }
-      }
-
-      // Usuários extras
-      const usuarioEl = document.getElementById('addon-usuario-ativo');
-      if (usuarioEl) {
-        if (sub.usuarios_extras_limite > 0) {
-          usuarioEl.style.display = 'block';
-          usuarioEl.textContent = `✅ ${sub.usuarios_extras_limite} usuário(s) extra(s) ativo(s)`;
-        } else {
-          usuarioEl.style.display = 'none';
-        }
-      }
-    } catch (e) {
-      console.warn('loadAddonStatus error:', e.message);
-    }
+    ['mini','medio','grande','max'].forEach(k => {
+      const el = document.getElementById('btn-buy-' + k);
+      if (!el) return;
+      el.textContent = HOTMART_LINKS['tokens_' + k] ? '🛒 Comprar via Hotmart' : 'Adicionar';
+    });
+    ['objecao','agente','numero','usuario'].forEach(k => {
+      const el = document.getElementById('btn-addon-' + k);
+      if (!el) return;
+      const base = { objecao: '🛡️ Ativar Agente de Objeção IA', agente: 'Contratar', numero: 'Contratar', usuario: 'Contratar' };
+      const baseHotmart = { objecao: '🛡️ Comprar via Hotmart', agente: '🛒 Comprar via Hotmart', numero: '🛒 Comprar via Hotmart', usuario: '🛒 Comprar via Hotmart' };
+      el.textContent = HOTMART_LINKS['addon_' + k] ? baseHotmart[k] : base[k];
+    });
   }
 
   // =====================
@@ -5120,6 +5066,129 @@
     if (el('qty-' + tipo))       el('qty-' + tipo).textContent = qty;
     if (el('qty-label-' + tipo)) el('qty-label-' + tipo).textContent = `${qty} ${qty > 1 ? noun[1] : noun[0]}`;
     if (el('total-' + tipo))     el('total-' + tipo).textContent = `R$ ${total.toLocaleString('pt-BR')}/mês`;
+  }
+
+  function showAddonModal(tipo) {
+    const qty   = _addonQty[tipo] || 1;
+    const unit  = _addonUnit[tipo];
+    const total = tipo === 'objecao' ? 127 : qty * unit;
+    const icons = { agente:'🤖', numero:'📱', objecao:'🛡️', usuario:'👤' };
+    const nomes = { agente:'Agente de IA Extra', numero:'Número WhatsApp Extra', objecao:'Identificação de Objeção IA', usuario:'Usuário Extra' };
+    const icon  = icons[tipo] || '📦';
+    const nome  = nomes[tipo] || tipo;
+
+    // Se link Hotmart configurado → redireciona para checkout
+    const hotmartLink = HOTMART_LINKS['addon_' + tipo];
+    if (hotmartLink) {
+      let msg;
+      if (tipo === 'objecao') {
+        msg = `🛡️ Ativar Agente IA — Objeção + Plano de Ação\n\nR$ 127/mês — recorrente mensal\n\n✅ Após a compra, o recurso é ativado automaticamente em até 5 minutos.\n\nAbrir checkout agora?`;
+      } else {
+        const plural = qty > 1 ? 's' : '';
+        msg = `${icon} Contratar ${qty} ${nome}${plural}\n\nQuantidade: ${qty}\nTotal: R$ ${total}/mês — recorrente\n\n✅ Após a compra, o recurso é ativado automaticamente em até 5 minutos.\n\nAbrir checkout agora?`;
+      }
+      if (confirm(msg)) window.open(hotmartLink, '_blank');
+      return;
+    }
+
+    // Fallback: fluxo PIX / solicitação manual
+    if (tipo === 'objecao') {
+      const msg = `🛡️ Ativar Agente IA — Identificação de Objeção + Plano de Ação\n\nO agente monitora a conversa em tempo real, detecta objeções, gera um plano de ação personalizado e envia o relatório via WhatsApp ao responsável.\n\nValor: R$ 127/mês\n⚠️ Será acrescido à sua mensalidade.\n\nApós ativação, o nó aparecerá desbloqueado no Designer de Fluxos.\n\nDeseja solicitar?`;
+      if (!confirm(msg)) return;
+      requestAddonPurchase('objecao', 1, 127);
+      return;
+    }
+    const plural = qty > 1 ? 's' : '';
+    const msg = `${icon} Contratar ${qty} ${nome}${plural}\n\n` +
+      `Quantidade: ${qty}\n` +
+      `Valor unitário: R$ ${unit}/mês\n` +
+      `Total acrescido na mensalidade: R$ ${total}/mês\n\n` +
+      `⚠️ Este valor será somado à sua mensalidade a partir do próximo ciclo.\n\n` +
+      `Deseja solicitar? O administrador entrará em contato com os dados de pagamento via PIX.`;
+    if (!confirm(msg)) return;
+    requestAddonPurchase(tipo, qty, total);
+  }
+
+  async function requestAddonPurchase(tipo, qty, totalPreco) {
+    const { data: { user } } = await db.auth.getUser();
+    // Um registro por unidade — mantém a lógica de contagem existente
+    const inserts = Array.from({ length: qty }, () => ({
+      user_id:   user.id,
+      pacote:    'addon_' + tipo,
+      tokens:    0,
+      preco_brl: _addonUnit[tipo],
+      status:    'pendente'
+    }));
+    const { error } = await db.from('pedidos_creditos').insert(inserts);
+    if (error) { alert('Erro ao enviar solicitação. Tente novamente.'); return; }
+    const noun = tipo === 'agente' ? 'agente(s) de IA' : 'número(s) WhatsApp';
+    alert(`✅ Solicitação enviada!\n\n${qty} ${noun} extra(s)\nTotal: R$ ${totalPreco.toLocaleString('pt-BR')}/mês\n\nEm breve o administrador entrará em contato com os dados para pagamento via PIX.\nApós confirmação, os recursos serão ativados em até 2h.`);
+    loadAdminPedidos && loadAdminPedidos();
+  }
+
+  function showBuyModal(pacoteId) {
+    const pkg = PACOTES_CREDITOS[pacoteId];
+    if (!pkg) return;
+
+    // Se link Hotmart configurado → redireciona diretamente para checkout
+    const hotmartLink = HOTMART_LINKS['tokens_' + pacoteId];
+    if (hotmartLink) {
+      if (confirm(
+        `⚡ Adicionar ${pkg.nome}\n\n` +
+        `🔢 +${(pkg.tokens/1000000).toFixed(0)}M tokens\n` +
+        `👥 +${pkg.leads.toLocaleString('pt-BR')} atendimentos extras\n` +
+        `💳 R$ ${pkg.preco_brl} — pagamento único\n\n` +
+        `✅ Após a compra, os tokens serão creditados automaticamente em até 5 minutos.\n\n` +
+        `Abrir checkout agora?`
+      )) {
+        window.open(hotmartLink, '_blank');
+      }
+      return;
+    }
+
+    // Fallback: fluxo PIX manual
+    buyPacoteAtual = pacoteId;
+    const precoFmt = pkg.moeda === 'BRL'
+      ? `R$ ${pkg.preco_brl}`
+      : `$${pkg.preco_usd}`;
+    document.getElementById('buy-modal-title').textContent = `⚡ Adicionar ${pkg.nome}`;
+    document.getElementById('buy-pkg-name').textContent = pkg.nome;
+    document.getElementById('buy-pkg-price').textContent = precoFmt;
+    document.getElementById('buy-pkg-leads').textContent = `👥 +${pkg.leads.toLocaleString('pt-BR')} atendimentos`;
+    document.getElementById('buy-pkg-tokens').textContent = `🔢 +${(pkg.tokens/1000000).toFixed(0)}M tokens`;
+    document.getElementById('buy-modal-error').textContent = '';
+    document.getElementById('btn-confirm-buy').disabled = false;
+    document.getElementById('btn-confirm-buy').textContent = '✅ Confirmar Pedido';
+    document.getElementById('modal-buy-credits').classList.add('open');
+  }
+
+  function closeBuyModal() {
+    document.getElementById('modal-buy-credits').classList.remove('open');
+    buyPacoteAtual = null;
+  }
+
+  async function confirmBuy() {
+    if (!buyPacoteAtual) return;
+    const pkg = PACOTES_CREDITOS[buyPacoteAtual];
+    const btn = document.getElementById('btn-confirm-buy');
+    const errEl = document.getElementById('buy-modal-error');
+    btn.disabled = true; btn.textContent = 'Enviando...';
+    const { data: { user } } = await db.auth.getUser();
+    const { error } = await db.from('pedidos_creditos').insert({
+      user_id: user.id, pacote: buyPacoteAtual,
+      tokens: pkg.tokens,
+      preco_usd: pkg.preco_usd || null,
+      preco_brl: pkg.preco_brl || null,
+      status: 'pendente'
+    });
+    if (error) {
+      errEl.textContent = 'Erro ao enviar pedido. Tente novamente.';
+      btn.disabled = false; btn.textContent = '✅ Confirmar Pedido'; return;
+    }
+    closeBuyModal();
+    const precoFmt = pkg.preco_brl ? `R$ ${pkg.preco_brl}` : `$${pkg.preco_usd}`;
+    alert(`✅ Pedido enviado!\n\nPacote: ${pkg.nome}\nValor: ${precoFmt}\n\nEm breve o administrador entrará em contato com os dados para pagamento via PIX.\nApós confirmação, os tokens serão creditados em até 2h.`);
+    loadCredits();
   }
 
   // Admin: abrir modal de adicionar créditos
@@ -5233,6 +5302,14 @@
       document.getElementById('billing-next-date').textContent = assin.proxima_cobranca
         ? `Próxima cobrança: ${new Date(assin.proxima_cobranca + 'T00:00:00').toLocaleDateString('pt-BR')}`
         : 'Próxima cobrança: —';
+
+      // Mostra botão "Renovar" apenas quando assinatura está cancelada ou inadimplente
+      const btnRenovar = document.getElementById('btn-renovar-assinatura');
+      if (btnRenovar) {
+        const precisaRenovar = ['cancelada', 'inadimplente'].includes(assin.status);
+        btnRenovar.style.display = precisaRenovar ? 'block' : 'none';
+        if (HOTMART_LINKS.main_plan) btnRenovar.href = HOTMART_LINKS.main_plan;
+      }
     }
     // Histórico de cobranças
     const { data: hist } = await db.from('historico_cobrancas').select('*').order('criado_em', { ascending: false }).limit(24);
@@ -5723,11 +5800,12 @@
     if (currentProfile?.role === 'admin') {
       _equipeQuotaMax = 9999;
     } else {
-      const { data: subAddon } = await db.from('assinaturas')
-        .select('usuarios_extras_limite')
+      const { data: addons } = await db.from('pedidos_creditos')
+        .select('pacote')
         .eq('user_id', user.id)
-        .maybeSingle();
-      _equipeQuotaMax = subAddon?.usuarios_extras_limite ?? 0;
+        .eq('status', 'ativo')
+        .eq('pacote', 'addon_usuario');
+      _equipeQuotaMax = (addons || []).length;
     }
 
     // 2. Membros cadastrados
@@ -5740,11 +5818,10 @@
 
     // 3. Números disponíveis (da instância + extras)
     const { data: profile } = await db.from('profiles').select('evo_instance').eq('id', user.id).single();
-    const { data: subNums } = await db.from('assinaturas')
-      .select('numeros_extras').eq('user_id', user.id).maybeSingle();
-    const numExtras = subNums?.numeros_extras ?? 0;
+    const { data: addonNums } = await db.from('pedidos_creditos')
+      .select('id').eq('user_id', user.id).eq('status', 'ativo').eq('pacote', 'addon_numero');
     _equipeNumeros = [profile?.evo_instance || 'Número Principal'];
-    for (let i = 1; i <= numExtras; i++) _equipeNumeros.push(`Número Extra ${i}`);
+    (addonNums || []).forEach((_, i) => _equipeNumeros.push(`Número Extra ${i + 1}`));
 
     // 4. Atualiza barra de cota
     const usados = _equipeMembros.length;
@@ -6005,13 +6082,14 @@
       _fluxoObjecao = true;
       extraNums = 4; extraAgts = 4; // admin vê exemplos expandidos
     } else {
-      const { data: subFluxo } = await db.from('assinaturas')
-        .select('addon_objecao, agentes_extras, numeros_extras')
+      const { data: addons } = await db.from('pedidos_creditos')
+        .select('pacote')
         .eq('user_id', user.id)
-        .maybeSingle();
-      extraNums = subFluxo?.numeros_extras ?? 0;
-      extraAgts = subFluxo?.agentes_extras ?? 0;
-      _fluxoObjecao = subFluxo?.addon_objecao ?? false;
+        .eq('status', 'ativo')
+        .in('pacote', ['addon_agente', 'addon_numero', 'addon_objecao']);
+      extraNums = (addons || []).filter(a => a.pacote === 'addon_numero').length;
+      extraAgts = (addons || []).filter(a => a.pacote === 'addon_agente').length;
+      _fluxoObjecao = (addons || []).some(a => a.pacote === 'addon_objecao');
     }
 
     // 4. Monta listas

@@ -9,7 +9,6 @@
  * Env vars: EVOLUTION_API_URL, EVOLUTION_API_KEY
  */
 
-import { serve } from "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const SUPABASE_URL     = Deno.env.get("SUPABASE_URL")!;
@@ -19,7 +18,7 @@ const EVO_KEY          = Deno.env.get("EVOLUTION_API_KEY")!;
 
 const adminDb = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const cors = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",

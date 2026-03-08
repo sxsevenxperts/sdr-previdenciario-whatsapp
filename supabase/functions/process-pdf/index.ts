@@ -8,7 +8,6 @@
  * Requer: Authorization: Bearer <JWT do usuário>
  */
 
-import { serve } from "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const SUPABASE_URL     = Deno.env.get("SUPABASE_URL")!;
@@ -33,7 +32,7 @@ function stripHtml(html: string): string {
     .trim();
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const cors = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",

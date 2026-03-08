@@ -10,7 +10,6 @@
  *   DELETE → deleta cliente (remove do Auth, cascade nas tabelas)
  */
 
-import { serve } from "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const SUPABASE_URL      = Deno.env.get("SUPABASE_URL")!;
@@ -107,7 +106,7 @@ async function insertAgenteConfigDefaults(userId: string): Promise<void> {
   await adminDb.from("agente_config").upsert(rows, { onConflict: "user_id,chave", ignoreDuplicates: true });
 }
 
-serve(async (req) => {
+Deno.serve(async (req) => {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",

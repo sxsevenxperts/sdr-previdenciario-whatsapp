@@ -293,7 +293,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://evo.sevenxperts.solutions/message/sendText/{{ $json.evoInstance }}",
+        "url": "={{ `https://evo.sevenxperts.solutions/message/sendText/${$json.evoInstance}` }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -305,7 +305,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"number\": \"{{ $json.numero }}\", \"text\": \"{{ $json.textoParaLead }}\"}",
+        "jsonBody": "={{ ({ number: $json.numero, text: ($json.textoParaLead || '⚠️ Olá! No momento nosso sistema está temporariamente indisponível. Por favor, tente novamente mais tarde ou entre em contato pelo número do escritório. Pedimos desculpas pelo inconveniente.') }) }}",
         "options": {}
       },
       "id": "node-envia-aviso-bloqueio",
@@ -535,7 +535,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"model\": \"tts-1\", \"input\": \"{{ $json.textoParaLead }}\", \"voice\": \"nova\", \"response_format\": \"mp3\"}",
+        "jsonBody": "={{ ({ model: 'tts-1', input: $json.textoParaLead, voice: 'nova', response_format: 'mp3' }) }}",
         "options": {
           "response": {
             "response": {
@@ -570,7 +570,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://evo.sevenxperts.solutions/message/sendWhatsAppAudio/{{ $json.evoInstance }}",
+        "url": "={{ `https://evo.sevenxperts.solutions/message/sendWhatsAppAudio/${$json.evoInstance}` }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -582,7 +582,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"number\": \"{{ $json.numero }}\", \"audio\": \"{{ $json.audioResposta }}\"}",
+        "jsonBody": "={{ ({ number: $json.numero, audio: $json.audioResposta }) }}",
         "options": {}
       },
       "id": "node-envia-audio-lead",
@@ -598,7 +598,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://evo.sevenxperts.solutions/message/sendText/{{ $json.evoInstance }}",
+        "url": "={{ `https://evo.sevenxperts.solutions/message/sendText/${$json.evoInstance}` }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -610,7 +610,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"number\": \"{{ $json.numero }}\", \"text\": \"{{ $json.textoParaLead }}\"}",
+        "jsonBody": "={{ ({ number: $json.numero, text: $json.textoParaLead }) }}",
         "options": {}
       },
       "id": "node-envia-lead",
@@ -699,7 +699,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://evo.sevenxperts.solutions/message/sendText/{{ $('Processa resposta e qualificação').first().json.evoInstance }}",
+        "url": "={{ `https://evo.sevenxperts.solutions/message/sendText/${$('Processa resposta e qualificação').first().json.evoInstance}` }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -711,7 +711,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"number\": \"{{ $('Processa resposta e qualificação').first().json.numeroDestino }}\", \"text\": \"{{ $('Processa resposta e qualificação').first().json.relatorio }}\"}",
+        "jsonBody": "={{ ({ number: $('Processa resposta e qualificação').first().json.numeroDestino, text: $('Processa resposta e qualificação').first().json.relatorio }) }}",
         "options": {}
       },
       "id": "node-envia-responsavel",
@@ -752,7 +752,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "=https://evo.sevenxperts.solutions/group/participants/{{ $('Processa resposta e qualificação').first().json.evoInstance }}",
+        "url": "={{ `https://evo.sevenxperts.solutions/group/participants/${$('Processa resposta e qualificação').first().json.evoInstance}` }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -825,7 +825,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "=https://evo.sevenxperts.solutions/message/sendText/{{ $('Processa resposta e qualificação').first().json.evoInstance }}",
+        "url": "={{ `https://evo.sevenxperts.solutions/message/sendText/${$('Processa resposta e qualificação').first().json.evoInstance}` }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -837,7 +837,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\"number\": \"{{ $('Processa resposta e qualificação').first().json.grupoDestino }}\", \"text\": \"{{ $('Processa resposta e qualificação').first().json.relatorio }}\"}",
+        "jsonBody": "={{ ({ number: $('Processa resposta e qualificação').first().json.grupoDestino, text: $('Processa resposta e qualificação').first().json.relatorio }) }}",
         "options": {}
       },
       "id": "node-envia-grupo",
