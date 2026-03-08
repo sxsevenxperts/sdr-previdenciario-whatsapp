@@ -578,10 +578,14 @@
     .plan-inc-item { background:rgba(163,230,53,.1); border-radius:20px; padding:5px 14px; font-size:12px; font-weight:600; color:#a3e635; border:1px solid rgba(163,230,53,.2); }
 
     /* FLOW DESIGNER */
-    .flow-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+    .flow-toolbar { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
     .flow-toolbar input { flex:1; min-width:200px; padding:9px 14px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:14px; }
     .flow-toolbar input:focus { outline:none; border-color:#a3e635; }
     .flow-layout { display:grid; grid-template-columns:200px 1fr; gap:0; height:calc(100vh - 220px); min-height:500px; background:#161b22; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); overflow:hidden; }
+    /* Canvas expandido — sem page-header, padding mínimo */
+    #page-fluxos { padding:8px 12px 0 !important; }
+    #page-fluxos .page-header { display:none !important; }
+    #page-fluxos .flow-layout { height:calc(100vh - 110px) !important; min-height:400px; }
     .flow-palette { border-right:1px solid #f1f5f9; padding:16px 12px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; background:#fafafa; }
     .flow-palette h4 { font-size:11px; font-weight:700; color:#6e7681; text-transform:uppercase; letter-spacing:.8px; margin-bottom:4px; }
     .palette-node { padding:10px 12px; background:#161b22; border:1.5px solid #e5e7eb; border-radius:8px; cursor:grab; font-size:13px; font-weight:600; text-align:center; transition:all .2s; user-select:none; }
@@ -7013,13 +7017,16 @@
         <div data-prov="openai">
           <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Modelo OpenAI:</label>
           <select class="etapa-select" style="margin-bottom:6px;" onchange="updateNodeFator(this)">
+            <option value="gpt-3.5-turbo">gpt-3.5-turbo — fator 0.2×</option>
             <option value="gpt-4.1-nano">gpt-4.1-nano — fator 0.3×</option>
-            <option value="gpt-4.1-mini">gpt-4.1-mini — fator 0.8× (rec.)</option>
+            <option value="gpt-4.1-mini">gpt-4.1-mini — fator 0.8×</option>
             <option value="gpt-4o-mini" selected>gpt-4o-mini — fator 1.0× (base)</option>
-            <option value="gpt-4.1">gpt-4.1 — fator 5.5×</option>
-            <option value="gpt-4o">gpt-4o — fator 8.0×</option>
             <option value="o4-mini">o4-mini — fator 2.0×</option>
             <option value="o3-mini">o3-mini — fator 3.0×</option>
+            <option value="gpt-4.1">gpt-4.1 — fator 5.5×</option>
+            <option value="gpt-4-turbo">gpt-4-turbo — fator 6.0×</option>
+            <option value="gpt-4o">gpt-4o — fator 8.0×</option>
+            <option value="o3">o3 — fator 12×</option>
           </select>
         </div>
         <div data-prov="claude" style="display:none;">
@@ -7029,6 +7036,7 @@
             <option value="claude-3-5-haiku-20241022">claude-3-5-haiku — fator 0.9×</option>
             <option value="claude-sonnet-4-6">claude-sonnet-4-6 — fator 10×</option>
             <option value="claude-3-5-sonnet-20241022">claude-3-5-sonnet — fator 10×</option>
+            <option value="claude-3-opus-20240229">claude-3-opus — fator 40×</option>
             <option value="claude-opus-4-6">claude-opus-4-6 — fator 50×</option>
           </select>
         </div>
