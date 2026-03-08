@@ -1093,13 +1093,15 @@
     body { background:radial-gradient(ellipse 80% 60% at 20% 0%, rgba(163,230,53,0.025) 0%, transparent 70%), var(--bg) !important; }
 
     /* ── Login page — glassmorphism premium ──────────────────── */
-    #login-page { background:radial-gradient(ellipse 100% 80% at 30% 0%, rgba(163,230,53,0.06) 0%, transparent 60%), #0a0f0d !important; }
+    #login-page { background:#000 !important; }
     .login-box {
-      background:linear-gradient(160deg, #161e24 0%, #121720 100%) !important;
-      border:1px solid rgba(255,255,255,0.06) !important;
-      box-shadow:0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(163,230,53,0.05), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+      background:#0a0a0a !important;
+      border:none !important;
+      box-shadow:none !important;
       border-radius:20px !important;
       padding:52px 44px !important;
+      -webkit-mask-image:radial-gradient(ellipse 88% 85% at 50% 50%, black 50%, transparent 100%) !important;
+      mask-image:radial-gradient(ellipse 88% 85% at 50% 50%, black 50%, transparent 100%) !important;
     }
     .login-box h1 { font-size:26px !important; font-weight:900 !important; letter-spacing:-.6px !important; }
     .login-box p { font-size:14px !important; color:#525a65 !important; margin-bottom:36px !important; }
@@ -1256,7 +1258,7 @@
 <div id="login-page">
   <div class="login-box">
     <div style="text-align:center;margin-bottom:24px;">
-      <img src="logo-banner.png" alt="XPERT.IA" style="width:260px;height:auto;display:block;margin:0 auto 8px;-webkit-mask-image:radial-gradient(ellipse 85% 80% at 50% 50%, black 40%, transparent 100%);mask-image:radial-gradient(ellipse 85% 80% at 50% 50%, black 40%, transparent 100%);" />
+      <img src="logo-banner.png" alt="XPERT.IA" style="width:320px;height:auto;display:block;margin:0 auto 4px;-webkit-mask-image:radial-gradient(ellipse 68% 62% at 50% 50%, black 25%, transparent 100%);mask-image:radial-gradient(ellipse 68% 62% at 50% 50%, black 25%, transparent 100%);" />
     </div>
     <p style="text-align:center;">Painel de administração do agente IA</p>
     <div class="form-group">
@@ -1288,7 +1290,7 @@
 <div id="dashboard-page">
   <div class="sidebar">
     <div class="logo">
-      <img src="logo-banner.png" alt="XPERT.IA" style="width:100%;max-width:190px;height:auto;display:block;margin-bottom:8px;-webkit-mask-image:radial-gradient(ellipse 85% 80% at 50% 50%, black 40%, transparent 100%);mask-image:radial-gradient(ellipse 85% 80% at 50% 50%, black 40%, transparent 100%);" />
+      <img src="logo-banner.png" alt="XPERT.IA" style="width:100%;max-width:190px;height:auto;display:block;margin-bottom:8px;-webkit-mask-image:radial-gradient(ellipse 68% 62% at 50% 50%, black 25%, transparent 100%);mask-image:radial-gradient(ellipse 68% 62% at 50% 50%, black 25%, transparent 100%);" />
       <div style="font-size:10px;color:rgba(255,255,255,0.45);font-weight:500;letter-spacing:.4px;text-transform:uppercase;margin-bottom:2px;">Painel de Administração</div>
       <div class="logo-company" id="sidebar-company-name"></div>
     </div>
