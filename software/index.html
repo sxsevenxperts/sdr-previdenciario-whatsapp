@@ -1071,6 +1071,176 @@
     }
     .scoring-lead-name { flex:1; font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
     .scoring-lead-stage { font-size:11px; color:var(--text2); }
+
+    /* ════════════════════════════════════════════════════════════
+       DESIGN SYSTEM v3  —  Premium & Elegant
+       ════════════════════════════════════════════════════════════ */
+
+    /* ── Custom scrollbars ────────────────────────────────────── */
+    ::-webkit-scrollbar { width:5px; height:5px; }
+    ::-webkit-scrollbar-track { background:transparent; }
+    ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.08); border-radius:10px; }
+    ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.14); }
+    ::-webkit-scrollbar-corner { background:transparent; }
+
+    /* ── Body subtle background ──────────────────────────────── */
+    body { background:radial-gradient(ellipse 80% 60% at 20% 0%, rgba(163,230,53,0.025) 0%, transparent 70%), var(--bg) !important; }
+
+    /* ── Login page — glassmorphism premium ──────────────────── */
+    #login-page { background:radial-gradient(ellipse 100% 80% at 30% 0%, rgba(163,230,53,0.06) 0%, transparent 60%), #0a0f0d !important; }
+    .login-box {
+      background:linear-gradient(160deg, #161e24 0%, #121720 100%) !important;
+      border:1px solid rgba(255,255,255,0.06) !important;
+      box-shadow:0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(163,230,53,0.05), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+      border-radius:20px !important;
+      padding:52px 44px !important;
+    }
+    .login-box h1 { font-size:26px !important; font-weight:900 !important; letter-spacing:-.6px !important; }
+    .login-box p { font-size:14px !important; color:#525a65 !important; margin-bottom:36px !important; }
+    .form-group label { font-size:11px !important; font-weight:700 !important; text-transform:uppercase; letter-spacing:.6px; color:#525a65 !important; margin-bottom:8px !important; }
+    .form-group input {
+      background:#0d1117 !important; border:1.5px solid #1e2530 !important;
+      border-radius:10px !important; padding:13px 16px !important; font-size:14px !important;
+      color:#e6edf3 !important; transition:border-color .18s, box-shadow .18s !important;
+    }
+    .form-group input:focus { border-color:#a3e635 !important; box-shadow:0 0 0 3px rgba(163,230,53,0.1) !important; outline:none !important; }
+    .btn-primary {
+      background:linear-gradient(135deg, #a3e635 0%, #78c013 100%) !important;
+      color:#071a00 !important; font-size:15px !important; font-weight:800 !important;
+      border-radius:10px !important; padding:14px !important; letter-spacing:.1px;
+      box-shadow:0 2px 8px rgba(163,230,53,0.25), 0 0 0 1px rgba(163,230,53,0.12) !important;
+      transition:all .2s cubic-bezier(0.4,0,0.2,1) !important;
+    }
+    .btn-primary:hover:not(:disabled) { background:linear-gradient(135deg,#b4f040 0%,#8ace1a 100%) !important; transform:translateY(-1px) !important; box-shadow:0 6px 20px rgba(163,230,53,0.35), 0 0 0 1px rgba(163,230,53,0.18) !important; }
+    .btn-primary:active { transform:translateY(0) !important; }
+
+    /* ── Modal — backdrop blur ────────────────────────────────── */
+    .modal-backdrop { backdrop-filter:blur(10px) !important; -webkit-backdrop-filter:blur(10px) !important; background:rgba(0,0,0,0.65) !important; }
+    .modal-box {
+      background:linear-gradient(160deg,#1a2130 0%,#161b22 100%) !important;
+      border:1px solid rgba(255,255,255,0.08) !important;
+      box-shadow:0 40px 100px rgba(0,0,0,0.7), 0 0 0 1px rgba(163,230,53,0.05), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+      border-radius:18px !important;
+      animation:modalSlideUp .22s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes modalSlideUp { from{transform:translateY(18px) scale(.97);opacity:0} to{transform:none;opacity:1} }
+    .modal-box h2 { font-size:17px !important; font-weight:800 !important; letter-spacing:-.3px !important; }
+
+    /* ── Footer ──────────────────────────────────────────────── */
+    .global-footer {
+      background:linear-gradient(90deg, #08090d 0%, #0a0f0d 50%, #08090d 100%) !important;
+      border-top:1px solid rgba(163,230,53,0.1) !important;
+      font-size:10px !important; letter-spacing:.8px !important;
+    }
+
+    /* ── Sidebar refinements ─────────────────────────────────── */
+    .sidebar .logo {
+      background:rgba(163,230,53,0.03);
+      border-bottom:1px solid rgba(255,255,255,0.04) !important;
+      padding:18px 24px 20px !important;
+    }
+    .nav-section { font-size:9px !important; letter-spacing:1.2px !important; padding:14px 20px 4px !important; }
+    .nav-item {
+      font-size:13px !important; padding:9px 12px !important;
+      border-radius:8px; margin:1px 10px;
+      border-left:2px solid transparent !important;
+    }
+    .nav-item.active {
+      background:linear-gradient(90deg,rgba(163,230,53,0.12),rgba(163,230,53,0.04)) !important;
+      border-left-color:#a3e635 !important;
+    }
+    .nav-item:hover { background:rgba(255,255,255,0.04) !important; }
+    .sidebar-bottom { padding:14px 14px 16px !important; }
+    .btn-logout { border-radius:9px !important; font-size:12px !important; }
+
+    /* ── Page header gradient text ───────────────────────────── */
+    .page-header h1 {
+      background:linear-gradient(135deg, #e6edf3 40%, #8b949e 100%);
+      -webkit-background-clip:text; background-clip:text;
+      -webkit-text-fill-color:transparent;
+      font-weight:800 !important; letter-spacing:-.5px;
+    }
+    /* light theme fix */
+    [data-theme="light"] .page-header h1 { background:none; -webkit-text-fill-color:var(--text); }
+
+    /* ── Stat cards — number glow ────────────────────────────── */
+    .stat-card .value { color:#e6edf3 !important; text-shadow:0 0 30px rgba(163,230,53,0.2); }
+    .stats-grid { gap:14px !important; }
+
+    /* ── Billing hero polish ─────────────────────────────────── */
+    .billing-hero {
+      background:linear-gradient(135deg, #0d2000 0%, #1a3a00 50%, #0f2800 100%) !important;
+      box-shadow:0 4px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(163,230,53,0.1) !important;
+      border:1px solid rgba(163,230,53,0.15) !important;
+      border-radius:18px !important;
+      padding:36px 40px !important;
+    }
+    .billing-hero h2 { font-size:24px !important; font-weight:900 !important; letter-spacing:-.5px !important; }
+    .billing-hero .price { font-size:48px !important; font-weight:900 !important; letter-spacing:-2px !important; }
+
+    /* ── Credits balance ─────────────────────────────────────── */
+    .credits-balance {
+      background:linear-gradient(135deg, #0e1628 0%, #111827 50%, #0a1020 100%) !important;
+      box-shadow:0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+      border:1px solid rgba(255,255,255,0.06) !important;
+      border-radius:18px !important;
+    }
+    .credits-balance .tokens-value { font-size:40px !important; letter-spacing:-2px !important; font-weight:900 !important; }
+
+    /* ── Pricing cards polish ────────────────────────────────── */
+    .pricing-card { border-radius:16px !important; border-color:#1e2530 !important; }
+    .pricing-card:hover { box-shadow:0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(163,230,53,0.15) !important; }
+    .pricing-card.popular { border-color:#a3e635 !important; box-shadow:0 6px 30px rgba(163,230,53,0.15), 0 0 0 1px rgba(163,230,53,0.2) !important; }
+
+    /* ── WA status bar ───────────────────────────────────────── */
+    .wa-status-bar { border-radius:12px !important; }
+
+    /* ── Tab buttons ─────────────────────────────────────────── */
+    .tabs { border-radius:12px !important; padding:4px !important; }
+    .tab-btn { border-radius:8px !important; font-size:12px !important; font-weight:600 !important; }
+    .tab-btn.active { box-shadow:0 1px 6px rgba(0,0,0,0.2) !important; }
+
+    /* ── btn-secondary polish ────────────────────────────────── */
+    .btn-secondary {
+      border-radius:9px !important; font-size:13px !important;
+      transition:all .18s !important;
+    }
+    .btn-secondary:hover { transform:translateY(-1px) !important; }
+
+    /* ── Token alert popup ───────────────────────────────────── */
+    .token-alert-box { border-radius:24px !important; border:1px solid rgba(255,255,255,0.07) !important; }
+    .token-alert-backdrop { backdrop-filter:blur(12px) !important; }
+
+    /* ── AI provider btns ────────────────────────────────────── */
+    .ai-provider-btn { border-radius:10px !important; padding:9px 18px !important; font-size:13px !important; }
+
+    /* ── Agente items ────────────────────────────────────────── */
+    .agente-item { border-radius:12px !important; }
+
+    /* ── Billing tabs ────────────────────────────────────────── */
+    .billing-tabs { border-radius:14px !important; }
+    .billing-tab-btn { border-radius:10px !important; font-size:13px !important; }
+    .billing-tab-btn.active { box-shadow:0 2px 8px rgba(163,230,53,0.2) !important; }
+
+    /* ── Flow layout ─────────────────────────────────────────── */
+    .flow-layout { border-radius:16px !important; }
+    .chat-layout { border-radius:16px !important; }
+
+    /* ── Empty states ────────────────────────────────────────── */
+    .empty-state { font-size:13px !important; }
+    .empty-state .icon { font-size:40px; }
+
+    /* ── Addon marketplace cards ─────────────────────────────── */
+    .mkt-addon-card { border-radius:16px !important; }
+    .mkt-addon-card:hover { box-shadow:0 8px 32px rgba(163,230,53,0.12) !important; }
+
+    /* ── CRM Kanban columns ──────────────────────────────────── */
+    .crm-board { gap:12px !important; }
+
+    /* ── Smooth global transitions ───────────────────────────── */
+    a, button, .nav-item, .card, .btn-save, .btn-secondary, .btn-primary,
+    .mkt-addon-card, .pricing-card, .equipe-card, .stat-card { transition:all .18s cubic-bezier(0.4,0,0.2,1); }
+
   </style>
   <link rel="stylesheet" href="https://unpkg.com/drawflow/dist/drawflow.min.css" />
 </head>
