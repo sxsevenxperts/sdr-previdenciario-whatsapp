@@ -9,7 +9,8 @@
  * COMPRA DE ADDON (por cliente existente):
  *   → offer.code reconhecido em ADDON_OFFER_CODES → ativa addon para o usuário
  *   Addons recorrentes: cjszocj0 (agente), 8ivu9qbb (objecao), w17oc1q3 (numero), vhne1box (usuario)
- *   Tokens (one-time): offer codes a preencher após criar produto Tokens no Hotmart
+ *   Tokens (one-time) — Produto Tokens XPERT.IA (U104799604W):
+ *     f623v6bt (mini 5M R$97), z9f5y7h3 (medio 10M R$177), yfbmox0t (grande 20M R$297), e23bospr (max 50M R$597)
  *
  * DESATIVAÇÃO: SUBSCRIPTION_CANCELLATION, PURCHASE_CANCELED, PURCHASE_REFUNDED, PURCHASE_CHARGEBACK
  *   → define active=false e status da assinatura como cancelado
@@ -54,11 +55,11 @@ const ADDON_OFFER_CODES: Record<string, { type: string; tokens?: number; qty?: n
   "8ivu9qbb": { type: "objecao", valor: 127 },         // Objeção IA       R$127/mês
   w17oc1q3: { type: "numero",  qty: 1, valor: 97  },  // WhatsApp Extra   R$97/mês
   vhne1box: { type: "usuario", qty: 1, valor: 57  },  // Usuário Extra    R$57/mês
-  // Pacotes de tokens (one-time) — offer codes a preencher após criar produto Tokens no Hotmart
-  // tokens_mini:   { type: "tokens", tokens: 5_000_000,  valor: 97  },
-  // tokens_medio:  { type: "tokens", tokens: 10_000_000, valor: 177 },
-  // tokens_grande: { type: "tokens", tokens: 20_000_000, valor: 297 },
-  // tokens_max:    { type: "tokens", tokens: 50_000_000, valor: 597 },
+  // Pacotes de tokens (one-time) — Produto Tokens XPERT.IA (U104799604W)
+  f623v6bt: { type: "tokens", tokens: 5_000_000,  valor: 97  },  // Tokens Mini   5M  R$97
+  z9f5y7h3: { type: "tokens", tokens: 10_000_000, valor: 177 },  // Tokens Médio  10M R$177
+  yfbmox0t: { type: "tokens", tokens: 20_000_000, valor: 297 },  // Tokens Grande 20M R$297
+  e23bospr: { type: "tokens", tokens: 50_000_000, valor: 597 },  // Tokens Max    50M R$597
 };
 
 // ── Agente padrão genérico (espelho do manage-clients) ────────────────────
