@@ -1,0 +1,1786 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clínica Estética — Sistema de Agendamentos</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/locales/pt-br.global.min.js"></script>
+<style>
+:root {
+  --primary: #d946a8;
+  --primary-dark: #be185d;
+  --primary-light: #fce7f3;
+  --secondary: #7c3aed;
+  --accent: #f59e0b;
+  --success: #10b981;
+  --danger: #ef4444;
+  --warning: #f59e0b;
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface2: #f8f0f5;
+  --border: #e8d5e8;
+  --text: #1f1f2e;
+  --text2: #6b6b8a;
+  --text3: #9999b8;
+  --sidebar-w: 240px;
+  --radius: 12px;
+  --shadow: 0 2px 12px rgba(217,70,168,0.08);
+  --shadow-lg: 0 8px 32px rgba(217,70,168,0.15);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+/* ── AUTH ── */
+#auth-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #fce7f3 0%, #ede9fe 100%);
+}
+.auth-card {
+  background: white;
+  border-radius: 24px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.auth-logo { font-size: 48px; margin-bottom: 8px; }
+.auth-card h1 { font-size: 22px; color: var(--primary-dark); margin-bottom: 4px; }
+.auth-card p { color: var(--text2); font-size: 14px; margin-bottom: 32px; }
+.auth-card input {
+  width: 100%; padding: 12px 16px; border: 1.5px solid var(--border);
+  border-radius: 10px; font-size: 15px; margin-bottom: 12px;
+  transition: border-color .2s; outline: none;
+}
+.auth-card input:focus { border-color: var(--primary); }
+.btn-primary {
+  width: 100%; padding: 13px; background: var(--primary); color: white;
+  border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+  cursor: pointer; transition: background .2s;
+}
+.btn-primary:hover { background: var(--primary-dark); }
+.auth-err { color: var(--danger); font-size: 13px; margin-top: 8px; }
+
+/* ── LAYOUT ── */
+#app { display: none; height: 100vh; overflow: hidden; }
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: white;
+  border-right: 1.5px solid var(--border);
+  display: flex; flex-direction: column;
+  z-index: 100;
+}
+.sidebar-brand {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.brand-logo { font-size: 28px; }
+.brand-name { font-size: 15px; font-weight: 700; color: var(--primary-dark); line-height: 1.2; }
+.brand-sub { font-size: 11px; color: var(--text2); }
+.sidebar-nav { flex: 1; padding: 12px 0; overflow-y: auto; }
+.nav-section { padding: 8px 16px 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text3); letter-spacing: .8px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 16px; margin: 1px 8px;
+  border-radius: 10px; cursor: pointer;
+  font-size: 14px; color: var(--text2);
+  transition: all .15s; text-decoration: none;
+  border: none; background: none; width: calc(100% - 16px); text-align: left;
+}
+.nav-item:hover { background: var(--primary-light); color: var(--primary-dark); }
+.nav-item.active { background: var(--primary); color: white; font-weight: 600; }
+.nav-item .icon { font-size: 18px; width: 22px; text-align: center; }
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  font-size: 13px; color: var(--text2);
+}
+.sidebar-footer strong { display: block; color: var(--text); font-size: 14px; }
+.btn-logout {
+  margin-top: 8px; width: 100%; padding: 8px;
+  border: 1.5px solid var(--border); background: none;
+  border-radius: 8px; font-size: 13px; color: var(--text2);
+  cursor: pointer; transition: all .2s;
+}
+.btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+.main-content {
+  margin-left: var(--sidebar-w);
+  height: 100vh;
+  overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.top-bar {
+  background: white;
+  border-bottom: 1.5px solid var(--border);
+  padding: 16px 28px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.top-bar h2 { font-size: 20px; font-weight: 700; color: var(--text); }
+.top-bar-actions { display: flex; gap: 10px; align-items: center; }
+.content-area { padding: 28px; flex: 1; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border-radius: 9px;
+  font-size: 14px; font-weight: 500; cursor: pointer;
+  border: 1.5px solid transparent; transition: all .15s;
+}
+.btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 7px; }
+.btn-xs { padding: 4px 8px; font-size: 12px; border-radius: 6px; }
+.btn-primary-sm { background: var(--primary); color: white; border-color: var(--primary); }
+.btn-primary-sm:hover { background: var(--primary-dark); }
+.btn-outline { background: white; color: var(--text2); border-color: var(--border); }
+.btn-outline:hover { border-color: var(--primary); color: var(--primary); }
+.btn-danger { background: #fef2f2; color: var(--danger); border-color: #fecaca; }
+.btn-danger:hover { background: var(--danger); color: white; }
+.btn-success { background: #ecfdf5; color: var(--success); border-color: #a7f3d0; }
+.btn-success:hover { background: var(--success); color: white; }
+
+/* ── CARDS ── */
+.card {
+  background: white; border-radius: var(--radius);
+  border: 1.5px solid var(--border); padding: 20px;
+  box-shadow: var(--shadow);
+}
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+.stat-card {
+  background: white; border-radius: var(--radius);
+  border: 1.5px solid var(--border); padding: 20px;
+  display: flex; align-items: center; gap: 16px;
+}
+.stat-icon { font-size: 32px; width: 56px; height: 56px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+.stat-info h3 { font-size: 24px; font-weight: 700; color: var(--text); }
+.stat-info p { font-size: 13px; color: var(--text2); }
+.stat-pink .stat-icon { background: #fce7f3; }
+.stat-purple .stat-icon { background: #ede9fe; }
+.stat-green .stat-icon { background: #ecfdf5; }
+.stat-amber .stat-icon { background: #fffbeb; }
+
+/* ── TABLES ── */
+.table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1.5px solid var(--border); }
+table { width: 100%; border-collapse: collapse; background: white; }
+th { padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); background: var(--surface2); border-bottom: 1.5px solid var(--border); }
+td { padding: 12px 16px; font-size: 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: #fdf4fb; }
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
+}
+.badge-green { background: #ecfdf5; color: #059669; }
+.badge-yellow { background: #fffbeb; color: #d97706; }
+.badge-red { background: #fef2f2; color: #dc2626; }
+.badge-blue { background: #eff6ff; color: #2563eb; }
+.badge-gray { background: #f3f4f6; color: #6b7280; }
+.badge-pink { background: var(--primary-light); color: var(--primary-dark); }
+.badge-purple { background: #ede9fe; color: #7c3aed; }
+
+/* ── MODAL ── */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 20px;
+}
+.modal {
+  background: white; border-radius: 20px;
+  padding: 32px; width: 100%; max-width: 560px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: var(--shadow-lg);
+}
+.modal-lg { max-width: 720px; }
+.modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; color: var(--text); }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+/* ── FORMS ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.form-full { grid-column: 1 / -1; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label { font-size: 13px; font-weight: 500; color: var(--text2); }
+.form-group input, .form-group select, .form-group textarea {
+  padding: 10px 12px; border: 1.5px solid var(--border);
+  border-radius: 9px; font-size: 14px; outline: none;
+  transition: border-color .2s; font-family: inherit;
+  background: white;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--primary); }
+.form-group textarea { resize: vertical; min-height: 80px; }
+.form-group input[type="color"] { padding: 4px 8px; height: 40px; cursor: pointer; }
+
+/* ── SEARCH ── */
+.search-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border: 1.5px solid var(--border);
+  border-radius: 10px; background: white; width: 260px;
+}
+.search-bar input { border: none; outline: none; font-size: 14px; flex: 1; background: transparent; }
+.search-icon { color: var(--text3); font-size: 16px; }
+
+/* ── CALENDAR ── */
+#calendar-container { background: white; border-radius: var(--radius); border: 1.5px solid var(--border); padding: 20px; }
+.fc { font-family: inherit; }
+.fc-toolbar-title { font-size: 18px !important; font-weight: 700 !important; }
+.fc-button-primary { background: var(--primary) !important; border-color: var(--primary) !important; }
+.fc-button-primary:hover { background: var(--primary-dark) !important; border-color: var(--primary-dark) !important; }
+.fc-button-primary:not(:disabled).fc-button-active { background: var(--primary-dark) !important; }
+.fc-event { border-radius: 6px !important; border: none !important; font-size: 12px !important; cursor: pointer; }
+.fc-daygrid-event { padding: 2px 6px !important; }
+.calendar-view-btns { display: flex; gap: 6px; margin-bottom: 16px; }
+
+/* ── AGENDA QUICK ── */
+.agenda-list { display: flex; flex-direction: column; gap: 8px; }
+.agenda-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 12px 16px; background: white;
+  border-radius: 10px; border: 1.5px solid var(--border);
+  transition: border-color .2s;
+}
+.agenda-item:hover { border-color: var(--primary); }
+.agenda-time { font-size: 14px; font-weight: 700; color: var(--text); min-width: 50px; text-align: center; }
+.agenda-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.agenda-info { flex: 1; }
+.agenda-info strong { font-size: 14px; display: block; }
+.agenda-info span { font-size: 12px; color: var(--text2); }
+.agenda-status { font-size: 12px; }
+
+/* ── FINANCEIRO ── */
+.fin-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.chart-wrap { position: relative; height: 260px; }
+.metodo-list { display: flex; flex-direction: column; gap: 10px; }
+.metodo-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: var(--surface2); border-radius: 9px; }
+.metodo-item span { font-size: 14px; color: var(--text2); }
+.metodo-item strong { font-size: 15px; color: var(--text); }
+
+/* ── COLOR DOT ── */
+.color-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+/* ── PACKAGE CARD ── */
+.pacote-card {
+  border: 1.5px solid var(--border); border-radius: 12px;
+  padding: 16px; background: white; transition: border-color .2s;
+}
+.pacote-card:hover { border-color: var(--primary); }
+.pacote-progress { height: 8px; background: var(--border); border-radius: 4px; margin: 10px 0 6px; overflow: hidden; }
+.pacote-progress-bar { height: 100%; border-radius: 4px; background: var(--primary); transition: width .5s; }
+.pacote-progress-bar.warning { background: var(--warning); }
+.pacote-progress-bar.danger { background: var(--danger); }
+.pacote-progress-bar.success { background: var(--success); }
+
+/* ── TOAST ── */
+#toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  padding: 12px 18px; border-radius: 10px;
+  font-size: 14px; font-weight: 500; color: white;
+  box-shadow: var(--shadow-lg);
+  animation: slideIn .3s ease;
+  max-width: 320px;
+}
+.toast-success { background: var(--success); }
+.toast-error { background: var(--danger); }
+.toast-info { background: var(--secondary); }
+@keyframes slideIn { from { transform: translateX(100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ── UTILS ── */
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+.text-sm { font-size: 13px; }
+.text-xs { font-size: 12px; }
+.text-muted { color: var(--text2); }
+.font-bold { font-weight: 700; }
+.hidden { display: none !important; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     AUTH SCREEN
+═══════════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">🌸</div>
+    <h1 id="auth-clinic-name">Clínica Estética</h1>
+    <p>Sistema de Agendamentos</p>
+    <input type="email" id="login-email" placeholder="E-mail" autocomplete="email">
+    <input type="password" id="login-pass" placeholder="Senha" autocomplete="current-password">
+    <button class="btn-primary" onclick="doLogin()">Entrar</button>
+    <div class="auth-err hidden" id="auth-err"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     APP
+═══════════════════════════════════════════════ -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-logo">🌸</div>
+      <div class="brand-name" id="sidebar-clinic-name">Clínica Estética</div>
+      <div class="brand-sub">Sistema de Agendamentos</div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">Principal</div>
+      <button class="nav-item active" data-page="dashboard" onclick="navigate('dashboard')">
+        <span class="icon">🏠</span> Dashboard
+      </button>
+      <button class="nav-item" data-page="agenda" onclick="navigate('agenda')">
+        <span class="icon">📅</span> Agenda
+      </button>
+      <button class="nav-item" data-page="agendamentos" onclick="navigate('agendamentos')">
+        <span class="icon">📋</span> Agendamentos
+      </button>
+      <div class="nav-section">Cadastros</div>
+      <button class="nav-item" data-page="clientes" onclick="navigate('clientes')">
+        <span class="icon">👤</span> Clientes
+      </button>
+      <button class="nav-item" data-page="profissionais" onclick="navigate('profissionais')">
+        <span class="icon">💆</span> Profissionais
+      </button>
+      <button class="nav-item" data-page="procedimentos" onclick="navigate('procedimentos')">
+        <span class="icon">✨</span> Procedimentos
+      </button>
+      <button class="nav-item" data-page="pacotes" onclick="navigate('pacotes')">
+        <span class="icon">📦</span> Pacotes de Sessões
+      </button>
+      <div class="nav-section">Gestão</div>
+      <button class="nav-item" data-page="financeiro" onclick="navigate('financeiro')">
+        <span class="icon">💰</span> Financeiro
+      </button>
+      <button class="nav-item" data-page="configuracoes" onclick="navigate('configuracoes')">
+        <span class="icon">⚙️</span> Configurações
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <span id="sidebar-user-role" class="badge badge-pink text-xs" style="margin-bottom:6px;display:inline-block"></span>
+      <strong id="sidebar-user-name">Carregando...</strong>
+      <span id="sidebar-user-email" style="font-size:12px;color:var(--text3)"></span>
+      <button class="btn-logout" onclick="doLogout()">Sair</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div class="top-bar">
+      <h2 id="page-title">Dashboard</h2>
+      <div class="top-bar-actions" id="top-bar-actions"></div>
+    </div>
+    <div class="content-area" id="content-area">
+      <!-- Páginas renderizadas via JS -->
+    </div>
+  </main>
+</div>
+
+<!-- MODALS -->
+<div id="modal-container"></div>
+<!-- TOAST -->
+<div id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIG — altere para suas credenciais Supabase
+// ═══════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://SEU_PROJECT_ID.supabase.co';
+const SUPABASE_ANON = 'SUA_ANON_KEY';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ═══════════════════════════════════════════════════════
+// ESTADO GLOBAL
+// ═══════════════════════════════════════════════════════
+let APP = {
+  user: null,
+  profile: null,
+  currentPage: 'dashboard',
+  clinica: {},
+  calendar: null,
+};
+
+// ═══════════════════════════════════════════════════════
+// UTILITÁRIOS
+// ═══════════════════════════════════════════════════════
+function fmt(v, dec=2) {
+  return Number(v||0).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+}
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleDateString('pt-BR');
+}
+function fmtDateTime(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+}
+function fmtTime(d) {
+  if (!d) return '—';
+  return new Date(d).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+function fmtCurrency(v) {
+  return 'R$ ' + fmt(v);
+}
+function localDateTime(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  const pad = n => String(n).padStart(2,'0');
+  return `${dt.getFullYear()}-${pad(dt.getMonth()+1)}-${pad(dt.getDate())}T${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+}
+function toast(msg, type='success') {
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+function showModal(html) {
+  const wrap = document.getElementById('modal-container');
+  wrap.innerHTML = `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()">${html}</div>`;
+}
+function closeModal() {
+  document.getElementById('modal-container').innerHTML = '';
+}
+function confirm2(msg) {
+  return new Promise(res => {
+    showModal(`<div class="modal" style="max-width:380px;text-align:center">
+      <div style="font-size:36px;margin-bottom:12px">⚠️</div>
+      <h3 style="margin-bottom:8px">Confirmar</h3>
+      <p style="color:var(--text2);margin-bottom:24px">${msg}</p>
+      <div style="display:flex;gap:10px;justify-content:center">
+        <button class="btn btn-outline" onclick="closeModal();window._confirmRes(false)">Cancelar</button>
+        <button class="btn btn-danger" onclick="closeModal();window._confirmRes(true)">Confirmar</button>
+      </div>
+    </div>`);
+    window._confirmRes = res;
+  });
+}
+function statusBadge(s) {
+  const map = {
+    agendado: ['badge-blue','Agendado'],
+    confirmado: ['badge-green','Confirmado'],
+    concluido: ['badge-purple','Concluído'],
+    cancelado: ['badge-red','Cancelado'],
+    faltou: ['badge-yellow','Faltou'],
+  };
+  const [cls, label] = map[s] || ['badge-gray', s];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+function statusPagBadge(s) {
+  const map = {
+    pago: ['badge-green','Pago'],
+    pendente: ['badge-yellow','Pendente'],
+    cancelado: ['badge-red','Cancelado'],
+  };
+  const [cls, label] = map[s] || ['badge-gray', s];
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+function metodoBadge(m) {
+  const map = {
+    pix: '💠 Pix', dinheiro: '💵 Dinheiro',
+    cartao_credito: '💳 Crédito', cartao_debito: '💳 Débito', transferencia: '🔄 Transfer.'
+  };
+  return map[m] || m;
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const errEl = document.getElementById('auth-err');
+  errEl.classList.add('hidden');
+  if (!email || !pass) { errEl.textContent = 'Preencha e-mail e senha.'; errEl.classList.remove('hidden'); return; }
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { errEl.textContent = error.message; errEl.classList.remove('hidden'); }
+}
+async function doLogout() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (session?.user) {
+    APP.user = session.user;
+    await loadProfile();
+    await loadClinicaConfig();
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    navigate('dashboard');
+  } else {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    APP.user = null;
+  }
+});
+
+async function loadProfile() {
+  const { data } = await sb.from('profiles').select('*').eq('id', APP.user.id).single();
+  APP.profile = data;
+  if (data) {
+    document.getElementById('sidebar-user-name').textContent = data.nome;
+    document.getElementById('sidebar-user-email').textContent = data.email || '';
+    const roleLabels = { admin: 'Admin', profissional: 'Profissional', recepcionista: 'Recepcionista' };
+    document.getElementById('sidebar-user-role').textContent = roleLabels[data.role] || data.role;
+  }
+}
+
+async function loadClinicaConfig() {
+  const { data } = await sb.from('config_clinica').select('*');
+  if (data) {
+    APP.clinica = Object.fromEntries(data.map(r => [r.chave, r.valor]));
+    const nome = APP.clinica.nome_clinica || 'Clínica Estética';
+    document.getElementById('sidebar-clinic-name').textContent = nome;
+    document.getElementById('auth-clinic-name').textContent = nome;
+    document.title = nome + ' — Agendamentos';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════════════════════════
+const PAGE_TITLES = {
+  dashboard: 'Dashboard',
+  agenda: 'Agenda',
+  agendamentos: 'Agendamentos',
+  clientes: 'Clientes',
+  profissionais: 'Profissionais',
+  procedimentos: 'Procedimentos',
+  pacotes: 'Pacotes de Sessões',
+  financeiro: 'Financeiro',
+  configuracoes: 'Configurações',
+};
+function navigate(page) {
+  APP.currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.page === page);
+  });
+  document.getElementById('page-title').textContent = PAGE_TITLES[page] || page;
+  document.getElementById('top-bar-actions').innerHTML = '';
+  const pages = {
+    dashboard: renderDashboard,
+    agenda: renderAgenda,
+    agendamentos: renderAgendamentos,
+    clientes: renderClientes,
+    profissionais: renderProfissionais,
+    procedimentos: renderProcedimentos,
+    pacotes: renderPacotes,
+    financeiro: renderFinanceiro,
+    configuracoes: renderConfiguracoes,
+  };
+  (pages[page] || (() => {}))();
+}
+
+// ═══════════════════════════════════════════════════════
+// ── DASHBOARD ──
+// ═══════════════════════════════════════════════════════
+async function renderDashboard() {
+  const area = document.getElementById('content-area');
+  area.innerHTML = '<p style="color:var(--text2)">Carregando...</p>';
+
+  const hoje = new Date();
+  const inicioHoje = new Date(hoje.setHours(0,0,0,0)).toISOString();
+  const fimHoje = new Date(hoje.setHours(23,59,59,999)).toISOString();
+  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString();
+
+  const [agHoje, agMes, clientes, receita] = await Promise.all([
+    sb.from('agendamentos').select('*', {count:'exact', head:true})
+      .gte('data_hora', inicioHoje).lte('data_hora', fimHoje).neq('status','cancelado'),
+    sb.from('agendamentos').select('*', {count:'exact', head:true})
+      .gte('data_hora', inicioMes).neq('status','cancelado'),
+    sb.from('clientes').select('*', {count:'exact', head:true}).eq('ativo', true),
+    sb.from('pagamentos').select('valor').eq('status','pago').gte('data_pagamento', inicioMes),
+  ]);
+
+  const receitaMes = (receita.data || []).reduce((s,r) => s + Number(r.valor), 0);
+
+  const { data: agHojeData } = await sb.from('v_agendamentos')
+    .select('*')
+    .gte('data_hora', inicioHoje).lte('data_hora', fimHoje)
+    .neq('status','cancelado')
+    .order('data_hora');
+
+  const { data: pacotesAlerta } = await sb.from('pacotes_cliente')
+    .select(`*, clientes(nome, telefone), procedimentos(nome)`)
+    .eq('status','ativo')
+    .filter('sessoes_utilizadas', 'gte', 0);
+
+  const alertaPacotes = (pacotesAlerta||[]).filter(p => (p.total_sessoes - p.sessoes_utilizadas) <= 2);
+
+  area.innerHTML = `
+    <div class="stat-grid">
+      <div class="stat-card stat-pink">
+        <div class="stat-icon">📅</div>
+        <div class="stat-info"><h3>${agHoje.count||0}</h3><p>Agendamentos hoje</p></div>
+      </div>
+      <div class="stat-card stat-purple">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info"><h3>${agMes.count||0}</h3><p>Agendamentos no mês</p></div>
+      </div>
+      <div class="stat-card stat-green">
+        <div class="stat-icon">💰</div>
+        <div class="stat-info"><h3>${fmtCurrency(receitaMes)}</h3><p>Receita este mês</p></div>
+      </div>
+      <div class="stat-card stat-amber">
+        <div class="stat-icon">👥</div>
+        <div class="stat-info"><h3>${clientes.count||0}</h3><p>Clientes ativos</p></div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="flex items-center justify-between mb-4">
+          <strong style="font-size:16px">📅 Agenda de Hoje — ${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</strong>
+          <button class="btn btn-sm btn-primary-sm" onclick="openNovoAgendamento()">+ Novo</button>
+        </div>
+        <div class="agenda-list" id="dash-agenda">
+          ${(agHojeData||[]).length === 0
+            ? '<p style="color:var(--text2);text-align:center;padding:24px">Nenhum agendamento hoje</p>'
+            : (agHojeData||[]).map(a => `
+              <div class="agenda-item">
+                <div class="agenda-time">${fmtTime(a.data_hora)}</div>
+                <div class="agenda-dot" style="background:${a.profissional_cor||'#d946a8'}"></div>
+                <div class="agenda-info">
+                  <strong>${a.cliente_nome}</strong>
+                  <span>${a.procedimento_nome} · ${a.profissional_nome}</span>
+                </div>
+                ${statusBadge(a.status)}
+              </div>`).join('')
+          }
+        </div>
+      </div>
+
+      <div class="card">
+        <strong style="font-size:16px">⚠️ Pacotes Acabando</strong>
+        <p style="color:var(--text2);font-size:13px;margin:4px 0 14px">Clientes com 2 ou menos sessões restantes</p>
+        ${alertaPacotes.length === 0
+          ? '<p style="color:var(--text2);text-align:center;padding:24px">Nenhum alerta</p>'
+          : alertaPacotes.slice(0,6).map(p => {
+              const restam = p.total_sessoes - p.sessoes_utilizadas;
+              const pct = Math.round((p.sessoes_utilizadas/p.total_sessoes)*100);
+              return `<div class="pacote-card mb-4">
+                <div class="flex justify-between items-center">
+                  <strong style="font-size:14px">${p.clientes?.nome}</strong>
+                  <span class="badge badge-red">${restam} sessão(ões)</span>
+                </div>
+                <div style="font-size:13px;color:var(--text2)">${p.procedimentos?.nome}</div>
+                <div class="pacote-progress">
+                  <div class="pacote-progress-bar danger" style="width:${pct}%"></div>
+                </div>
+                <div class="flex justify-between text-xs text-muted">
+                  <span>${p.sessoes_utilizadas}/${p.total_sessoes} utilizadas</span>
+                  <button class="btn btn-xs btn-outline" onclick="sendLembretePacote('${p.id}')">📱 Lembrar</button>
+                </div>
+              </div>`;
+            }).join('')
+        }
+      </div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════
+// ── AGENDA (CALENDÁRIO) ──
+// ═══════════════════════════════════════════════════════
+async function renderAgenda() {
+  const area = document.getElementById('content-area');
+  area.innerHTML = `
+    <div class="top-bar-actions" style="margin-bottom:16px">
+      <button class="btn btn-sm btn-primary-sm" onclick="openNovoAgendamento()">+ Novo Agendamento</button>
+    </div>
+    <div id="calendar-container">
+      <div id="calendar"></div>
+    </div>`;
+  document.getElementById('top-bar-actions').innerHTML =
+    `<button class="btn btn-sm btn-primary-sm" onclick="openNovoAgendamento()">+ Novo Agendamento</button>`;
+
+  const { data: ags } = await sb.from('v_agendamentos').select('*');
+  const events = (ags||[]).map(a => ({
+    id: a.id,
+    title: `${fmtTime(a.data_hora)} ${a.cliente_nome}`,
+    start: a.data_hora,
+    end: a.data_hora_fim,
+    backgroundColor: a.profissional_cor || '#d946a8',
+    borderColor: 'transparent',
+    extendedProps: a,
+  }));
+
+  APP.calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
+    locale: 'pt-br',
+    initialView: 'timeGridWeek',
+    headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,timeGridDay' },
+    events,
+    height: 'calc(100vh - 200px)',
+    slotMinTime: '07:00:00',
+    slotMaxTime: '21:00:00',
+    slotDuration: '00:30:00',
+    eventClick(info) { showAgendamentoDetail(info.event.extendedProps); },
+    dateClick(info) { openNovoAgendamento(info.dateStr); },
+    eventDidMount(info) {
+      const el = info.el;
+      const props = info.event.extendedProps;
+      el.title = `${props.cliente_nome} · ${props.procedimento_nome} · ${props.profissional_nome}`;
+    },
+  });
+  APP.calendar.render();
+}
+
+function showAgendamentoDetail(a) {
+  showModal(`<div class="modal">
+    <h3>📋 Agendamento</h3>
+    <div class="form-grid">
+      <div class="form-group"><label>Cliente</label><div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:14px">${a.cliente_nome}</div></div>
+      <div class="form-group"><label>Profissional</label><div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:14px">${a.profissional_nome}</div></div>
+      <div class="form-group"><label>Procedimento</label><div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:14px">${a.procedimento_nome}</div></div>
+      <div class="form-group"><label>Data/Hora</label><div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:14px">${fmtDateTime(a.data_hora)}</div></div>
+      <div class="form-group"><label>Duração</label><div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:14px">${a.duracao_minutos} min</div></div>
+      <div class="form-group"><label>Status</label><div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:14px">${statusBadge(a.status)}</div></div>
+      ${a.preco_cobrado ? `<div class="form-group form-full"><label>Valor</label><div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:14px">${fmtCurrency(a.preco_cobrado)}</div></div>` : ''}
+      ${a.observacoes ? `<div class="form-group form-full"><label>Observações</label><div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:14px">${a.observacoes}</div></div>` : ''}
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Fechar</button>
+      <button class="btn btn-outline" onclick="closeModal();editAgendamento('${a.id}')">✏️ Editar</button>
+      <button class="btn btn-success btn-sm" onclick="confirmarAgendamento('${a.id}')">✅ Confirmar</button>
+      <button class="btn btn-primary-sm btn-sm" onclick="concluirAgendamento('${a.id}')">💅 Concluir</button>
+    </div>
+  </div>`);
+}
+
+// ═══════════════════════════════════════════════════════
+// ── AGENDAMENTOS (LISTA) ──
+// ═══════════════════════════════════════════════════════
+async function renderAgendamentos(search='') {
+  document.getElementById('top-bar-actions').innerHTML =
+    `<div class="search-bar"><span class="search-icon">🔍</span><input placeholder="Buscar cliente..." oninput="renderAgendamentos(this.value)" value="${search}"></div>
+     <button class="btn btn-sm btn-primary-sm" onclick="openNovoAgendamento()">+ Novo</button>`;
+
+  let q = sb.from('v_agendamentos').select('*').order('data_hora', {ascending:false}).limit(100);
+  if (search) q = q.ilike('cliente_nome', `%${search}%`);
+  const { data } = await q;
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data/Hora</th><th>Cliente</th><th>Procedimento</th><th>Profissional</th><th>Duração</th><th>Valor</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${(data||[]).map(a => `<tr>
+            <td style="font-weight:600">${fmtDateTime(a.data_hora)}</td>
+            <td>${a.cliente_nome}</td>
+            <td><span class="color-dot" style="background:${a.categoria_cor||'#ccc'};margin-right:6px"></span>${a.procedimento_nome}</td>
+            <td>${a.profissional_nome}</td>
+            <td>${a.duracao_minutos} min</td>
+            <td>${a.preco_cobrado ? fmtCurrency(a.preco_cobrado) : '—'}</td>
+            <td>${statusBadge(a.status)}</td>
+            <td style="display:flex;gap:6px">
+              <button class="btn btn-xs btn-outline" onclick="editAgendamento('${a.id}')">✏️</button>
+              <button class="btn btn-xs btn-danger" onclick="cancelarAgendamento('${a.id}')">✖</button>
+            </td>
+          </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:32px">Nenhum agendamento encontrado</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// MODAL NOVO / EDITAR AGENDAMENTO
+// ═══════════════════════════════════════════════════════
+async function openNovoAgendamento(dateStr) {
+  const [{ data: clientes }, { data: profs }, { data: procs }] = await Promise.all([
+    sb.from('clientes').select('id,nome').eq('ativo',true).order('nome'),
+    sb.from('profissionais').select('id,nome').eq('ativo',true).order('nome'),
+    sb.from('procedimentos').select('id,nome,duracao_minutos,preco').eq('ativo',true).order('nome'),
+  ]);
+
+  const defaultDT = dateStr ? dateStr.replace('Z','').slice(0,16) : localDateTime(new Date());
+
+  showModal(`<div class="modal modal-lg">
+    <h3>📅 Novo Agendamento</h3>
+    <div class="form-grid">
+      <div class="form-group form-full">
+        <label>Cliente *</label>
+        <select id="ag-cliente" onchange="checkPacoteCliente()">
+          <option value="">Selecionar cliente...</option>
+          ${(clientes||[]).map(c=>`<option value="${c.id}">${c.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Procedimento *</label>
+        <select id="ag-proc" onchange="updateAgendamentoDuracao()">
+          <option value="">Selecionar procedimento...</option>
+          ${(procs||[]).map(p=>`<option value="${p.id}" data-dur="${p.duracao_minutos}" data-preco="${p.preco}">${p.nome} (${p.duracao_minutos}min)</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Profissional *</label>
+        <select id="ag-prof">
+          <option value="">Selecionar profissional...</option>
+          ${(profs||[]).map(p=>`<option value="${p.id}">${p.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Data e Hora *</label>
+        <input type="datetime-local" id="ag-dt" value="${defaultDT}" onchange="updateAgendamentoDuracao()">
+      </div>
+      <div class="form-group">
+        <label>Duração (min)</label>
+        <input type="number" id="ag-dur" value="60" min="15" step="15">
+      </div>
+      <div class="form-group">
+        <label>Valor Cobrado (R$)</label>
+        <input type="number" id="ag-preco" step="0.01" min="0" placeholder="0,00">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="ag-status">
+          <option value="agendado">Agendado</option>
+          <option value="confirmado">Confirmado</option>
+        </select>
+      </div>
+      <div class="form-group" id="pacote-select-wrap" style="display:none">
+        <label>Usar Pacote</label>
+        <select id="ag-pacote"><option value="">Avulso</option></select>
+      </div>
+      <div class="form-group form-full">
+        <label>Observações</label>
+        <textarea id="ag-obs" rows="2" placeholder="Informações adicionais..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary-sm" onclick="saveAgendamento()">Salvar Agendamento</button>
+    </div>
+  </div>`);
+}
+
+function updateAgendamentoDuracao() {
+  const sel = document.getElementById('ag-proc');
+  const opt = sel.options[sel.selectedIndex];
+  if (opt && opt.dataset.dur) {
+    document.getElementById('ag-dur').value = opt.dataset.dur;
+    document.getElementById('ag-preco').value = opt.dataset.preco || '';
+  }
+}
+
+async function checkPacoteCliente() {
+  const clienteId = document.getElementById('ag-cliente').value;
+  const procId = document.getElementById('ag-proc')?.value;
+  const wrap = document.getElementById('pacote-select-wrap');
+  if (!clienteId) { wrap.style.display='none'; return; }
+  const { data } = await sb.from('pacotes_cliente')
+    .select(`*, procedimentos(nome)`)
+    .eq('cliente_id', clienteId)
+    .eq('status','ativo')
+    .gt('total_sessoes', sb.rpc);
+
+  if (data && data.length > 0) {
+    document.getElementById('ag-pacote').innerHTML =
+      `<option value="">Avulso</option>` +
+      data.map(p => `<option value="${p.id}">${p.procedimentos?.nome} (${p.total_sessoes-p.sessoes_utilizadas} sessões restantes)</option>`).join('');
+    wrap.style.display='flex';
+  } else {
+    wrap.style.display='none';
+  }
+}
+
+async function saveAgendamento() {
+  const clienteId = document.getElementById('ag-cliente').value;
+  const procId = document.getElementById('ag-proc').value;
+  const profId = document.getElementById('ag-prof').value;
+  const dt = document.getElementById('ag-dt').value;
+  const dur = parseInt(document.getElementById('ag-dur').value) || 60;
+  const preco = parseFloat(document.getElementById('ag-preco').value) || null;
+  const status = document.getElementById('ag-status').value;
+  const obs = document.getElementById('ag-obs').value;
+  const pacoteId = document.getElementById('ag-pacote')?.value || null;
+
+  if (!clienteId || !procId || !profId || !dt) { toast('Preencha os campos obrigatórios','error'); return; }
+
+  const dataHora = new Date(dt).toISOString();
+  const dataHoraFim = new Date(new Date(dt).getTime() + dur*60000).toISOString();
+
+  const { error } = await sb.from('agendamentos').insert({
+    cliente_id: clienteId, procedimento_id: procId, profissional_id: profId,
+    data_hora: dataHora, data_hora_fim: dataHoraFim,
+    duracao_minutos: dur, preco_cobrado: preco, status, observacoes: obs,
+    pacote_id: pacoteId || null,
+  });
+
+  if (error) { toast('Erro ao salvar: ' + error.message, 'error'); return; }
+  closeModal();
+  toast('Agendamento criado com sucesso!');
+  navigate(APP.currentPage);
+}
+
+async function editAgendamento(id) {
+  const { data: a } = await sb.from('agendamentos').select('*').eq('id', id).single();
+  const [{ data: clientes }, { data: profs }, { data: procs }] = await Promise.all([
+    sb.from('clientes').select('id,nome').eq('ativo',true).order('nome'),
+    sb.from('profissionais').select('id,nome').eq('ativo',true).order('nome'),
+    sb.from('procedimentos').select('id,nome,duracao_minutos,preco').eq('ativo',true).order('nome'),
+  ]);
+
+  showModal(`<div class="modal modal-lg">
+    <h3>✏️ Editar Agendamento</h3>
+    <div class="form-grid">
+      <div class="form-group form-full">
+        <label>Cliente</label>
+        <select id="ag-cliente">
+          ${(clientes||[]).map(c=>`<option value="${c.id}" ${c.id===a.cliente_id?'selected':''}>${c.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Procedimento</label>
+        <select id="ag-proc">
+          ${(procs||[]).map(p=>`<option value="${p.id}" ${p.id===a.procedimento_id?'selected':''}>${p.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Profissional</label>
+        <select id="ag-prof">
+          ${(profs||[]).map(p=>`<option value="${p.id}" ${p.id===a.profissional_id?'selected':''}>${p.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Data e Hora</label>
+        <input type="datetime-local" id="ag-dt" value="${localDateTime(a.data_hora)}">
+      </div>
+      <div class="form-group">
+        <label>Duração (min)</label>
+        <input type="number" id="ag-dur" value="${a.duracao_minutos||60}" min="15" step="15">
+      </div>
+      <div class="form-group">
+        <label>Valor Cobrado (R$)</label>
+        <input type="number" id="ag-preco" value="${a.preco_cobrado||''}" step="0.01" min="0">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="ag-status">
+          ${['agendado','confirmado','concluido','cancelado','faltou'].map(s=>
+            `<option value="${s}" ${s===a.status?'selected':''}>${s.charAt(0).toUpperCase()+s.slice(1)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group form-full">
+        <label>Observações</label>
+        <textarea id="ag-obs">${a.observacoes||''}</textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary-sm" onclick="updateAgendamento('${id}')">Salvar</button>
+    </div>
+  </div>`);
+}
+
+async function updateAgendamento(id) {
+  const dt = document.getElementById('ag-dt').value;
+  const dur = parseInt(document.getElementById('ag-dur').value) || 60;
+  const { error } = await sb.from('agendamentos').update({
+    cliente_id: document.getElementById('ag-cliente').value,
+    procedimento_id: document.getElementById('ag-proc').value,
+    profissional_id: document.getElementById('ag-prof').value,
+    data_hora: new Date(dt).toISOString(),
+    data_hora_fim: new Date(new Date(dt).getTime() + dur*60000).toISOString(),
+    preco_cobrado: parseFloat(document.getElementById('ag-preco').value) || null,
+    status: document.getElementById('ag-status').value,
+    observacoes: document.getElementById('ag-obs').value,
+  }).eq('id', id);
+  if (error) { toast('Erro: '+error.message,'error'); return; }
+  closeModal(); toast('Agendamento atualizado!');
+  navigate(APP.currentPage);
+}
+
+async function confirmarAgendamento(id) {
+  await sb.from('agendamentos').update({ status:'confirmado' }).eq('id', id);
+  closeModal(); toast('Agendamento confirmado!');
+  navigate(APP.currentPage);
+}
+
+async function concluirAgendamento(id) {
+  const { data: ag } = await sb.from('agendamentos').select('*').eq('id', id).single();
+  await sb.from('agendamentos').update({ status:'concluido' }).eq('id', id);
+  if (ag?.pacote_id) {
+    const { data: pac } = await sb.from('pacotes_cliente').select('*').eq('id', ag.pacote_id).single();
+    if (pac) {
+      const novas = pac.sessoes_utilizadas + 1;
+      const newStatus = novas >= pac.total_sessoes ? 'concluido' : 'ativo';
+      await sb.from('pacotes_cliente').update({ sessoes_utilizadas: novas, status: newStatus }).eq('id', pac.id);
+    }
+  }
+  closeModal(); toast('Agendamento concluído!');
+  navigate(APP.currentPage);
+}
+
+async function cancelarAgendamento(id) {
+  if (!await confirm2('Cancelar este agendamento?')) return;
+  await sb.from('agendamentos').update({ status:'cancelado' }).eq('id', id);
+  toast('Agendamento cancelado.', 'info');
+  navigate(APP.currentPage);
+}
+
+// ═══════════════════════════════════════════════════════
+// ── CLIENTES ──
+// ═══════════════════════════════════════════════════════
+async function renderClientes(search='') {
+  document.getElementById('top-bar-actions').innerHTML =
+    `<div class="search-bar"><span class="search-icon">🔍</span><input placeholder="Buscar cliente..." oninput="renderClientes(this.value)" value="${search}"></div>
+     <button class="btn btn-sm btn-primary-sm" onclick="openClienteModal()">+ Novo Cliente</button>`;
+
+  let q = sb.from('clientes').select('*').order('nome');
+  if (search) q = q.ilike('nome', `%${search}%`);
+  const { data } = await q;
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>Telefone</th><th>E-mail</th><th>Data Nasc.</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${(data||[]).map(c => `<tr>
+            <td><strong>${c.nome}</strong></td>
+            <td><a href="tel:${c.telefone}" style="color:inherit;text-decoration:none">📱 ${c.telefone}</a></td>
+            <td>${c.email||'—'}</td>
+            <td>${fmtDate(c.data_nascimento)}</td>
+            <td><span class="badge ${c.ativo?'badge-green':'badge-gray'}">${c.ativo?'Ativo':'Inativo'}</span></td>
+            <td style="display:flex;gap:6px">
+              <button class="btn btn-xs btn-outline" onclick="openClienteModal('${c.id}')">✏️</button>
+              <button class="btn btn-xs btn-outline" onclick="navigate('agendamentos')">📅</button>
+              <button class="btn btn-xs btn-danger" onclick="deleteCliente('${c.id}')">🗑</button>
+            </td>
+          </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:32px">Nenhum cliente encontrado</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function openClienteModal(id) {
+  let c = {};
+  if (id) {
+    const { data } = await sb.from('clientes').select('*').eq('id', id).single();
+    c = data || {};
+  }
+  showModal(`<div class="modal">
+    <h3>${id ? '✏️ Editar' : '➕ Novo'} Cliente</h3>
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Nome *</label><input id="c-nome" value="${c.nome||''}" placeholder="Nome completo"></div>
+      <div class="form-group"><label>Telefone / WhatsApp *</label><input id="c-tel" value="${c.telefone||''}" placeholder="(11) 99999-9999"></div>
+      <div class="form-group"><label>E-mail</label><input id="c-email" type="email" value="${c.email||''}" placeholder="email@exemplo.com"></div>
+      <div class="form-group"><label>Data de Nascimento</label><input id="c-nasc" type="date" value="${c.data_nascimento||''}"></div>
+      <div class="form-group"><label>CPF</label><input id="c-cpf" value="${c.cpf||''}" placeholder="000.000.000-00"></div>
+      <div class="form-group form-full"><label>Endereço</label><input id="c-end" value="${c.endereco||''}" placeholder="Rua, número, bairro..."></div>
+      <div class="form-group form-full"><label>Observações</label><textarea id="c-obs">${c.observacoes||''}</textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary-sm" onclick="saveCliente('${id||''}')">Salvar</button>
+    </div>
+  </div>`);
+}
+
+async function saveCliente(id) {
+  const payload = {
+    nome: document.getElementById('c-nome').value.trim(),
+    telefone: document.getElementById('c-tel').value.trim(),
+    email: document.getElementById('c-email').value.trim() || null,
+    data_nascimento: document.getElementById('c-nasc').value || null,
+    cpf: document.getElementById('c-cpf').value.trim() || null,
+    endereco: document.getElementById('c-end').value.trim() || null,
+    observacoes: document.getElementById('c-obs').value.trim() || null,
+  };
+  if (!payload.nome || !payload.telefone) { toast('Nome e telefone são obrigatórios','error'); return; }
+  const { error } = id
+    ? await sb.from('clientes').update(payload).eq('id', id)
+    : await sb.from('clientes').insert(payload);
+  if (error) { toast('Erro: '+error.message,'error'); return; }
+  closeModal(); toast(id ? 'Cliente atualizado!' : 'Cliente cadastrado!');
+  renderClientes();
+}
+
+async function deleteCliente(id) {
+  if (!await confirm2('Excluir este cliente? Os agendamentos vinculados serão mantidos.')) return;
+  await sb.from('clientes').delete().eq('id', id);
+  toast('Cliente removido.','info'); renderClientes();
+}
+
+// ═══════════════════════════════════════════════════════
+// ── PROFISSIONAIS ──
+// ═══════════════════════════════════════════════════════
+async function renderProfissionais() {
+  document.getElementById('top-bar-actions').innerHTML =
+    `<button class="btn btn-sm btn-primary-sm" onclick="openProfModal()">+ Novo Profissional</button>`;
+  const { data } = await sb.from('profissionais').select('*').order('nome');
+  document.getElementById('content-area').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Nome</th><th>Especialidade</th><th>Telefone</th><th>Cor Agenda</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${(data||[]).map(p => `<tr>
+            <td><strong>${p.nome}</strong></td>
+            <td>${p.especialidade||'—'}</td>
+            <td>${p.telefone||'—'}</td>
+            <td><span style="display:inline-flex;align-items:center;gap:8px"><span style="width:20px;height:20px;border-radius:4px;background:${p.cor_agenda||'#d946a8'}"></span>${p.cor_agenda||''}</span></td>
+            <td><span class="badge ${p.ativo?'badge-green':'badge-gray'}">${p.ativo?'Ativo':'Inativo'}</span></td>
+            <td style="display:flex;gap:6px">
+              <button class="btn btn-xs btn-outline" onclick="openProfModal('${p.id}')">✏️</button>
+              <button class="btn btn-xs btn-danger" onclick="deleteProf('${p.id}')">🗑</button>
+            </td>
+          </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:var(--text2);padding:32px">Nenhum profissional cadastrado</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function openProfModal(id) {
+  let p = {};
+  if (id) { const { data } = await sb.from('profissionais').select('*').eq('id',id).single(); p = data||{}; }
+  showModal(`<div class="modal">
+    <h3>${id?'✏️ Editar':'➕ Novo'} Profissional</h3>
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Nome *</label><input id="p-nome" value="${p.nome||''}" placeholder="Nome completo"></div>
+      <div class="form-group"><label>Especialidade</label><input id="p-esp" value="${p.especialidade||''}" placeholder="Ex: Esteticista, Dermato..."></div>
+      <div class="form-group"><label>Telefone</label><input id="p-tel" value="${p.telefone||''}" placeholder="(11) 99999-9999"></div>
+      <div class="form-group"><label>E-mail</label><input id="p-email" type="email" value="${p.email||''}"></div>
+      <div class="form-group"><label>Cor na Agenda</label><input id="p-cor" type="color" value="${p.cor_agenda||'#d946a8'}"></div>
+      <div class="form-group form-full"><label>Bio / Apresentação</label><textarea id="p-bio">${p.bio||''}</textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary-sm" onclick="saveProf('${id||''}')">Salvar</button>
+    </div>
+  </div>`);
+}
+
+async function saveProf(id) {
+  const payload = {
+    nome: document.getElementById('p-nome').value.trim(),
+    especialidade: document.getElementById('p-esp').value.trim() || null,
+    telefone: document.getElementById('p-tel').value.trim() || null,
+    email: document.getElementById('p-email').value.trim() || null,
+    cor_agenda: document.getElementById('p-cor').value,
+    bio: document.getElementById('p-bio').value.trim() || null,
+  };
+  if (!payload.nome) { toast('Nome é obrigatório','error'); return; }
+  const { error } = id
+    ? await sb.from('profissionais').update(payload).eq('id',id)
+    : await sb.from('profissionais').insert(payload);
+  if (error) { toast('Erro: '+error.message,'error'); return; }
+  closeModal(); toast(id?'Profissional atualizado!':'Profissional cadastrado!');
+  renderProfissionais();
+}
+
+async function deleteProf(id) {
+  if (!await confirm2('Excluir este profissional?')) return;
+  await sb.from('profissionais').delete().eq('id',id);
+  toast('Profissional removido.','info'); renderProfissionais();
+}
+
+// ═══════════════════════════════════════════════════════
+// ── PROCEDIMENTOS ──
+// ═══════════════════════════════════════════════════════
+async function renderProcedimentos() {
+  document.getElementById('top-bar-actions').innerHTML =
+    `<button class="btn btn-sm btn-primary-sm" onclick="openProcModal()">+ Novo Procedimento</button>`;
+  const [{ data: procs }, { data: cats }] = await Promise.all([
+    sb.from('procedimentos').select(`*, categorias_procedimento(nome,cor)`).order('nome'),
+    sb.from('categorias_procedimento').select('*').order('nome'),
+  ]);
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Procedimento</th><th>Categoria</th><th>Duração</th><th>Preço</th><th>Intervalo Rec.</th><th>Pacote</th><th>Status</th><th></th></tr></thead>
+        <tbody>
+          ${(procs||[]).map(p => `<tr>
+            <td><strong>${p.nome}</strong>${p.descricao?`<br><span class="text-xs text-muted">${p.descricao.slice(0,60)}</span>`:''}</td>
+            <td>${p.categorias_procedimento?`<span class="badge" style="background:${p.categorias_procedimento.cor}22;color:${p.categorias_procedimento.cor}">${p.categorias_procedimento.nome}</span>`:'—'}</td>
+            <td>⏱ ${p.duracao_minutos} min</td>
+            <td>${fmtCurrency(p.preco)}</td>
+            <td>${p.intervalo_recomendado_dias?`${p.intervalo_recomendado_dias} dias`:'—'}</td>
+            <td>${p.max_sessoes_pacote?`${p.max_sessoes_pacote} sessões`:'Avulso'}</td>
+            <td><span class="badge ${p.ativo?'badge-green':'badge-gray'}">${p.ativo?'Ativo':'Inativo'}</span></td>
+            <td style="display:flex;gap:6px">
+              <button class="btn btn-xs btn-outline" onclick="openProcModal('${p.id}')">✏️</button>
+              <button class="btn btn-xs btn-danger" onclick="deleteProc('${p.id}')">🗑</button>
+            </td>
+          </tr>`).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text2);padding:32px">Nenhum procedimento cadastrado</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function openProcModal(id) {
+  let p = {};
+  const { data: cats } = await sb.from('categorias_procedimento').select('*').order('nome');
+  if (id) { const { data } = await sb.from('procedimentos').select('*').eq('id',id).single(); p = data||{}; }
+  showModal(`<div class="modal">
+    <h3>${id?'✏️ Editar':'➕ Novo'} Procedimento</h3>
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Nome *</label><input id="pr-nome" value="${p.nome||''}" placeholder="Nome do procedimento"></div>
+      <div class="form-group"><label>Categoria</label>
+        <select id="pr-cat">
+          <option value="">Sem categoria</option>
+          ${(cats||[]).map(c=>`<option value="${c.id}" ${c.id===p.categoria_id?'selected':''}>${c.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Duração (minutos) *</label><input id="pr-dur" type="number" value="${p.duracao_minutos||60}" min="5" step="5"></div>
+      <div class="form-group"><label>Preço (R$) *</label><input id="pr-preco" type="number" value="${p.preco||''}" step="0.01" min="0"></div>
+      <div class="form-group"><label>Intervalo Recomendado (dias)</label><input id="pr-int" type="number" value="${p.intervalo_recomendado_dias||''}" min="1" placeholder="Ex: 30"></div>
+      <div class="form-group"><label>Sessões em Pacote</label><input id="pr-pac" type="number" value="${p.max_sessoes_pacote||''}" min="1" placeholder="Ex: 10 (vazio = avulso)"></div>
+      <div class="form-group form-full"><label>Descrição</label><textarea id="pr-desc">${p.descricao||''}</textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary-sm" onclick="saveProc('${id||''}')">Salvar</button>
+    </div>
+  </div>`);
+}
+
+async function saveProc(id) {
+  const payload = {
+    nome: document.getElementById('pr-nome').value.trim(),
+    categoria_id: document.getElementById('pr-cat').value || null,
+    duracao_minutos: parseInt(document.getElementById('pr-dur').value) || 60,
+    preco: parseFloat(document.getElementById('pr-preco').value) || 0,
+    intervalo_recomendado_dias: parseInt(document.getElementById('pr-int').value) || null,
+    max_sessoes_pacote: parseInt(document.getElementById('pr-pac').value) || null,
+    descricao: document.getElementById('pr-desc').value.trim() || null,
+  };
+  if (!payload.nome) { toast('Nome é obrigatório','error'); return; }
+  const { error } = id
+    ? await sb.from('procedimentos').update(payload).eq('id',id)
+    : await sb.from('procedimentos').insert(payload);
+  if (error) { toast('Erro: '+error.message,'error'); return; }
+  closeModal(); toast(id?'Procedimento atualizado!':'Procedimento cadastrado!');
+  renderProcedimentos();
+}
+
+async function deleteProc(id) {
+  if (!await confirm2('Excluir este procedimento?')) return;
+  await sb.from('procedimentos').delete().eq('id',id);
+  toast('Procedimento removido.','info'); renderProcedimentos();
+}
+
+// ═══════════════════════════════════════════════════════
+// ── PACOTES DE SESSÕES ──
+// ═══════════════════════════════════════════════════════
+async function renderPacotes(search='') {
+  document.getElementById('top-bar-actions').innerHTML =
+    `<div class="search-bar"><span class="search-icon">🔍</span><input placeholder="Buscar cliente..." oninput="renderPacotes(this.value)" value="${search}"></div>
+     <button class="btn btn-sm btn-primary-sm" onclick="openPacoteModal()">+ Novo Pacote</button>`;
+
+  let q = sb.from('pacotes_cliente')
+    .select(`*, clientes(nome,telefone), procedimentos(nome), profissionais(nome)`)
+    .order('created_at', {ascending:false});
+  const { data } = await q;
+  const filtrados = search
+    ? (data||[]).filter(p => p.clientes?.nome?.toLowerCase().includes(search.toLowerCase()))
+    : data||[];
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Cliente</th><th>Procedimento</th><th>Profissional</th><th>Sessões</th><th>Progresso</th><th>Valor</th><th>Status</th><th>Validade</th><th></th></tr></thead>
+        <tbody>
+          ${filtrados.map(p => {
+            const restam = p.total_sessoes - p.sessoes_utilizadas;
+            const pct = p.total_sessoes > 0 ? Math.round((p.sessoes_utilizadas/p.total_sessoes)*100) : 0;
+            const barClass = restam <= 1 ? 'danger' : restam <= 2 ? 'warning' : 'success';
+            return `<tr>
+              <td><strong>${p.clientes?.nome||'—'}</strong></td>
+              <td>${p.procedimentos?.nome||'—'}</td>
+              <td>${p.profissionais?.nome||'—'}</td>
+              <td>${p.sessoes_utilizadas}/${p.total_sessoes} <span class="text-xs text-muted">(${restam} restam)</span></td>
+              <td style="min-width:120px">
+                <div class="pacote-progress"><div class="pacote-progress-bar ${barClass}" style="width:${pct}%"></div></div>
+                <span class="text-xs text-muted">${pct}%</span>
+              </td>
+              <td>
+                <div>${fmtCurrency(p.valor_pago)} pago</div>
+                <div class="text-xs text-muted">de ${fmtCurrency(p.valor_total)}</div>
+              </td>
+              <td><span class="badge ${p.status==='ativo'?'badge-green':p.status==='concluido'?'badge-purple':'badge-red'}">${p.status}</span></td>
+              <td>${fmtDate(p.validade)||'—'}</td>
+              <td style="display:flex;gap:6px">
+                <button class="btn btn-xs btn-outline" onclick="openPacoteModal('${p.id}')">✏️</button>
+                <button class="btn btn-xs btn-danger" onclick="deletePacote('${p.id}')">🗑</button>
+              </td>
+            </tr>`;
+          }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text2);padding:32px">Nenhum pacote cadastrado</td></tr>'}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+async function openPacoteModal(id) {
+  let p = {};
+  const [{ data: clientes }, { data: procs }, { data: profs }] = await Promise.all([
+    sb.from('clientes').select('id,nome').eq('ativo',true).order('nome'),
+    sb.from('procedimentos').select('id,nome,preco,max_sessoes_pacote').eq('ativo',true).order('nome'),
+    sb.from('profissionais').select('id,nome').eq('ativo',true).order('nome'),
+  ]);
+  if (id) { const { data } = await sb.from('pacotes_cliente').select('*').eq('id',id).single(); p = data||{}; }
+
+  showModal(`<div class="modal modal-lg">
+    <h3>${id?'✏️ Editar':'➕ Novo'} Pacote de Sessões</h3>
+    <div class="form-grid">
+      <div class="form-group"><label>Cliente *</label>
+        <select id="pk-cli">
+          <option value="">Selecionar...</option>
+          ${(clientes||[]).map(c=>`<option value="${c.id}" ${c.id===p.cliente_id?'selected':''}>${c.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Procedimento *</label>
+        <select id="pk-proc" onchange="updatePacotePreco()">
+          <option value="">Selecionar...</option>
+          ${(procs||[]).map(c=>`<option value="${c.id}" data-preco="${c.preco}" data-sess="${c.max_sessoes_pacote||''}" ${c.id===p.procedimento_id?'selected':''}>${c.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Profissional</label>
+        <select id="pk-prof">
+          <option value="">Qualquer</option>
+          ${(profs||[]).map(c=>`<option value="${c.id}" ${c.id===p.profissional_id?'selected':''}>${c.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Total de Sessões *</label><input id="pk-total" type="number" value="${p.total_sessoes||''}" min="1"></div>
+      <div class="form-group"><label>Sessões Utilizadas</label><input id="pk-used" type="number" value="${p.sessoes_utilizadas||0}" min="0"></div>
+      <div class="form-group"><label>Valor Total (R$)</label><input id="pk-valor" type="number" value="${p.valor_total||''}" step="0.01" min="0"></div>
+      <div class="form-group"><label>Valor Pago (R$)</label><input id="pk-pago" type="number" value="${p.valor_pago||0}" step="0.01" min="0"></div>
+      <div class="form-group"><label>Validade</label><input id="pk-val" type="date" value="${p.validade||''}"></div>
+      <div class="form-group"><label>Status</label>
+        <select id="pk-status">
+          ${['ativo','concluido','cancelado'].map(s=>`<option value="${s}" ${s===p.status?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group form-full"><label>Observações</label><textarea id="pk-obs">${p.observacoes||''}</textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary-sm" onclick="savePacote('${id||''}')">Salvar</button>
+    </div>
+  </div>`);
+}
+
+function updatePacotePreco() {
+  const sel = document.getElementById('pk-proc');
+  const opt = sel.options[sel.selectedIndex];
+  if (opt.dataset.sess) document.getElementById('pk-total').value = opt.dataset.sess;
+}
+
+async function savePacote(id) {
+  const payload = {
+    cliente_id: document.getElementById('pk-cli').value,
+    procedimento_id: document.getElementById('pk-proc').value,
+    profissional_id: document.getElementById('pk-prof').value || null,
+    total_sessoes: parseInt(document.getElementById('pk-total').value) || 1,
+    sessoes_utilizadas: parseInt(document.getElementById('pk-used').value) || 0,
+    valor_total: parseFloat(document.getElementById('pk-valor').value) || 0,
+    valor_pago: parseFloat(document.getElementById('pk-pago').value) || 0,
+    validade: document.getElementById('pk-val').value || null,
+    status: document.getElementById('pk-status').value,
+    observacoes: document.getElementById('pk-obs').value || null,
+  };
+  if (!payload.cliente_id || !payload.procedimento_id) { toast('Preencha cliente e procedimento','error'); return; }
+  const { error } = id
+    ? await sb.from('pacotes_cliente').update(payload).eq('id',id)
+    : await sb.from('pacotes_cliente').insert(payload);
+  if (error) { toast('Erro: '+error.message,'error'); return; }
+  closeModal(); toast(id?'Pacote atualizado!':'Pacote criado!');
+  renderPacotes();
+}
+
+async function deletePacote(id) {
+  if (!await confirm2('Excluir este pacote?')) return;
+  await sb.from('pacotes_cliente').delete().eq('id',id);
+  toast('Pacote removido.','info'); renderPacotes();
+}
+
+// ═══════════════════════════════════════════════════════
+// ── FINANCEIRO ──
+// ═══════════════════════════════════════════════════════
+async function renderFinanceiro() {
+  document.getElementById('top-bar-actions').innerHTML =
+    `<button class="btn btn-sm btn-primary-sm" onclick="openPagamentoModal()">+ Registrar Pagamento</button>`;
+  document.getElementById('content-area').innerHTML = '<p style="color:var(--text2)">Carregando...</p>';
+
+  const hoje = new Date();
+  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0,10);
+  const fimMes = new Date(hoje.getFullYear(), hoje.getMonth()+1, 0).toISOString().slice(0,10);
+
+  const [{ data: pags }, { data: pagsMes }] = await Promise.all([
+    sb.from('pagamentos').select(`*, clientes(nome)`).order('data_pagamento', {ascending:false}).limit(50),
+    sb.from('pagamentos').select('*').gte('data_pagamento', inicioMes).lte('data_pagamento', fimMes),
+  ]);
+
+  const totalMes = (pagsMes||[]).filter(p=>p.status==='pago').reduce((s,p)=>s+Number(p.valor),0);
+  const pendenteMes = (pagsMes||[]).filter(p=>p.status==='pendente').reduce((s,p)=>s+Number(p.valor),0);
+
+  // Agrupar por método
+  const porMetodo = {};
+  (pagsMes||[]).filter(p=>p.status==='pago').forEach(p => {
+    porMetodo[p.metodo] = (porMetodo[p.metodo]||0) + Number(p.valor);
+  });
+
+  // Chart por dia (últimos 30 dias)
+  const dias = {};
+  for (let i=29; i>=0; i--) {
+    const d = new Date(); d.setDate(d.getDate()-i);
+    dias[d.toISOString().slice(0,10)] = 0;
+  }
+  (pags||[]).filter(p=>p.status==='pago').forEach(p => {
+    if (dias[p.data_pagamento] !== undefined) dias[p.data_pagamento] += Number(p.valor);
+  });
+
+  document.getElementById('content-area').innerHTML = `
+    <div class="stat-grid" style="margin-bottom:24px">
+      <div class="stat-card stat-green">
+        <div class="stat-icon">💰</div>
+        <div class="stat-info"><h3>${fmtCurrency(totalMes)}</h3><p>Receita este mês</p></div>
+      </div>
+      <div class="stat-card stat-amber">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-info"><h3>${fmtCurrency(pendenteMes)}</h3><p>A receber este mês</p></div>
+      </div>
+      <div class="stat-card stat-pink">
+        <div class="stat-icon">📊</div>
+        <div class="stat-info"><h3>${(pagsMes||[]).filter(p=>p.status==='pago').length}</h3><p>Pagamentos recebidos</p></div>
+      </div>
+    </div>
+
+    <div class="fin-grid" style="margin-bottom:24px">
+      <div class="card">
+        <strong style="font-size:15px;display:block;margin-bottom:14px">📈 Receita — Últimos 30 dias</strong>
+        <div class="chart-wrap"><canvas id="chart-fin"></canvas></div>
+      </div>
+      <div class="card">
+        <strong style="font-size:15px;display:block;margin-bottom:14px">💳 Por Forma de Pagamento</strong>
+        <div class="metodo-list">
+          ${Object.entries(porMetodo).map(([m,v]) => `
+            <div class="metodo-item">
+              <span>${metodoBadge(m)}</span>
+              <strong>${fmtCurrency(v)}</strong>
+            </div>`).join('') || '<p style="color:var(--text2);text-align:center;padding:16px">Sem dados</p>'}
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <strong style="font-size:15px;display:block;margin-bottom:16px">📋 Últimos Pagamentos</strong>
+      <div class="table-wrap" style="border-radius:8px">
+        <table>
+          <thead><tr><th>Data</th><th>Cliente</th><th>Valor</th><th>Método</th><th>Status</th><th>Descrição</th><th></th></tr></thead>
+          <tbody>
+            ${(pags||[]).map(p => `<tr>
+              <td>${fmtDate(p.data_pagamento)}</td>
+              <td>${p.clientes?.nome||'—'}</td>
+              <td><strong>${fmtCurrency(p.valor)}</strong></td>
+              <td>${metodoBadge(p.metodo)}</td>
+              <td>${statusPagBadge(p.status)}</td>
+              <td style="color:var(--text2)">${p.descricao||'—'}</td>
+              <td><button class="btn btn-xs btn-danger" onclick="deletePagamento('${p.id}')">🗑</button></td>
+            </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text2);padding:24px">Nenhum pagamento registrado</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  // Renderizar gráfico
+  requestAnimationFrame(() => {
+    const ctx = document.getElementById('chart-fin');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: Object.keys(dias).map(d => d.slice(5)),
+        datasets: [{ label: 'Receita (R$)', data: Object.values(dias), backgroundColor: 'rgba(217,70,168,0.6)', borderColor: '#d946a8', borderWidth: 1, borderRadius: 4 }],
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } },
+    });
+  });
+}
+
+async function openPagamentoModal() {
+  const { data: clientes } = await sb.from('clientes').select('id,nome').eq('ativo',true).order('nome');
+  showModal(`<div class="modal">
+    <h3>💰 Registrar Pagamento</h3>
+    <div class="form-grid">
+      <div class="form-group form-full"><label>Cliente *</label>
+        <select id="pag-cli">
+          <option value="">Selecionar...</option>
+          ${(clientes||[]).map(c=>`<option value="${c.id}">${c.nome}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group"><label>Valor (R$) *</label><input id="pag-val" type="number" step="0.01" min="0" placeholder="0,00"></div>
+      <div class="form-group"><label>Forma de Pagamento</label>
+        <select id="pag-metodo">
+          <option value="pix">💠 Pix</option>
+          <option value="dinheiro">💵 Dinheiro</option>
+          <option value="cartao_credito">💳 Cartão Crédito</option>
+          <option value="cartao_debito">💳 Cartão Débito</option>
+          <option value="transferencia">🔄 Transferência</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Status</label>
+        <select id="pag-status"><option value="pago">Pago</option><option value="pendente">Pendente</option></select>
+      </div>
+      <div class="form-group"><label>Data</label><input id="pag-data" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
+      <div class="form-group form-full"><label>Descrição</label><input id="pag-desc" placeholder="Ex: Sessão de limpeza de pele, Pacote corporal..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary-sm" onclick="savePagamento()">Registrar</button>
+    </div>
+  </div>`);
+}
+
+async function savePagamento() {
+  const payload = {
+    cliente_id: document.getElementById('pag-cli').value,
+    valor: parseFloat(document.getElementById('pag-val').value) || 0,
+    metodo: document.getElementById('pag-metodo').value,
+    status: document.getElementById('pag-status').value,
+    data_pagamento: document.getElementById('pag-data').value,
+    descricao: document.getElementById('pag-desc').value || null,
+  };
+  if (!payload.cliente_id || !payload.valor) { toast('Preencha cliente e valor','error'); return; }
+  const { error } = await sb.from('pagamentos').insert(payload);
+  if (error) { toast('Erro: '+error.message,'error'); return; }
+  closeModal(); toast('Pagamento registrado!');
+  renderFinanceiro();
+}
+
+async function deletePagamento(id) {
+  if (!await confirm2('Remover este pagamento?')) return;
+  await sb.from('pagamentos').delete().eq('id',id);
+  toast('Pagamento removido.','info'); renderFinanceiro();
+}
+
+// ═══════════════════════════════════════════════════════
+// ── CONFIGURAÇÕES ──
+// ═══════════════════════════════════════════════════════
+async function renderConfiguracoes() {
+  const [{ data: configs }, { data: lembretes }, { data: horarios }] = await Promise.all([
+    sb.from('config_clinica').select('*'),
+    sb.from('config_lembretes').select('*'),
+    sb.from('horarios_funcionamento').select('*').order('dia_semana'),
+  ]);
+
+  const cfg = Object.fromEntries((configs||[]).map(r => [r.chave, r.valor]));
+  const diasNome = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+
+  document.getElementById('content-area').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+      <!-- CLÍNICA -->
+      <div class="card">
+        <strong style="font-size:16px;display:block;margin-bottom:16px">🏢 Dados da Clínica</strong>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="form-group"><label>Nome da Clínica</label><input id="cfg-nome" value="${cfg.nome_clinica||''}"></div>
+          <div class="form-group"><label>Telefone</label><input id="cfg-tel" value="${cfg.telefone||''}"></div>
+          <div class="form-group"><label>WhatsApp</label><input id="cfg-wp" value="${cfg.whatsapp||''}" placeholder="5511999999999"></div>
+          <div class="form-group"><label>Endereço</label><input id="cfg-end" value="${cfg.endereco||''}"></div>
+          <button class="btn btn-primary-sm btn-sm" onclick="saveConfigClinica()">Salvar</button>
+        </div>
+      </div>
+
+      <!-- WHATSAPP / EVOLUTION -->
+      <div class="card">
+        <strong style="font-size:16px;display:block;margin-bottom:16px">📱 WhatsApp (Evolution API)</strong>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div class="form-group"><label>URL da API</label><input id="cfg-evo-url" value="${cfg.evo_api_url||''}" placeholder="http://..."></div>
+          <div class="form-group"><label>API Key</label><input id="cfg-evo-key" value="${cfg.evo_api_key||''}" type="password"></div>
+          <div class="form-group"><label>Nome da Instância</label><input id="cfg-evo-inst" value="${cfg.evo_instance||''}"></div>
+          <button class="btn btn-primary-sm btn-sm" onclick="saveConfigEvo()">Salvar</button>
+          <button class="btn btn-outline btn-sm" onclick="testWhatsApp()">🧪 Testar Envio</button>
+        </div>
+      </div>
+
+      <!-- LEMBRETES -->
+      <div class="card" style="grid-column:1/-1">
+        <strong style="font-size:16px;display:block;margin-bottom:16px">🔔 Lembretes WhatsApp Automáticos</strong>
+        <div style="display:flex;flex-direction:column;gap:16px">
+          ${(lembretes||[]).map(l => `
+            <div style="border:1.5px solid var(--border);border-radius:10px;padding:16px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                <strong>${l.tipo === 'agendamento_24h' ? '📅 Lembrete 24h antes do agendamento' : l.tipo === 'agendamento_2h' ? '⏰ Lembrete 2h antes do agendamento' : '⚠️ Pacote quase acabando'}</strong>
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                  <input type="checkbox" id="lem-ativo-${l.id}" ${l.ativo?'checked':''} onchange="toggleLembrete('${l.id}',this.checked)">
+                  Ativo
+                </label>
+              </div>
+              <div class="form-group">
+                <label>Mensagem (use {{nome}}, {{horario}}, {{procedimento}}, {{profissional}}, {{sessoes_restantes}})</label>
+                <textarea id="lem-msg-${l.id}" rows="3">${l.template_mensagem||''}</textarea>
+              </div>
+              <button class="btn btn-sm btn-outline" onclick="saveLembrete('${l.id}')">Salvar mensagem</button>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <!-- HORÁRIOS -->
+      <div class="card" style="grid-column:1/-1">
+        <strong style="font-size:16px;display:block;margin-bottom:16px">🕐 Horários de Funcionamento</strong>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Dia</th><th>Abertura</th><th>Fechamento</th><th>Fechado</th><th></th></tr></thead>
+            <tbody>
+              ${(horarios||[]).map(h => `<tr>
+                <td><strong>${diasNome[h.dia_semana]}</strong></td>
+                <td><input type="time" id="hor-ab-${h.id}" value="${h.hora_abertura||'08:00'}" style="padding:6px;border:1px solid var(--border);border-radius:6px" ${h.fechado?'disabled':''}></td>
+                <td><input type="time" id="hor-fe-${h.id}" value="${h.hora_fechamento||'18:00'}" style="padding:6px;border:1px solid var(--border);border-radius:6px" ${h.fechado?'disabled':''}></td>
+                <td><input type="checkbox" id="hor-cl-${h.id}" ${h.fechado?'checked':''} onchange="toggleFechado('${h.id}',this.checked)"></td>
+                <td><button class="btn btn-xs btn-outline" onclick="saveHorario('${h.id}')">💾</button></td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function saveConfigClinica() {
+  const updates = [
+    ['nome_clinica', document.getElementById('cfg-nome').value],
+    ['telefone', document.getElementById('cfg-tel').value],
+    ['whatsapp', document.getElementById('cfg-wp').value],
+    ['endereco', document.getElementById('cfg-end').value],
+  ];
+  for (const [chave, valor] of updates) {
+    await sb.from('config_clinica').upsert({ chave, valor }, { onConflict:'chave' });
+  }
+  await loadClinicaConfig();
+  toast('Configurações salvas!');
+}
+
+async function saveConfigEvo() {
+  const updates = [
+    ['evo_api_url', document.getElementById('cfg-evo-url').value],
+    ['evo_api_key', document.getElementById('cfg-evo-key').value],
+    ['evo_instance', document.getElementById('cfg-evo-inst').value],
+  ];
+  for (const [chave, valor] of updates) {
+    await sb.from('config_clinica').upsert({ chave, valor }, { onConflict:'chave' });
+  }
+  await loadClinicaConfig();
+  toast('Config Evolution API salva!');
+}
+
+async function testWhatsApp() {
+  const tel = APP.clinica.whatsapp;
+  if (!tel) { toast('Configure o WhatsApp da clínica primeiro','error'); return; }
+  await sendWhatsApp(tel, '🌸 Teste de conexão WhatsApp — Sistema de Agendamentos funcionando!');
+}
+
+async function saveLembrete(id) {
+  const msg = document.getElementById(`lem-msg-${id}`).value;
+  await sb.from('config_lembretes').update({ template_mensagem: msg }).eq('id', id);
+  toast('Lembrete salvo!');
+}
+
+async function toggleLembrete(id, ativo) {
+  await sb.from('config_lembretes').update({ ativo }).eq('id', id);
+  toast(ativo ? 'Lembrete ativado!' : 'Lembrete desativado.', 'info');
+}
+
+async function saveHorario(id) {
+  const ab = document.getElementById(`hor-ab-${id}`).value;
+  const fe = document.getElementById(`hor-fe-${id}`).value;
+  await sb.from('horarios_funcionamento').update({ hora_abertura: ab, hora_fechamento: fe }).eq('id', id);
+  toast('Horário salvo!');
+}
+
+async function toggleFechado(id, fechado) {
+  await sb.from('horarios_funcionamento').update({ fechado }).eq('id', id);
+  const row = document.getElementById(`hor-ab-${id}`);
+  if (row) { row.disabled = fechado; document.getElementById(`hor-fe-${id}`).disabled = fechado; }
+}
+
+// ═══════════════════════════════════════════════════════
+// ── WHATSAPP ──
+// ═══════════════════════════════════════════════════════
+async function sendWhatsApp(telefone, mensagem) {
+  const url = APP.clinica.evo_api_url;
+  const key = APP.clinica.evo_api_key;
+  const inst = APP.clinica.evo_instance;
+  if (!url || !key || !inst) { toast('Configure a Evolution API em Configurações','error'); return false; }
+
+  const numero = telefone.replace(/\D/g,'');
+  try {
+    const resp = await fetch(`${url}/message/sendText/${inst}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'apikey': key },
+      body: JSON.stringify({ number: numero, text: mensagem }),
+    });
+    if (resp.ok) { toast('WhatsApp enviado!'); return true; }
+    else { toast('Erro ao enviar WhatsApp','error'); return false; }
+  } catch(e) {
+    toast('Falha na conexão com Evolution API','error'); return false;
+  }
+}
+
+async function sendLembretePacote(pacoteId) {
+  const { data: p } = await sb.from('pacotes_cliente')
+    .select(`*, clientes(nome,telefone), procedimentos(nome)`)
+    .eq('id', pacoteId).single();
+  if (!p) return;
+
+  const { data: lembretes } = await sb.from('config_lembretes')
+    .select('*').eq('tipo','pacote_acabando').eq('ativo',true);
+  const lembrete = lembretes?.[0];
+  if (!lembrete) { toast('Lembrete de pacote desativado','error'); return; }
+
+  const sessRest = p.total_sessoes - p.sessoes_utilizadas;
+  let msg = lembrete.template_mensagem
+    .replace('{{nome}}', p.clientes?.nome || 'Cliente')
+    .replace('{{procedimento}}', p.procedimentos?.nome || 'procedimento')
+    .replace('{{sessoes_restantes}}', sessRest);
+
+  const ok = await sendWhatsApp(p.clientes?.telefone, msg);
+  if (ok) {
+    await sb.from('pacotes_cliente').update({ lembrete_fim_enviado: true }).eq('id', pacoteId);
+  }
+}
+
+async function sendLembreteAgendamento(agId) {
+  const { data: a } = await sb.from('v_agendamentos').select('*').eq('id', agId).single();
+  if (!a) return;
+
+  const { data: lembretes } = await sb.from('config_lembretes')
+    .select('*').eq('tipo','agendamento_24h').eq('ativo',true);
+  const lembrete = lembretes?.[0];
+  if (!lembrete) return;
+
+  let msg = lembrete.template_mensagem
+    .replace('{{nome}}', a.cliente_nome)
+    .replace('{{horario}}', fmtTime(a.data_hora))
+    .replace('{{procedimento}}', a.procedimento_nome)
+    .replace('{{profissional}}', a.profissional_nome);
+
+  const ok = await sendWhatsApp(a.cliente_telefone, msg);
+  if (ok) {
+    await sb.from('agendamentos').update({ lembrete_enviado: true }).eq('id', agId);
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+document.getElementById('login-email').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('login-pass').focus(); });
+document.getElementById('login-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
