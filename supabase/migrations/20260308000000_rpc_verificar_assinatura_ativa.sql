@@ -9,10 +9,10 @@ SET search_path = public
 AS $$
   SELECT EXISTS (
     SELECT 1
-    FROM public.assinaturas a
-    JOIN auth.users u ON u.id = a.user_id
+    FROM public.profiles p
+    JOIN auth.users u ON u.id = p.id
     WHERE lower(u.email) = lower(p_email)
-      AND a.active = true
+      AND p.active = true
   );
 $$;
 

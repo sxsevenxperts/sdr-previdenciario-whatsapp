@@ -554,6 +554,39 @@
     .drawflow .drawflow-node.node-voz-ia .title-box { background:#9333ea; }
     .drawflow .drawflow-node.node-lead-score-coletor .title-box { background:linear-gradient(135deg,#d97706,#b45309); }
     .drawflow .drawflow-node.node-lead-score-coletor { border-color:#d97706; }
+    .drawflow .drawflow-node.node-agendar-gcal .title-box { background:linear-gradient(135deg,#1a73e8,#0d47a1); color:#fff; }
+    .drawflow .drawflow-node.node-agendar-gcal { border-color:#1a73e8; }
+    /* ── Calendário ── */
+    .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+    .cal-nav-btn { background:#21262d; border:1px solid #30363d; color:#c9d1d9; border-radius:8px; padding:6px 14px; cursor:pointer; font-size:13px; transition:background .15s; }
+    .cal-nav-btn:hover { background:#30363d; }
+    .cal-title { font-size:17px; font-weight:700; color:#e6edf3; }
+    .cal-view-tabs { display:flex; gap:6px; }
+    .cal-view-btn { background:#161b22; border:1px solid #30363d; color:#8b949e; border-radius:6px; padding:5px 14px; cursor:pointer; font-size:12px; font-weight:600; transition:all .15s; }
+    .cal-view-btn.active { background:rgba(163,230,53,.15); border-color:#a3e635; color:#a3e635; }
+    .cal-grid-month { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+    .cal-day-header { text-align:center; font-size:11px; font-weight:700; color:#6e7681; padding:6px 0; text-transform:uppercase; }
+    .cal-cell { min-height:90px; background:#161b22; border-radius:8px; padding:6px; border:1px solid #21262d; transition:background .15s; }
+    .cal-cell:hover { background:#1c2128; }
+    .cal-cell.today { border-color:#a3e635; background:rgba(163,230,53,.05); }
+    .cal-cell.other-month { opacity:.35; }
+    .cal-cell-num { font-size:12px; font-weight:700; color:#8b949e; margin-bottom:4px; }
+    .cal-cell.today .cal-cell-num { color:#a3e635; }
+    .cal-task-chip { background:rgba(99,102,241,.18); border:1px solid rgba(99,102,241,.3); border-radius:4px; font-size:10px; color:#a5b4fc; padding:2px 5px; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; cursor:pointer; transition:background .1s; }
+    .cal-task-chip:hover { background:rgba(99,102,241,.35); }
+    .cal-task-chip.concluida { text-decoration:line-through; opacity:.5; }
+    .cal-task-chip.vencida { background:rgba(239,68,68,.18); border-color:rgba(239,68,68,.3); color:#fca5a5; }
+    .cal-week-grid { display:grid; grid-template-columns:48px repeat(7,1fr); gap:0; border:1px solid #21262d; border-radius:8px; overflow:hidden; }
+    .cal-week-hour { font-size:10px; color:#6e7681; text-align:right; padding:0 6px; height:40px; display:flex; align-items:flex-start; padding-top:2px; border-bottom:1px solid #21262d; background:#0d1117; }
+    .cal-week-cell { border-left:1px solid #21262d; border-bottom:1px solid #21262d; height:40px; position:relative; background:#161b22; transition:background .1s; }
+    .cal-week-cell:hover { background:#1c2128; }
+    .cal-week-cell.today-col { background:rgba(163,230,53,.04); }
+    .cal-week-day-header { font-size:11px; font-weight:700; color:#8b949e; text-align:center; padding:6px 0; background:#0d1117; border-bottom:2px solid #21262d; border-left:1px solid #21262d; }
+    .cal-week-day-header.today-col { color:#a3e635; }
+    .cal-week-corner { background:#0d1117; border-bottom:2px solid #21262d; }
+    .cal-week-event { position:absolute; left:2px; right:2px; background:rgba(99,102,241,.25); border:1px solid rgba(99,102,241,.4); border-radius:4px; font-size:9px; color:#a5b4fc; padding:1px 4px; overflow:hidden; cursor:pointer; z-index:1; white-space:nowrap; }
+    .cal-week-event.vencida { background:rgba(239,68,68,.2); border-color:rgba(239,68,68,.4); color:#fca5a5; }
+    .cal-week-event.concluida { opacity:.4; text-decoration:line-through; }
     .objecao-section-label { font-size:10px; font-weight:700; color:#f87171; text-transform:uppercase; letter-spacing:.5px; margin:10px 0 4px; display:flex; align-items:center; gap:4px; }
     .objecao-section-label::before { content:''; display:block; flex:1; height:1px; background:rgba(220,38,38,.25); }
     .objecao-badge { display:inline-flex; align-items:center; gap:4px; background:rgba(220,38,38,.12); border:1px solid rgba(220,38,38,.3); border-radius:6px; padding:3px 8px; font-size:10px; color:#fca5a5; margin-bottom:8px; }
@@ -1026,6 +1059,9 @@
       </div>
       <div class="nav-item" onclick="showPage('crm', this)">
         <span class="icon"></span> CRM — Pipeline
+      </div>
+      <div class="nav-item" onclick="showPage('calendario', this)">
+        <span class="icon">📅</span> Calendário
       </div>
       <div class="nav-item" onclick="showPage('equipe', this)">
         <span class="icon">👥</span> Equipe
@@ -1514,6 +1550,28 @@
       </div>
       <button class="btn-save" onclick="saveConfigs(['tonalidade','instrucoes_comunicacao','msg_qualificado','msg_desqualificado','responder_em_audio'])">Salvar</button>
       <span class="save-status" id="save-comunicacao"></span>
+
+      <!-- Google Calendar Integration -->
+      <div class="card" style="margin-top:20px;" id="card-gcal-integration">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+          <div style="width:38px;height:38px;border-radius:8px;background:rgba(26,115,232,.12);border:1px solid rgba(26,115,232,.3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📅</div>
+          <div>
+            <h3 style="margin:0;font-size:15px;">Google Calendar</h3>
+            <p style="margin:2px 0 0;font-size:12px;color:#8b949e;">Permite ao agente agendar eventos diretamente na sua agenda Google</p>
+          </div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:8px;">
+            <span id="gcal-status-badge" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(107,114,128,.15);border:1px solid #30363d;color:#6b7280;">Desconectado</span>
+          </div>
+        </div>
+        <div id="gcal-connected-info" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(26,115,232,.06);border:1px solid rgba(26,115,232,.2);border-radius:8px;font-size:13px;color:#93c5fd;">
+          ✅ Conta conectada: <strong id="gcal-email-label"></strong>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn-save" id="btn-gcal-connect" onclick="connectGCal()" style="background:rgba(26,115,232,.8);">🔗 Conectar com Google</button>
+          <button class="btn-secondary" id="btn-gcal-disconnect" onclick="disconnectGCal()" style="display:none;color:#fca5a5;border-color:rgba(239,68,68,.3);">Desconectar</button>
+        </div>
+        <p style="margin:12px 0 0;font-size:11px;color:#6e7681;">Para usar o bloco <strong>📅 Agendar no Google Agenda</strong> no Designer de Fluxos, conecte sua conta aqui primeiro. O agente criará eventos automaticamente quando o lead confirmar agendamento.</p>
+      </div>
     </div>
 
     <!-- QUALIFICAÇÃO -->
@@ -2365,6 +2423,7 @@
           <div class="palette-node" draggable="true" ondragstart="drag(event,'acao')">⚡ Ação / Webhook</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'anotacao')">🗒️ Anotação Interna</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'mover_pipeline')">🗂️ Mover no CRM</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'agendar_gcal')" style="border-color:rgba(26,115,232,.4);color:#93c5fd;">📅 Agendar no Google Agenda</div>
 
           <h4 style="margin-top:14px">Terminadores</h4>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'inicio')">🟢 Início</div>
@@ -2469,6 +2528,29 @@
             <div><span style="color:#a3e635;font-weight:700;">5.</span> Assinatura registrada como <strong>ativa</strong></div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- CALENDÁRIO -->
+    <div class="page" id="page-calendario">
+      <div class="page-header">
+        <h1>📅 Calendário de Tarefas</h1>
+        <p>Visualize e gerencie todas as tarefas dos seus leads por data</p>
+      </div>
+      <div class="card">
+        <div class="cal-header">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <button class="cal-nav-btn" onclick="calNavigate(-1)">‹ Anterior</button>
+            <span class="cal-title" id="cal-title-label">—</span>
+            <button class="cal-nav-btn" onclick="calNavigate(1)">Próximo ›</button>
+            <button class="cal-nav-btn" onclick="calGoToday()" style="background:rgba(163,230,53,.1);border-color:rgba(163,230,53,.3);color:#a3e635;">Hoje</button>
+          </div>
+          <div class="cal-view-tabs">
+            <button class="cal-view-btn active" id="cal-btn-month" onclick="setCalView('month',this)">Mês</button>
+            <button class="cal-view-btn" id="cal-btn-week" onclick="setCalView('week',this)">Semana</button>
+          </div>
+        </div>
+        <div id="cal-body"></div>
       </div>
     </div>
 
@@ -2872,7 +2954,7 @@
     document.getElementById('page-' + name).classList.add('active');
     el.classList.add('active');
     if (name === 'leads') loadLeads();
-    if (name === 'agente') loadWebAgente();
+    if (name === 'agente') { loadWebAgente(); checkGCalStatus(); }
     if (name === 'crm') { loadCRM(); setTimeout(checkReminders, 500); }
     if (name === 'pdfs') loadPDFList();
     if (name === 'analytics') loadDashboard();
@@ -2891,6 +2973,7 @@
       }
     }
     if (name === 'equipe') loadEquipePage();
+    if (name === 'calendario') loadCalendario();
     if (name === 'fluxos') {
       setTimeout(() => loadFluxosPage(), 100);
     }
@@ -5914,6 +5997,40 @@
       </div>`
     },
 
+    agendar_gcal: {
+      title: '📅 Agendar no Google Agenda', inputs: 1, outputs: 1, cls: 'node-agendar-gcal',
+      html: `<div class="box">
+        <div style="font-size:11px;font-weight:600;color:#93c5fd;margin-bottom:8px;display:flex;align-items:center;gap:5px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect width="24" height="24" rx="4" fill="#1a73e8"/><path d="M7 2v2h10V2h2v2h2a2 2 0 012 2v14a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2h2V2h2zm-4 8v10h18V10H3z" fill="#fff"/></svg>
+          Criar evento no Google Calendar via OAuth
+        </div>
+        <div style="margin-bottom:6px;">
+          <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Título do evento</div>
+          <input type="text" class="etapa-select" style="margin-bottom:0;font-size:11px;" placeholder="Ex: Reunião com {{nome}}" value="Reunião com {{nome}}" />
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+          <div>
+            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Data (variável ou fixa)</div>
+            <input type="text" class="etapa-select" style="margin-bottom:0;font-size:11px;" placeholder="{{data_agendamento}}" value="{{data_agendamento}}" />
+          </div>
+          <div>
+            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Hora</div>
+            <input type="text" class="etapa-select" style="margin-bottom:0;font-size:11px;" placeholder="{{hora_agendamento}}" value="{{hora_agendamento}}" />
+          </div>
+        </div>
+        <div style="margin-bottom:6px;">
+          <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Duração (minutos)</div>
+          <input type="number" class="etapa-select" style="margin-bottom:0;font-size:11px;width:80px;" value="60" min="15" step="15" />
+        </div>
+        <div style="margin-bottom:6px;">
+          <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Descrição / Notas</div>
+          <textarea class="etapa-select" style="margin-bottom:0;font-size:11px;height:46px;resize:none;" placeholder="Lead: {{nome}} — {{telefone}}">Lead: {{nome}} — {{telefone}}</textarea>
+        </div>
+        <div style="background:rgba(26,115,232,.1);border:1px solid rgba(26,115,232,.25);border-radius:6px;padding:6px 8px;font-size:10px;color:#93c5fd;">
+          ⚙️ Configure as credenciais OAuth do Google Calendar em <strong>Configuração → Integrações</strong>
+        </div>
+      </div>`
+    },
     lead_score_coletor: {
       title: '🎯 Colhedor de Lead Score', inputs: 1, outputs: 2, cls: 'node-lead-score-coletor',
       html: `<div class="box">
@@ -5935,6 +6052,221 @@
       </div>`
     },
   };
+
+  // =====================================================================
+  // GOOGLE CALENDAR INTEGRATION
+  // =====================================================================
+  async function checkGCalStatus() {
+    const badge  = document.getElementById('gcal-status-badge');
+    const info   = document.getElementById('gcal-connected-info');
+    const btnOn  = document.getElementById('btn-gcal-connect');
+    const btnOff = document.getElementById('btn-gcal-disconnect');
+    if (!badge) return;
+    try {
+      const res = await callFunction('gcal-proxy', 'status', null, 'GET');
+      if (res?.connected) {
+        badge.textContent = 'Conectado';
+        badge.style.background = 'rgba(163,230,53,.12)';
+        badge.style.borderColor = 'rgba(163,230,53,.3)';
+        badge.style.color = '#a3e635';
+        if (info)  { info.style.display = 'block'; }
+        if (btnOn)  btnOn.style.display = 'none';
+        if (btnOff) btnOff.style.display = 'inline-flex';
+        const el = document.getElementById('gcal-email-label');
+        if (el) el.textContent = res.email ?? '';
+      }
+    } catch(_) { /* silencioso */ }
+  }
+
+  async function connectGCal() {
+    try {
+      const res = await callFunction('gcal-proxy', 'auth-url', null, 'GET');
+      if (res?.url) window.open(res.url, '_blank', 'width=500,height=650');
+      else alert('Não foi possível gerar o link de autorização. Verifique as variáveis GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET na edge function.');
+    } catch(e) { alert('Erro: ' + e.message); }
+  }
+
+  async function disconnectGCal() {
+    if (!confirm('Desconectar o Google Calendar?')) return;
+    await callFunction('gcal-proxy', 'disconnect', null, 'GET');
+    location.reload();
+  }
+
+  // Helper genérico para chamar edge functions autenticadas
+  async function callFunction(fnName, action, body, method = 'POST') {
+    const { data: { session } } = await db.auth.getSession();
+    const token = session?.access_token;
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${fnName}?action=${action}`, {
+      method,
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    return res.json();
+  }
+
+  // =====================================================================
+  // CALENDÁRIO DE TAREFAS
+  // =====================================================================
+  let _calView = 'month';          // 'month' | 'week'
+  let _calDate = new Date();       // referência (mês/semana atual)
+  let _calTasks = [];              // cache de lead_tarefas
+
+  async function loadCalendario() {
+    await _calFetchTasks();
+    renderCal();
+  }
+
+  async function _calFetchTasks() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+    const { data } = await db
+      .from('lead_tarefas')
+      .select('id, descricao, data_vencimento, concluida, lead_id, leads(nome)')
+      .eq('leads.user_id', user.id)
+      .not('data_vencimento', 'is', null)
+      .order('data_vencimento');
+    _calTasks = (data || []).filter(t => t.leads); // só tarefas de leads do usuário
+  }
+
+  function setCalView(view, btn) {
+    _calView = view;
+    document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderCal();
+  }
+
+  function calNavigate(dir) {
+    if (_calView === 'month') {
+      _calDate = new Date(_calDate.getFullYear(), _calDate.getMonth() + dir, 1);
+    } else {
+      _calDate = new Date(_calDate.getTime() + dir * 7 * 86400000);
+    }
+    renderCal();
+  }
+
+  function calGoToday() {
+    _calDate = new Date();
+    renderCal();
+  }
+
+  function renderCal() {
+    if (_calView === 'month') renderCalMonth();
+    else renderCalWeek();
+  }
+
+  function renderCalMonth() {
+    const y = _calDate.getFullYear(), m = _calDate.getMonth();
+    const today = new Date(); today.setHours(0,0,0,0);
+    document.getElementById('cal-title-label').textContent =
+      new Date(y, m, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+    const firstDay = new Date(y, m, 1).getDay(); // 0=dom
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    const prevMonthDays = new Date(y, m, 0).getDate();
+
+    // Agrupar tarefas por data YYYY-MM-DD
+    const byDate = {};
+    _calTasks.forEach(t => {
+      const d = t.data_vencimento.slice(0,10);
+      if (!byDate[d]) byDate[d] = [];
+      byDate[d].push(t);
+    });
+
+    const DAY_NAMES = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+    let html = '<div class="cal-grid-month">';
+    DAY_NAMES.forEach(d => html += `<div class="cal-day-header">${d}</div>`);
+
+    // Células do mês anterior
+    for (let i = firstDay - 1; i >= 0; i--) {
+      html += `<div class="cal-cell other-month"><div class="cal-cell-num">${prevMonthDays - i}</div></div>`;
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateObj = new Date(y, m, day);
+      const isToday = dateObj.getTime() === today.getTime();
+      const key = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      const tasks = byDate[key] || [];
+      const extra = tasks.length > 3 ? tasks.length - 3 : 0;
+      let chips = tasks.slice(0,3).map(t => {
+        const vencida = !t.concluida && new Date(t.data_vencimento+'T00:00:00') < today;
+        const cls = t.concluida ? 'concluida' : vencida ? 'vencida' : '';
+        const nome = t.leads?.nome ? ` • ${escapeHtml(t.leads.nome)}` : '';
+        return `<div class="cal-task-chip ${cls}" onclick="openLeadModal('${t.lead_id}')" title="${escapeHtml(t.descricao)}">${escapeHtml(t.descricao.length>22?t.descricao.slice(0,22)+'…':t.descricao)}${nome}</div>`;
+      }).join('');
+      if (extra) chips += `<div class="cal-task-chip" style="opacity:.6;">+${extra} mais</div>`;
+
+      html += `<div class="cal-cell ${isToday?'today':''}">
+        <div class="cal-cell-num">${day}</div>
+        ${chips}
+      </div>`;
+    }
+
+    // Células do próximo mês
+    const totalCells = firstDay + daysInMonth;
+    const trailing = (7 - (totalCells % 7)) % 7;
+    for (let i = 1; i <= trailing; i++) {
+      html += `<div class="cal-cell other-month"><div class="cal-cell-num">${i}</div></div>`;
+    }
+    html += '</div>';
+    document.getElementById('cal-body').innerHTML = html;
+  }
+
+  function renderCalWeek() {
+    const today = new Date(); today.setHours(0,0,0,0);
+    // Início da semana (segunda-feira)
+    const dow = _calDate.getDay();
+    const weekStart = new Date(_calDate);
+    weekStart.setDate(_calDate.getDate() - ((dow + 6) % 7));
+
+    const days = Array.from({length:7}, (_,i) => {
+      const d = new Date(weekStart); d.setDate(weekStart.getDate() + i); return d;
+    });
+
+    const startStr = days[0].toLocaleDateString('pt-BR', { day:'numeric', month:'short' });
+    const endStr   = days[6].toLocaleDateString('pt-BR', { day:'numeric', month:'short', year:'numeric' });
+    document.getElementById('cal-title-label').textContent = `${startStr} – ${endStr}`;
+
+    const DAYS_SHORT = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+
+    // Agrupar tarefas por data+hora
+    const byDay = {};
+    _calTasks.forEach(t => {
+      const d = t.data_vencimento.slice(0,10);
+      if (!byDay[d]) byDay[d] = [];
+      byDay[d].push(t);
+    });
+
+    let html = '<div class="cal-week-grid">';
+    // Header row
+    html += '<div class="cal-week-corner"></div>';
+    days.forEach((d, i) => {
+      const isToday = d.getTime() === today.getTime();
+      const label = `${DAYS_SHORT[i]} ${d.getDate()}`;
+      html += `<div class="cal-week-day-header ${isToday?'today-col':''}">${label}</div>`;
+    });
+
+    // Hour rows
+    for (let h = 7; h <= 21; h++) {
+      html += `<div class="cal-week-hour">${h}:00</div>`;
+      days.forEach(d => {
+        const isToday = d.getTime() === today.getTime();
+        const key = d.toISOString().slice(0,10);
+        const tasks = (byDay[key] || []);
+        // Place tasks as chips in the first hour slot of the day only
+        const chips = h === 7 ? tasks.map(t => {
+          const vencida = !t.concluida && new Date(t.data_vencimento+'T00:00:00') < today;
+          const cls = t.concluida ? 'concluida' : vencida ? 'vencida' : '';
+          return `<div class="cal-week-event ${cls}" onclick="openLeadModal('${t.lead_id}')" title="${escapeHtml(t.descricao)}">${escapeHtml(t.descricao.length>20?t.descricao.slice(0,20)+'…':t.descricao)}</div>`;
+        }).join('') : '';
+        html += `<div class="cal-week-cell ${isToday?'today-col':''}">${chips}</div>`;
+      });
+    }
+    html += '</div>';
+    document.getElementById('cal-body').innerHTML = html;
+  }
 
   // =====================================================================
   // EQUIPE — Usuários Extras
