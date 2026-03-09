@@ -587,8 +587,8 @@
     #page-fluxos .page-header { display:none !important; }
     #page-fluxos .flow-toolbar { flex-shrink:0; }
     #page-fluxos .flow-layout { flex:1 1 0 !important; height:0 !important; min-height:0 !important; }
-    /* Canvas interno Drawflow: 10000×10000 px */
-    .drawflow { min-width:10000px !important; min-height:10000px !important; }
+    /* Canvas interno Drawflow: 30000×30000 px */
+    .drawflow { min-width:30000px !important; min-height:30000px !important; }
     .flow-palette { border-right:1px solid #f1f5f9; padding:16px 12px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; background:#fafafa; }
     .flow-palette h4 { font-size:11px; font-weight:700; color:#6e7681; text-transform:uppercase; letter-spacing:.8px; margin-bottom:4px; }
     .palette-node { padding:10px 12px; background:#161b22; border:1.5px solid #e5e7eb; border-radius:8px; cursor:grab; font-size:13px; font-weight:600; text-align:center; transition:all .2s; user-select:none; }
@@ -7782,11 +7782,11 @@
     editor = new Drawflow(container);
     editor.reroute = true;
     editor.editor_mode = 'edit';
-    editor.zoom_min = 0.05;
+    editor.zoom_min = 0.02;
     editor.start();
     // Zoom inicial afastado para ver mais canvas
-    editor.zoom = 0.5;
-    if (editor.precanvas) editor.precanvas.style.transform = 'translate(0px,0px) scale(0.5)';
+    editor.zoom = 0.35;
+    if (editor.precanvas) editor.precanvas.style.transform = 'translate(0px,0px) scale(0.35)';
     // Registra tipos de nó (etapa usa placeholder – substituído no drop)
     Object.entries(NODE_TEMPLATES).forEach(([type, cfg]) => {
       const safeHtml = cfg.html.replace('ETAPA_NUMEROS_OPTIONS','').replace('ETAPA_AGENTES_OPTIONS','');

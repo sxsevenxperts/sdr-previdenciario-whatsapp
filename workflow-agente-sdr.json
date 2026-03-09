@@ -71,47 +71,12 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/audio/transcriptions",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "={{ 'Bearer ' + $env.OPENAI_API_KEY }}"
-            }
-          ]
-        },
-        "contentType": "multipart-form-data",
-        "sendBody": true,
-        "bodyParameters": {
-          "parameters": [
-            {
-              "name": "model",
-              "value": "whisper-1"
-            },
-            {
-              "name": "language",
-              "value": "pt"
-            },
-            {
-              "name": "response_format",
-              "value": "json"
-            }
-          ]
-        },
-        "options": {
-          "response": {
-            "response": {
-              "fullResponse": false
-            }
-          }
-        }
+        "jsCode": "const item = $input.first();\nconst binary = item.binary;\nconst audioKey = binary ? Object.keys(binary)[0] : null;\n\nif (!audioKey) {\n  return [{ json: { ...item.json, text: '[Áudio sem conteúdo]' } }];\n}\n\nconst audioData = binary[audioKey];\nconst userId = item.json.userId || item.json.user_id;\n\nconst response = await $helpers.request({\n  method: 'POST',\n  url: `https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/llm-proxy?action=whisper&user_id=${userId}`,\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    audio_base64: audioData.data,\n    filename: audioData.fileName || 'audio.ogg',\n    language: 'pt'\n  }),\n  responseType: 'json'\n});\n\nreturn [{ json: { ...item.json, text: response.text || '[Transcrição indisponível]' } }];"
       },
       "id": "node-whisper",
       "name": "Transcreve áudio (Whisper)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         880,
         260
@@ -445,36 +410,12 @@
     },
     {
       "parameters": {
-        "method": "POST",
-        "url": "https://api.openai.com/v1/audio/speech",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "Authorization",
-              "value": "={{ 'Bearer ' + $env.OPENAI_API_KEY }}"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ ({ model: 'tts-1', input: $json.textoParaLead, voice: 'nova', response_format: 'mp3' }) }}",
-        "options": {
-          "response": {
-            "response": {
-              "responseFormat": "file"
-            }
-          }
-        }
+        "jsCode": "const dados = $input.first().json;\nconst userId = dados.userId || dados.user_id;\n\nconst response = await $helpers.request({\n  method: 'POST',\n  url: `https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/llm-proxy?action=tts&user_id=${userId}`,\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({\n    text: dados.textoParaLead,\n    voice: 'nova',\n    model: 'tts-1'\n  }),\n  responseType: 'json'\n});\n\nreturn [{ json: { ...dados, audio_base64: response.audio_base64 || '' } }];"
       },
       "id": "node-tts",
       "name": "Gera áudio TTS (OpenAI)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [
         3740,
         260
@@ -483,7 +424,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const dados = $('Processa resposta e qualificação').first().json;\nconst binaryData = $input.first().binary?.data;\n\nif (!binaryData) {\n  // Fallback: se TTS falhar, envia texto\n  return [{ json: { ...dados, enviarComoAudio: false } }];\n}\n\n// Converte binary para base64\nconst base64Audio = Buffer.from(binaryData.data, 'base64').toString('base64');\nconst audioDataUri = `data:audio/mp3;base64,${base64Audio}`;\n\nreturn [{ json: { ...dados, audioResposta: audioDataUri, enviarComoAudio: true } }];"
+        "jsCode": "const dados = $('Processa resposta e qualificação').first().json;\nconst audio_base64 = $input.first().json.audio_base64;\n\nif (!audio_base64) {\n  return [{ json: { ...dados, enviarComoAudio: false } }];\n}\n\nconst audioDataUri = `data:audio/mp3;base64,${audio_base64}`;\nreturn [{ json: { ...dados, audioResposta: audioDataUri, enviarComoAudio: true } }];"
       },
       "id": "node-prepara-audio-envio",
       "name": "Prepara áudio para envio",
@@ -855,7 +796,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const dados = $input.first().json;\nconst apiKey = $env.OPENAI_API_KEY;\n\n// Monta o conteúdo da mensagem para Vision\nconst imageContent = dados.imagemBase64\n  ? { type: 'image_url', image_url: { url: `data:${dados.imagemMimetype};base64,${dados.imagemBase64}`, detail: 'high' } }\n  : dados.imagemUrl\n    ? { type: 'image_url', image_url: { url: dados.imagemUrl, detail: 'high' } }\n    : null;\n\nif (!imageContent) {\n  const descricao = dados.imagemCaption ? `Lead enviou uma imagem com a legenda: \"${dados.imagemCaption}\"` : 'Lead enviou uma imagem (sem conteúdo disponível)';\n  return [{ json: { ...dados, mensagem: descricao, ehImagem: true } }];\n}\n\nconst messages = [\n  { role: 'system', content: 'Você é um assistente que descreve imagens enviadas por clientes para uma empresa. Descreva o que vê na imagem de forma objetiva, mencionando qualquer documento, proposta, contrato, comprovante ou material relevante que apareça. Se for um documento, leia e transcreva o conteúdo principal.' },\n  { role: 'user', content: [\n    { type: 'text', text: dados.imagemCaption ? `O cliente enviou esta imagem com o comentário: \"${dados.imagemCaption}\". Descreva e analise.` : 'O cliente enviou esta imagem. Descreva e analise o conteúdo.' },\n    imageContent\n  ] }\n];\n\nconst response = await $helpers.request({\n  method: 'POST',\n  url: 'https://api.openai.com/v1/chat/completions',\n  headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },\n  body: JSON.stringify({ model: 'gpt-4o', messages, max_tokens: 1024 }),\n  responseType: 'json'\n});\n\nconst descricao = response.choices?.[0]?.message?.content || 'Imagem recebida mas não foi possível analisar.';\nconst mensagemFinal = `📷 [Lead enviou uma imagem]:\\n${descricao}`;\n\nreturn [{ json: { ...dados, mensagem: mensagemFinal, ehImagem: true } }];"
+        "jsCode": "const dados = $input.first().json;\nconst userId = dados.userId || dados.user_id;\n\nconst imageContent = dados.imagemBase64\n  ? { type: 'image_url', image_url: { url: `data:${dados.imagemMimetype};base64,${dados.imagemBase64}`, detail: 'high' } }\n  : dados.imagemUrl\n    ? { type: 'image_url', image_url: { url: dados.imagemUrl, detail: 'high' } }\n    : null;\n\nif (!imageContent) {\n  const descricao = dados.imagemCaption\n    ? `Lead enviou uma imagem com a legenda: \"${dados.imagemCaption}\"`\n    : 'Lead enviou uma imagem (sem conteúdo disponível)';\n  return [{ json: { ...dados, mensagem: descricao, ehImagem: true } }];\n}\n\nconst messages = [{\n  role: 'user',\n  content: [\n    { type: 'text', text: dados.imagemCaption\n        ? `O cliente enviou esta imagem com o comentário: \"${dados.imagemCaption}\". Descreva e analise.`\n        : 'O cliente enviou esta imagem. Descreva e analise o conteúdo.' },\n    imageContent\n  ]\n}];\n\nconst system = 'Você é um assistente que descreve imagens enviadas por clientes. Descreva objetivamente o que vê, mencionando documentos, propostas, contratos, comprovantes ou materiais relevantes. Se for um documento, leia e transcreva o conteúdo principal.';\n\nconst response = await $helpers.request({\n  method: 'POST',\n  url: `https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/llm-proxy?provider=openai&user_id=${userId}&model=gpt-4o`,\n  headers: { 'Content-Type': 'application/json' },\n  body: JSON.stringify({ messages, system }),\n  responseType: 'json'\n});\n\nconst descricao = response.content || 'Imagem recebida mas não foi possível analisar.';\nconst mensagemFinal = `📷 [Lead enviou uma imagem]:\\n${descricao}`;\nreturn [{ json: { ...dados, mensagem: mensagemFinal, ehImagem: true } }];"
       },
       "id": "node-descreve-imagem",
       "name": "Descreve imagem (Vision)",
@@ -893,7 +834,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const dados = $input.first().json;\nconst apiKey = $env.OPENAI_API_KEY;\nconst isPdf = dados.docMimetype?.includes('pdf');\n\nif (!dados.docBase64 && !dados.docUrl) {\n  const mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\"]:\\n(Arquivo recebido mas sem conteúdo legível disponível. Pergunte ao lead sobre o conteúdo.)`;\n  return [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];\n}\n\nif (isPdf && dados.docBase64) {\n  // Chama GPT-4o com o PDF como base64 para extrair texto\n  const response = await $helpers.request({\n    method: 'POST',\n    url: 'https://api.openai.com/v1/chat/completions',\n    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      model: 'gpt-4o',\n      messages: [\n        { role: 'system', content: 'Você é um assistente que extrai e resume o conteúdo de documentos enviados por clientes. Leia o documento e forneça um resumo objetivo do conteúdo principal, incluindo datas, nomes, valores, códigos ou qualquer informação relevante para o atendimento.' },\n        { role: 'user', content: [\n          { type: 'text', text: `O cliente enviou o arquivo \"${dados.docFileName}\". Extraia e resuma o conteúdo principal.` },\n          { type: 'file', file: { filename: dados.docFileName, file_data: `data:${dados.docMimetype};base64,${dados.docBase64}` } }\n        ] }\n      ],\n      max_tokens: 2048\n    }),\n    responseType: 'json'\n  });\n  const texto = response.choices?.[0]?.message?.content || 'Não foi possível extrair o conteúdo.';\n  const mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\"]:\\n${texto}`;\n  return [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];\n}\n\n// Arquivo não-PDF ou sem base64 — menciona ao agente\nconst mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\" (${dados.docMimetype})]:\\n(Arquivo recebido. Responda ao lead solicitando o conteúdo em formato de texto ou peça que descreva o documento.)`;\nreturn [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];"
+        "jsCode": "const dados = $input.first().json;\nconst userId = dados.userId || dados.user_id;\nconst isPdf = dados.docMimetype?.includes('pdf');\n\nif (!dados.docBase64 && !dados.docUrl) {\n  const mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\"]:\\n(Arquivo recebido mas sem conteúdo legível disponível. Pergunte ao lead sobre o conteúdo.)`;\n  return [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];\n}\n\nconst proxyUrl = `https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/llm-proxy?provider=openai&user_id=${userId}&model=gpt-4o`;\n\nif (isPdf && dados.docBase64) {\n  const response = await $helpers.request({\n    method: 'POST',\n    url: proxyUrl,\n    headers: { 'Content-Type': 'application/json' },\n    body: JSON.stringify({\n      messages: [{ role: 'user', content: [\n        { type: 'text', text: `O cliente enviou o arquivo \"${dados.docFileName}\". Extraia e resuma o conteúdo principal.` },\n        { type: 'file', file: { filename: dados.docFileName, file_data: `data:${dados.docMimetype};base64,${dados.docBase64}` } }\n      ]}],\n      system: 'Você é um assistente que extrai e resume documentos enviados por clientes. Forneça um resumo objetivo incluindo datas, nomes, valores, códigos ou qualquer informação relevante para o atendimento.'\n    }),\n    responseType: 'json'\n  });\n  const texto = response.content || 'Não foi possível extrair o conteúdo.';\n  const mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\"]:\\n${texto}`;\n  return [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];\n}\n\nconst mensagemFinal = `📄 [Lead enviou o arquivo \"${dados.docFileName}\" (${dados.docMimetype})]:\\n(Arquivo recebido. Responda ao lead solicitando o conteúdo em formato de texto ou peça que descreva o documento.)`;\nreturn [{ json: { ...dados, mensagem: mensagemFinal, ehDocumento: true } }];"
       },
       "id": "node-extrai-doc",
       "name": "Extrai texto documento",
