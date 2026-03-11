@@ -443,6 +443,9 @@
     .membro-hidden { display:none !important; }
     .membro-hidden.visible { display:flex !important; }
     .nav-section.membro-hidden.visible { display:block !important; }
+    .client-only { display:none !important; }
+    .client-only.visible { display:flex !important; }
+    .nav-section.client-only.visible { display:block !important; }
     .client-tag { font-size:10px; background:#f0fdf4; color:#16a34a; padding:2px 7px; border-radius:10px; font-weight:700; }
     .client-tag.inactive { background:#fee2e2; color:#dc2626; }
 
@@ -1328,7 +1331,7 @@
       <div class="nav-item membro-hidden" onclick="showPage('calendario', this)">
         <span class="icon">📅</span> Calendário
       </div>
-      <div class="nav-item membro-hidden" onclick="showPage('equipe', this)">
+      <div class="nav-item client-only" onclick="showPage('equipe', this)">
         <span class="icon">👥</span> Equipe
       </div>
       <div class="nav-section membro-hidden">Configuração</div>
@@ -2468,7 +2471,7 @@
     </div>
 
     <!-- EQUIPE -->
-    <div class="page" id="page-equipe">
+    <div class="page client-only" id="page-equipe">
       <div class="page-header">
         <div>
           <h1>👥 Equipe</h1>
@@ -3666,9 +3669,13 @@
       // membro usa owner_id (dados do chefe), outros usam o próprio id
       _effectiveUserId = (isMembro && profile?.owner_id) ? profile.owner_id : user.id;
 
-      // Se admin: exibe menu de clientes
+      // Se admin: exibe menu de clientes (e oculta client-only)
       if (profile?.role === 'admin') {
         document.querySelectorAll('.admin-only').forEach(el => el.classList.add('visible'));
+        document.querySelectorAll('.client-only').forEach(el => el.classList.remove('visible'));
+      } else {
+        // regular user: mostra client-only
+        document.querySelectorAll('.client-only').forEach(el => el.classList.add('visible'));
       }
 
       // Se membro: oculta itens restritos, mostra página inicial correta
