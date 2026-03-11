@@ -3335,27 +3335,27 @@
         <p>Gerencie as contas dos seus clientes</p>
       </div>
 
-      <!-- Colunas: Contas e Tokens -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <!-- Colunas: Contas e Tokens (compactas) -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
         <div class="card" style="padding:12px;display:flex;flex-direction:column;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <h3 style="margin:0;font-size:14px;">Contas cadastradas</h3>
             <button class="btn-save" style="padding:6px 12px;font-size:12px;" onclick="openCreateClientModal()">Novo Cliente</button>
           </div>
-          <div id="clients-table" style="flex:1;overflow-y:auto;max-height:350px;"><p class="loading">Carregando...</p></div>
+          <div id="clients-table" style="flex:1;overflow-y:auto;max-height:200px;"><p class="loading">Carregando...</p></div>
         </div>
         <div class="card" style="padding:12px;display:flex;flex-direction:column;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <h3 style="margin:0;font-size:14px;">Uso de Tokens GPT (este mês)</h3>
             <button class="btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="loadTokenUsageAdmin()">Atualizar</button>
           </div>
-          <div id="token-usage-admin-table" style="flex:1;overflow-y:auto;max-height:350px;"><p class="loading">Carregando...</p></div>
+          <div id="token-usage-admin-table" style="flex:1;overflow-y:auto;max-height:200px;"><p class="loading">Carregando...</p></div>
         </div>
       </div>
 
-      <!-- Aba abaixo das colunas -->
+      <!-- Abas: Assinaturas, Atividades, Integrações -->
       <div class="card">
-        <div style="display:flex;gap:12px;border-bottom:1px solid var(--border);margin-bottom:16px;padding-bottom:12px;">
+        <div style="display:flex;gap:12px;border-bottom:1px solid var(--border);margin-bottom:12px;padding-bottom:8px;">
           <button class="tab-btn" onclick="switchClientTab('assinaturas')" id="tab-assinaturas-btn" style="border-bottom:2px solid var(--lime);color:var(--lime);background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">Assinaturas</button>
           <button class="tab-btn" onclick="switchClientTab('atividades')" id="tab-atividades-btn" style="border-bottom:2px solid transparent;color:var(--text2);background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">Atividades</button>
           <button class="tab-btn" onclick="switchClientTab('integracoes')" id="tab-integracoes-btn" style="border-bottom:2px solid transparent;color:var(--text2);background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">Integrações</button>
