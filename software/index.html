@@ -3334,19 +3334,37 @@
         <h1>Clientes</h1>
         <p>Gerencie as contas dos seus clientes</p>
       </div>
-      <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="margin:0">Contas cadastradas</h3>
-          <button class="btn-save" onclick="openCreateClientModal()">Novo Cliente</button>
+
+      <!-- Colunas: Contas e Tokens -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 style="margin:0">Contas cadastradas</h3>
+            <button class="btn-save" onclick="openCreateClientModal()">Novo Cliente</button>
+          </div>
+          <div id="clients-table"><p class="loading">Carregando...</p></div>
         </div>
-        <div id="clients-table"><p class="loading">Carregando...</p></div>
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <h3 style="margin:0">Uso de Tokens GPT (este mês)</h3>
+            <button class="btn-secondary" style="padding:7px 14px;font-size:13px" onclick="loadTokenUsageAdmin()">Atualizar</button>
+          </div>
+          <div id="token-usage-admin-table"><p class="loading">Carregando...</p></div>
+        </div>
       </div>
+
+      <!-- Aba abaixo das colunas -->
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <h3 style="margin:0">Uso de Tokens GPT (este mês)</h3>
-          <button class="btn-secondary" style="padding:7px 14px;font-size:13px" onclick="loadTokenUsageAdmin()">Atualizar</button>
+        <div style="display:flex;gap:12px;border-bottom:1px solid var(--border);margin-bottom:16px;padding-bottom:12px;">
+          <button class="tab-btn" onclick="switchClientTab('assinaturas')" id="tab-assinaturas-btn" style="border-bottom:2px solid var(--lime);color:var(--lime);background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">Assinaturas</button>
+          <button class="tab-btn" onclick="switchClientTab('atividades')" id="tab-atividades-btn" style="border-bottom:2px solid transparent;color:var(--text2);background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">Atividades</button>
         </div>
-        <div id="token-usage-admin-table"><p class="loading">Carregando...</p></div>
+        <div id="tab-assinaturas" style="display:block;">
+          <p style="color:var(--text2);font-size:13px;text-align:center;padding:24px;">Detalhes de assinaturas dos clientes</p>
+        </div>
+        <div id="tab-atividades" style="display:none;">
+          <p style="color:var(--text2);font-size:13px;text-align:center;padding:24px;">Histórico de atividades</p>
+        </div>
       </div>
 
       <!-- ── HOTMART WEBHOOK CONFIG ─────────────────────────────────────── -->
@@ -9604,6 +9622,33 @@
       await loadIntegracoes();
     } else if (aba === 'configuracoes') {
       await loadConfiguracoes();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // GERENCIAR CLIENTES - ABAS
+  // ═══════════════════════════════════════════════════════════════
+
+  function switchClientTab(tabName) {
+    // Esconde todas as abas
+    document.getElementById('tab-assinaturas').style.display = 'none';
+    document.getElementById('tab-atividades').style.display = 'none';
+
+    // Remove estilos active de todos os botões
+    document.getElementById('tab-assinaturas-btn').style.borderBottomColor = 'transparent';
+    document.getElementById('tab-assinaturas-btn').style.color = 'var(--text2)';
+    document.getElementById('tab-atividades-btn').style.borderBottomColor = 'transparent';
+    document.getElementById('tab-atividades-btn').style.color = 'var(--text2)';
+
+    // Mostra aba selecionada
+    if (tabName === 'assinaturas') {
+      document.getElementById('tab-assinaturas').style.display = 'block';
+      document.getElementById('tab-assinaturas-btn').style.borderBottomColor = 'var(--lime)';
+      document.getElementById('tab-assinaturas-btn').style.color = 'var(--lime)';
+    } else if (tabName === 'atividades') {
+      document.getElementById('tab-atividades').style.display = 'block';
+      document.getElementById('tab-atividades-btn').style.borderBottomColor = 'var(--lime)';
+      document.getElementById('tab-atividades-btn').style.color = 'var(--lime)';
     }
   }
 
