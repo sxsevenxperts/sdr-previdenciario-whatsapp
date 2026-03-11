@@ -443,9 +443,6 @@
     .membro-hidden { display:none !important; }
     .membro-hidden.visible { display:flex !important; }
     .nav-section.membro-hidden.visible { display:block !important; }
-    .client-only { display:none !important; }
-    .client-only.visible { display:flex !important; }
-    .nav-section.client-only.visible { display:block !important; }
     .client-tag { font-size:10px; background:#f0fdf4; color:#16a34a; padding:2px 7px; border-radius:10px; font-weight:700; }
     .client-tag.inactive { background:#fee2e2; color:#dc2626; }
 
@@ -1053,6 +1050,7 @@
     #modal-usuario-extra { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; display:none; align-items:center; justify-content:center; }
     #modal-usuario-extra.open { display:flex; }
     #modal-admin-equipe.open { display:flex; }
+    #modal-kpi.open { display:flex; }
     .usuario-modal-box { background:#161b22; border:1px solid #30363d; border-radius:16px; padding:28px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; }
     .usuario-modal-title { font-size:16px; font-weight:700; color:#e6edf3; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
     .usuario-cor-picker { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
@@ -1332,7 +1330,7 @@
       <div class="nav-item membro-hidden" onclick="showPage('calendario', this)">
         <span class="icon">📅</span> Calendário
       </div>
-      <div class="nav-item client-only" onclick="showPage('equipe', this)">
+      <div class="nav-item membro-hidden" onclick="showPage('equipe', this)">
         <span class="icon">👥</span> Equipe
       </div>
       <div class="nav-section membro-hidden">Configuração</div>
@@ -1363,6 +1361,9 @@
         <span class="icon"></span> Designer de Fluxos
       </div>
       <div class="nav-section">Conta</div>
+      <div class="nav-item membro-hidden" onclick="showPage('kpis', this)">
+        <span class="icon">📊</span> KPIs & OKRs
+      </div>
       <div class="nav-item membro-hidden" onclick="showPage('faturamento', this)">
         <span class="icon"></span> Faturamento
       </div>
@@ -1370,6 +1371,9 @@
         <span class="icon">⚙️</span> Configurações
       </div>
       <div class="nav-section admin-only" id="admin-nav-section">Super Admin</div>
+      <div class="nav-item admin-only" onclick="showPage('monitoramento', this)">
+        <span class="icon">📊</span> Monitoramento
+      </div>
       <div class="nav-item admin-only" id="admin-nav-clientes" onclick="showPage('clientes', this)">
         <span class="icon"></span> Clientes
       </div>
@@ -2472,7 +2476,7 @@
     </div>
 
     <!-- EQUIPE -->
-    <div class="page client-only" id="page-equipe">
+    <div class="page" id="page-equipe">
       <div class="page-header">
         <div>
           <h1>👥 Equipe</h1>
@@ -2564,6 +2568,63 @@
           <button onclick="fecharModalAdminEquipe()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;line-height:1;">✕</button>
         </div>
         <div id="admin-equipe-lista" style="overflow-y:auto;flex:1;"></div>
+      </div>
+    </div>
+
+    <!-- KPIs & OKRs -->
+    <div class="page" id="page-kpis">
+      <div class="page-header">
+        <h1>📊 KPIs & OKRs</h1>
+        <p>Defina e acompanhe suas metas e objetivos</p>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">Meus KPIs</h3>
+          <button class="btn-primary" onclick="abrirModalKPI()">➕ Adicionar KPI</button>
+        </div>
+        <div id="kpis-tabela"><p class="loading">Carregando...</p></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">Meus OKRs</h3>
+          <button class="btn-primary" onclick="abrirModalOKR()">➕ Adicionar OKR</button>
+        </div>
+        <div id="okrs-tabela"><p class="loading">Carregando...</p></div>
+      </div>
+    </div>
+
+    <!-- Modal Adicionar/Editar KPI -->
+    <div id="modal-kpi" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:none;align-items:center;justify-content:center;">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;width:500px;max-width:95vw;padding:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <h3 style="margin:0;font-size:16px;font-weight:700;" id="kpi-modal-titulo">Adicionar KPI</h3>
+          <button onclick="fecharModalKPI()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;">✕</button>
+        </div>
+        <input type="hidden" id="kpi-id" />
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">TIPO DE KPI</label>
+          <select id="kpi-tipo" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);">
+            <option value="">— Selecione um tipo —</option>
+            <option value="taxa_finalizacao">Taxa de Finalização</option>
+            <option value="leads_semana">Leads por Semana</option>
+            <option value="conversao">Conversão</option>
+            <option value="customizado">Customizado</option>
+          </select>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">NOME</label>
+          <input type="text" id="kpi-nome" placeholder="Ex: Aumentar taxa de finalização" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);box-sizing:border-box;" />
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">META</label>
+          <input type="number" id="kpi-meta" placeholder="50" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);box-sizing:border-box;" />
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button class="btn-primary" style="flex:1;" onclick="salvarKPI()">💾 Salvar</button>
+          <button class="btn-secondary" style="flex:1;" onclick="fecharModalKPI()">Cancelar</button>
+        </div>
       </div>
     </div>
 
@@ -3075,8 +3136,94 @@
       </div>
     </div>
 
+    <!-- MONITORAMENTO (admin only) -->
+    <div class="page admin-only" id="page-monitoramento">
+      <div class="page-header">
+        <h1>📊 Dashboard Financeiro</h1>
+        <p>Saúde e performance de assinaturas</p>
+      </div>
+
+      <!-- Cards de resumo (KPIs) -->
+      <div id="dashboard-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+        <div class="card" style="padding:16px;">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">✅ Ativas</div>
+          <div style="font-size:28px;font-weight:700;color:var(--lime);" id="card-ativas">—</div>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">⏳ Prestes a Vencer</div>
+          <div style="font-size:28px;font-weight:700;color:#60a5fa;" id="card-proximas">—</div>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">🔴 Suspensas</div>
+          <div style="font-size:28px;font-weight:700;color:#f87171;" id="card-suspensas">—</div>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">⚫ Canceladas</div>
+          <div style="font-size:28px;font-weight:700;color:#a3a3a3;" id="card-canceladas">—</div>
+        </div>
+        <div class="card" style="padding:16px;">
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">🗑️ Banco Apagado</div>
+          <div style="font-size:28px;font-weight:700;color:#6e7681;" id="card-apagadas">—</div>
+        </div>
+      </div>
+
+      <!-- Tabela de Assinaturas Expandida -->
+      <div class="card">
+        <h3>Assinaturas Detalhadas</h3>
+        <div id="monitoramento-tabela"><p class="loading">Carregando...</p></div>
+      </div>
+
+      <!-- Seção de Forma de Pagamento -->
+      <div class="card" style="margin-top:24px;">
+        <h3>💳 Distribuição por Forma de Pagamento</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+          <div>
+            <canvas id="payment-chart" style="max-width:100%;"></canvas>
+          </div>
+          <div>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead style="background:var(--bg-card2);border-bottom:1px solid var(--border);">
+                <tr>
+                  <th style="padding:10px;text-align:left;font-weight:700;font-size:12px;">Forma</th>
+                  <th style="padding:10px;text-align:center;font-weight:700;font-size:12px;">Qtd</th>
+                  <th style="padding:10px;text-align:right;font-weight:700;font-size:12px;">Valor/Mês</th>
+                </tr>
+              </thead>
+              <tbody id="payment-table-body">
+                <tr><td colspan="3" style="padding:20px;text-align:center;color:var(--text2);">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seção de Distribuição de Addons -->
+      <div class="card" style="margin-top:24px;">
+        <h3>📦 Distribuição de Addons</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+          <div>
+            <canvas id="addon-chart" style="max-width:100%;"></canvas>
+          </div>
+          <div>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead style="background:var(--bg-card2);border-bottom:1px solid var(--border);">
+                <tr>
+                  <th style="padding:10px;text-align:left;font-weight:700;font-size:12px;">Addon</th>
+                  <th style="padding:10px;text-align:center;font-weight:700;font-size:12px;">Ativo</th>
+                  <th style="padding:10px;text-align:center;font-weight:700;font-size:12px;">Inativo</th>
+                </tr>
+              </thead>
+              <tbody id="addon-table-body">
+                <tr><td colspan="3" style="padding:20px;text-align:center;color:var(--text2);">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- CLIENTES (admin only) -->
-    <div class="page" id="page-clientes">
+    <div class="page admin-only" id="page-clientes">
       <div class="page-header">
         <h1>Clientes</h1>
         <p>Gerencie as contas dos seus clientes</p>
@@ -3681,13 +3828,9 @@
       // membro usa owner_id (dados do chefe), outros usam o próprio id
       _effectiveUserId = (isMembro && profile?.owner_id) ? profile.owner_id : user.id;
 
-      // Se admin: exibe menu de clientes (e oculta client-only)
+      // Se admin: exibe menu de clientes
       if (profile?.role === 'admin') {
         document.querySelectorAll('.admin-only').forEach(el => el.classList.add('visible'));
-        document.querySelectorAll('.client-only').forEach(el => el.classList.remove('visible'));
-      } else {
-        // regular user: mostra client-only
-        document.querySelectorAll('.client-only').forEach(el => el.classList.add('visible'));
       }
 
       // Se membro: oculta itens restritos, mostra página inicial correta
@@ -3739,6 +3882,8 @@
     if (name === 'pdfs') loadPDFList();
     if (name === 'analytics') loadDashboard();
     if (name === 'scoring') loadScoring();
+    if (name === 'kpis') loadKPIsPage();
+    if (name === 'monitoramento') loadMonitoramentoPage();
     if (name === 'clientes') { loadClients(); loadTokenUsageAdmin(); }
     if (name === 'faturamento') {
       loadBilling();
@@ -6159,6 +6304,370 @@
         </tr>`;
       }).join('')}</tbody>
     </table>`
+  }
+
+  // =====================
+  // KPIs & OKRs
+  // =====================
+  async function loadKPIsPage() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+
+    const { data: kpis } = await db.from('user_kpis')
+      .select('*')
+      .eq('user_id', user.id)
+      .neq('tipo', 'okr')
+      .order('criado_em');
+
+    const { data: okrs } = await db.from('user_kpis')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('tipo', 'okr')
+      .order('criado_em');
+
+    renderKPIsTabela(kpis || []);
+    renderOKRsTabela(okrs || []);
+  }
+
+  function renderKPIsTabela(kpis) {
+    const el = document.getElementById('kpis-tabela');
+    if (!kpis.length) {
+      el.innerHTML = '<p style="color:#8b949e;text-align:center;padding:20px;">Nenhum KPI definido. Clique em "➕ Adicionar KPI" para começar.</p>';
+      return;
+    }
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse;">
+      <thead style="background:var(--bg-card2);border-bottom:1px solid var(--border);">
+        <tr>
+          <th style="padding:12px;text-align:left;font-weight:700;">KPI</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Meta</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Atual</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Progresso</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${kpis.map(k => {
+          const progresso = k.percentual || 0;
+          const cor = progresso >= 100 ? '#16a34a' : progresso >= 50 ? '#ca8a04' : '#dc2626';
+          return `<tr style="border-bottom:1px solid var(--border2);">
+            <td style="padding:12px;"><strong>${escapeHtml(k.nome)}</strong></td>
+            <td style="padding:12px;text-align:center;">${k.meta_definida || '—'}</td>
+            <td style="padding:12px;text-align:center;font-weight:700;">${k.valor_atual || 0}</td>
+            <td style="padding:12px;text-align:center;">
+              <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
+                <div style="width:100px;height:8px;background:var(--bg-card2);border-radius:4px;overflow:hidden;">
+                  <div style="height:100%;background:${cor};width:${Math.min(progresso, 100)}%;"></div>
+                </div>
+                <span style="font-weight:700;color:${cor};font-size:12px;min-width:40px;">${progresso.toFixed(0)}%</span>
+              </div>
+            </td>
+            <td style="padding:12px;text-align:center;">
+              <button class="btn-secondary" style="font-size:11px;padding:4px 10px;margin-right:4px;" onclick="abrirModalKPI('${k.id}')">✏️</button>
+              <button class="btn-danger" style="font-size:11px;padding:4px 10px;" onclick="removerKPI('${k.id}','${escapeHtml(k.nome)}')">🗑️</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  function renderOKRsTabela(okrs) {
+    const el = document.getElementById('okrs-tabela');
+    if (!okrs.length) {
+      el.innerHTML = '<p style="color:#8b949e;text-align:center;padding:20px;">Nenhum OKR definido. Clique em "➕ Adicionar OKR" para começar.</p>';
+      return;
+    }
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse;">
+      <thead style="background:var(--bg-card2);border-bottom:1px solid var(--border);">
+        <tr>
+          <th style="padding:12px;text-align:left;font-weight:700;">Objetivo</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Resultado-Chave</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Status</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${okrs.map(o => `<tr style="border-bottom:1px solid var(--border2);">
+          <td style="padding:12px;"><strong>${escapeHtml(o.nome)}</strong></td>
+          <td style="padding:12px;text-align:center;">${o.valor_atual || '—'}</td>
+          <td style="padding:12px;text-align:center;"><span style="font-weight:700;${o.status === 'alcancado' ? 'color:#16a34a' : 'color:#8b949e'}">${o.status === 'alcancado' ? '✅ Alcançado' : '⏳ Em progresso'}</span></td>
+          <td style="padding:12px;text-align:center;">
+            <button class="btn-secondary" style="font-size:11px;padding:4px 10px;margin-right:4px;" onclick="abrirModalOKR('${o.id}')">✏️</button>
+            <button class="btn-danger" style="font-size:11px;padding:4px 10px;" onclick="removerKPI('${o.id}','${escapeHtml(o.nome)}')">🗑️</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  function abrirModalKPI(kpiId) {
+    document.getElementById('kpi-id').value = kpiId || '';
+    document.getElementById('kpi-tipo').value = '';
+    document.getElementById('kpi-nome').value = '';
+    document.getElementById('kpi-meta').value = '';
+    document.getElementById('kpi-modal-titulo').textContent = kpiId ? 'Editar KPI' : 'Adicionar KPI';
+    document.getElementById('modal-kpi').classList.add('open');
+  }
+
+  function abrirModalOKR(okrId) {
+    abrirModalKPI(okrId);
+    document.getElementById('kpi-tipo').value = 'okr';
+    document.getElementById('kpi-modal-titulo').textContent = okrId ? 'Editar OKR' : 'Adicionar OKR';
+  }
+
+  function fecharModalKPI() {
+    document.getElementById('modal-kpi').classList.remove('open');
+  }
+
+  async function salvarKPI() {
+    const { data: { user } } = await db.auth.getUser();
+    const id = document.getElementById('kpi-id').value.trim();
+    const tipo = document.getElementById('kpi-tipo').value;
+    const nome = document.getElementById('kpi-nome').value.trim();
+    const meta = parseFloat(document.getElementById('kpi-meta').value) || 0;
+
+    if (!tipo || !nome || !meta) {
+      showToast('Preencha todos os campos.', 'error');
+      return;
+    }
+
+    if (!id) {
+      const { error } = await db.from('user_kpis').insert({
+        user_id: user.id, tipo, nome, meta_definida: meta, valor_atual: 0, percentual: 0
+      });
+      if (error) { showToast('Erro ao salvar KPI: ' + error.message, 'error'); return; }
+    } else {
+      const { error } = await db.from('user_kpis').update({
+        tipo, nome, meta_definida: meta
+      }).eq('id', id);
+      if (error) { showToast('Erro ao atualizar KPI: ' + error.message, 'error'); return; }
+    }
+
+    fecharModalKPI();
+    loadKPIsPage();
+    showToast('KPI salvo com sucesso!', 'success');
+  }
+
+  async function removerKPI(id, nome) {
+    if (!confirm(`Remover "${nome}"?`)) return;
+    const { error } = await db.from('user_kpis').delete().eq('id', id);
+    if (error) { showToast('Erro ao remover: ' + error.message, 'error'); return; }
+    loadKPIsPage();
+    showToast('KPI removido.', 'success');
+  }
+
+  async function loadMonitoramentoPage() {
+    if (currentProfile?.role !== 'admin') return;
+
+    // Carrega todas as assinaturas
+    const { data: assinaturas } = await db.from('assinaturas')
+      .select('user_id, status, proxima_cobranca, valor_mes, forma_pagamento, addon_objecao, agentes_extras, numeros_extras, usuarios_extras_limite, suspended_at, cancelada_em')
+      .order('proxima_cobranca');
+
+    // Carrega os profiles para ter nomes
+    const { data: profiles } = await db.from('profiles')
+      .select('id, display_name, deleted_at')
+      .eq('role', 'client');
+
+    const profilesMap = {};
+    (profiles || []).forEach(p => {
+      profilesMap[p.id] = p;
+    });
+
+    if (!assinaturas || !assinaturas.length) {
+      document.getElementById('monitoramento-tabela').innerHTML = '<p class="empty-state">Nenhuma assinatura cadastrada.</p>';
+      return;
+    }
+
+    // === CALCULA MÉTRICAS PARA OS CARDS ===
+    const hoje = new Date();
+    const em7dias = new Date(hoje.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    let ativas = 0, proximas = 0, suspensas = 0, canceladas = 0, apagadas = 0;
+    const formasPagamento = {};
+    const addonsCount = { objecao: 0, agente: 0, numero: 0, usuario: 0 };
+    let totalValorMes = 0;
+
+    assinaturas.forEach(ass => {
+      const dataVencimento = new Date(ass.proxima_cobranca);
+      const profile = profilesMap[ass.user_id];
+
+      // Status
+      if (ass.status === 'ativa') ativas++;
+      if (ass.status === 'cancelada') canceladas++;
+      if (ass.status === 'suspensa' || (ass.status === 'inadimplente' && ass.suspended_at)) suspensas++;
+
+      // Prestes a vencer (7 dias)
+      if (dataVencimento <= em7dias && dataVencimento >= hoje && ass.status === 'ativa') proximas++;
+
+      // Banco apagado
+      if (profile?.deleted_at) apagadas++;
+
+      // Forma de pagamento
+      const forma = ass.forma_pagamento || 'Desconhecido';
+      if (!formasPagamento[forma]) {
+        formasPagamento[forma] = { count: 0, valor: 0 };
+      }
+      formasPagamento[forma].count++;
+      formasPagamento[forma].valor += ass.valor_mes || 0;
+      totalValorMes += ass.valor_mes || 0;
+
+      // Addons
+      if (ass.addon_objecao) addonsCount.objecao++;
+      if (ass.agentes_extras > 0) addonsCount.agente++;
+      if (ass.numeros_extras > 0) addonsCount.numero++;
+      if (ass.usuarios_extras_limite > 0) addonsCount.usuario++;
+    });
+
+    // Atualiza cards
+    document.getElementById('card-ativas').textContent = ativas;
+    document.getElementById('card-proximas').textContent = proximas;
+    document.getElementById('card-suspensas').textContent = suspensas;
+    document.getElementById('card-canceladas').textContent = canceladas;
+    document.getElementById('card-apagadas').textContent = apagadas;
+
+    // === TABELA DE ASSINATURAS EXPANDIDA ===
+    const tabelaEl = document.getElementById('monitoramento-tabela');
+    tabelaEl.innerHTML = `<table style="width:100%;border-collapse:collapse;">
+      <thead style="background:var(--bg-card2);border-bottom:1px solid var(--border);">
+        <tr>
+          <th style="padding:12px;text-align:left;font-weight:700;font-size:12px;">Cliente</th>
+          <th style="padding:12px;text-align:center;font-weight:700;font-size:12px;">Status</th>
+          <th style="padding:12px;text-align:center;font-weight:700;font-size:12px;">Próx. Cobrança</th>
+          <th style="padding:12px;text-align:center;font-weight:700;font-size:12px;">Dias p/ Vencer</th>
+          <th style="padding:12px;text-align:right;font-weight:700;font-size:12px;">Valor/Mês</th>
+          <th style="padding:12px;text-align:center;font-weight:700;font-size:12px;">Forma Pagamento</th>
+          <th style="padding:12px;text-align:center;font-weight:700;font-size:12px;">Status Avançado</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${assinaturas.map(ass => {
+          const profile = profilesMap[ass.user_id];
+          const dataVencimento = new Date(ass.proxima_cobranca);
+          const diasParaVencer = Math.ceil((dataVencimento - hoje) / (1000 * 60 * 60 * 24));
+
+          let corDias = '#a3e635';
+          if (diasParaVencer <= 0) corDias = '#dc2626';
+          else if (diasParaVencer <= 7) corDias = '#ca8a04';
+
+          const statusAvancado = profile?.deleted_at
+            ? `🗑️ Dados apagados em ${new Date(profile.deleted_at).toLocaleDateString('pt-BR')}`
+            : ass.status === 'cancelada'
+            ? `⚫ Cancelada em ${ass.cancelada_em ? new Date(ass.cancelada_em).toLocaleDateString('pt-BR') : '—'}`
+            : ass.status === 'suspensa' || ass.suspended_at
+            ? `🔴 Suspensa (${ass.suspended_at ? Math.ceil((new Date() - new Date(ass.suspended_at)) / (1000 * 60 * 60 * 24)) : '?'} dias)`
+            : '✅ Ativa';
+
+          return `<tr style="border-bottom:1px solid var(--border2);">
+            <td style="padding:12px;"><strong>${escapeHtml(profile?.display_name || '—')}</strong></td>
+            <td style="padding:12px;text-align:center;"><span style="font-weight:700;${ass.status === 'ativa' ? 'color:#a3e635' : 'color:#dc2626'}">${ass.status}</span></td>
+            <td style="padding:12px;text-align:center;font-size:12px;">${new Date(ass.proxima_cobranca).toLocaleDateString('pt-BR')}</td>
+            <td style="padding:12px;text-align:center;font-weight:700;color:${corDias}">${diasParaVencer > 0 ? diasParaVencer : '0'}</td>
+            <td style="padding:12px;text-align:right;font-weight:700;font-size:12px;">R$ ${(ass.valor_mes || 0).toFixed(2)}</td>
+            <td style="padding:12px;text-align:center;font-size:12px;">${escapeHtml(ass.forma_pagamento || 'Desconhecido')}</td>
+            <td style="padding:12px;text-align:center;font-size:12px;">${statusAvancado}</td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+
+    // === DISTRIBUIÇÃO DE FORMA DE PAGAMENTO ===
+    const formaLabels = Object.keys(formasPagamento);
+    const formaData = formaLabels.map(f => formasPagamento[f].count);
+    const formaValor = formaLabels.map(f => formasPagamento[f].valor);
+
+    // Atualiza tabela de formas de pagamento
+    document.getElementById('payment-table-body').innerHTML = formaLabels.map(forma => {
+      const dados = formasPagamento[forma];
+      return `<tr style="border-bottom:1px solid var(--border2);">
+        <td style="padding:10px;">${escapeHtml(forma)}</td>
+        <td style="padding:10px;text-align:center;font-weight:700;">${dados.count}</td>
+        <td style="padding:10px;text-align:right;font-size:12px;">R$ ${dados.valor.toFixed(2)}</td>
+      </tr>`;
+    }).join('');
+
+    // Cria gráfico de formas de pagamento
+    const ctxPayment = document.getElementById('payment-chart');
+    if (window.paymentChartInstance) window.paymentChartInstance.destroy();
+    window.paymentChartInstance = new Chart(ctxPayment, {
+      type: 'doughnut',
+      data: {
+        labels: formaLabels,
+        datasets: [{
+          data: formaData,
+          backgroundColor: ['#a3e635', '#60a5fa', '#f87171', '#fbbf24', '#a78bfa'],
+          borderColor: 'var(--bg-card)',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { color: 'var(--text)', font: { size: 12 } }
+          }
+        }
+      }
+    });
+
+    // === DISTRIBUIÇÃO DE ADDONS ===
+    const addonLabels = ['Objeção IA', 'Agente Extra', 'Número Extra', 'Usuários Extras'];
+    const addonData = [addonsCount.objecao, addonsCount.agente, addonsCount.numero, addonsCount.usuario];
+
+    // Atualiza tabela de addons
+    document.getElementById('addon-table-body').innerHTML = addonLabels.map((label, idx) => {
+      const count = addonData[idx];
+      const inativos = assinaturas.length - count;
+      return `<tr style="border-bottom:1px solid var(--border2);">
+        <td style="padding:10px;">${label}</td>
+        <td style="padding:10px;text-align:center;font-weight:700;color:#a3e635;">${count}</td>
+        <td style="padding:10px;text-align:center;font-weight:700;color:#6e7681;">${inativos}</td>
+      </tr>`;
+    }).join('');
+
+    // Cria gráfico de addons
+    const ctxAddon = document.getElementById('addon-chart');
+    if (window.addonChartInstance) window.addonChartInstance.destroy();
+    window.addonChartInstance = new Chart(ctxAddon, {
+      type: 'bar',
+      data: {
+        labels: addonLabels,
+        datasets: [{
+          label: 'Clientes com Addon',
+          data: addonData,
+          backgroundColor: '#a3e635',
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          x: {
+            ticks: { color: 'var(--text2)', font: { size: 11 } },
+            grid: { color: 'rgba(255,255,255,.05)' }
+          },
+          y: {
+            ticks: { color: 'var(--text2)', font: { size: 11 } },
+            grid: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  async function entrarComoCliente(clientId, clientNome) {
+    if (!confirm(`Entrar como "${clientNome}"?\n\nVocê acessará a conta dele como técnico admin.`)) return;
+    // Aqui seria necessário implementar um sistema de impersonação
+    // Por enquanto, vamos apenas redirecionar para a dashboard do cliente
+    alert('⚠️ Função de impersonação em desenvolvimento.\n\nPor enquanto, peça ao cliente suas credenciais.');
   }
 
   async function verEquipeAdmin(clientId, clientNome) {
