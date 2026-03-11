@@ -1404,6 +1404,9 @@
       <div class="nav-item admin-only" id="admin-nav-clientes" onclick="showPage('clientes', this)">
         <span class="icon"></span> Clientes
       </div>
+      <div class="nav-item admin-only" onclick="showPage('admin-model-costs', this)">
+        <span class="icon">💰</span> Custo de Tokens
+      </div>
     </div>
     <div class="sidebar-bottom">
       <div style="margin-bottom:12px;font-size:12px;color:rgba(255,255,255,0.5);">
@@ -1560,6 +1563,23 @@
               ⏸ Agente pausado para esta conversa — você está no controle. <button onclick="toggleAgente()" style="margin-left:12px;padding:4px 12px;background:#ca8a04;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px;">▶ Reativar Agente</button>
             </div>
             <div class="messages-area" id="messages-area"></div>
+            
+            <!-- Model Selector + Cost Preview -->
+            <div style="display:flex;gap:8px;align-items:center;margin:12px 16px 0 16px;padding:12px;background:#0d1117;border:1px solid #30363d;border-radius:8px;">
+              <label style="font-size:12px;color:#8b949e;font-weight:600;white-space:nowrap;">Modelo:</label>
+              <select id="chat-model-selector" style="flex:1;padding:8px 12px;background:#161b22;border:1px solid #30363d;border-radius:6px;color:#e6edf3;font-size:13px;cursor:pointer;" onchange="updateCostPreview()">
+                <option value="gpt-4o-mini">GPT-4o Mini (1.0x) — Rápido e Barato</option>
+                <option value="gpt-4o">GPT-4o (8.0x) — Inteligente</option>
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (0.2x) — Ultra Barato</option>
+                <option value="claude-3.5-sonnet">Claude 3.5 Sonnet (25x) — Muito Caro</option>
+                <option value="claude-opus-4-6">Claude Opus 4.6 (50x) — Mais Caro</option>
+                <option value="gemini-1.5-pro">Gemini 1.5 Pro (5.0x) — Balanceado</option>
+              </select>
+              <div id="chat-cost-preview" style="font-size:11px;color:#f59e0b;padding:4px 8px;background:#30363d;border-radius:4px;min-width:120px;text-align:center;white-space:nowrap;">
+                ~1000 tokens
+              </div>
+            </div>
+            
             <div class="chat-input-area">
               <input type="file" id="chat-file-input" style="display:none"
                 accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.zip"
@@ -1567,7 +1587,7 @@
               <button class="btn-attach" onclick="document.getElementById('chat-file-input').click()" title="Enviar arquivo ou foto">📎</button>
               <textarea class="chat-input" id="chat-input" placeholder="Digite uma mensagem para enviar direto ao WhatsApp..." rows="1"
                 onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendManualMessage();}"
-                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+                oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';updateCostPreview();"></textarea>
               <button id="btn-mic" class="btn-mic" onclick="toggleRecording()" title="Gravar áudio">🎤</button>
               <button class="btn-send" id="btn-send" onclick="sendManualMessage()" title="Enviar">➤</button>
             </div>
@@ -3443,6 +3463,42 @@
       </div>
     </div>
 
+    <!-- ADMIN: ANÁLISE DE CUSTO POR MODELO -->
+    <div class="page admin-only" id="page-admin-model-costs">
+      <div class="page-header">
+        <h1>💰 Custo de Tokens por Modelo</h1>
+        <p>Análise de custos reais vs deduzidos por modelo de IA</p>
+      </div>
+
+      <!-- Summary Cards (3 colunas) -->
+      <div id="admin-model-cost-cards" style="display:grid;grid-template-columns:repeat(3, 1fr);gap:12px;margin-bottom:24px;">
+        <p class="loading">Carregando...</p>
+      </div>
+
+      <!-- Detailed Table -->
+      <div class="card">
+        <h3 style="margin-top:0;font-size:15px;">Detalhamento por Modelo</h3>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead style="border-bottom:1px solid var(--border);">
+              <tr style="font-size:12px;color:#8b949e;">
+                <th style="text-align:left;padding:8px;font-weight:600;">Modelo</th>
+                <th style="text-align:right;padding:8px;font-weight:600;">Tokens Reais</th>
+                <th style="text-align:right;padding:8px;font-weight:600;">Tokens Deduzidos</th>
+                <th style="text-align:right;padding:8px;font-weight:600;">Diferença</th>
+                <th style="text-align:center;padding:8px;font-weight:600;">Clientes</th>
+                <th style="text-align:center;padding:8px;font-weight:600;">Conversas</th>
+                <th style="text-align:right;padding:8px;font-weight:600;">Margem %</th>
+              </tr>
+            </thead>
+            <tbody id="admin-model-cost-table">
+              <tr><td colspan="7" style="text-align:center;padding:24px;color:#6e7681;">Sem dados</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- CALENDÁRIO -->
     <div class="page" id="page-calendario">
       <div class="page-header">
@@ -3640,6 +3696,28 @@
               style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg-input,var(--bg-secondary));color:var(--text);font-size:14px;box-sizing:border-box;" />
           </div>
           <button class="btn-save" onclick="saveNewPassword()" style="width:100%;">Salvar Nova Senha</button>
+        </div>
+
+        <!-- Tokens por Modelo (este mês) -->
+        <div class="card" style="padding:24px;">
+          <h3 style="margin:0 0 16px;font-size:15px;font-weight:700;">📊 Tokens Usados por Modelo (Este Mês)</h3>
+          <div style="overflow-x:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;">
+              <thead style="border-bottom:1px solid var(--border);">
+                <tr style="color:#8b949e;">
+                  <th style="text-align:left;padding:8px;font-weight:600;">Modelo</th>
+                  <th style="text-align:right;padding:8px;font-weight:600;">Tokens Usados</th>
+                  <th style="text-align:center;padding:8px;font-weight:600;">Fator</th>
+                  <th style="text-align:right;padding:8px;font-weight:600;">Deduzidos</th>
+                  <th style="text-align:right;padding:8px;font-weight:600;">% Total</th>
+                </tr>
+              </thead>
+              <tbody id="cliente-model-usage-table">
+                <tr><td colspan="5" style="text-align:center;padding:16px;color:#6e7681;">Carregando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p style="font-size:11px;color:#6e7681;margin-top:12px;margin-bottom:0;">Modelos mais caros (como Claude Opus) consomem mais tokens efetivos em relação aos tokens gastos realmente.</p>
         </div>
 
       </div>
@@ -4119,6 +4197,35 @@
   // =====================
   const _membroAllowedPages = new Set(['overview','batepapo','crm','leads','configuracoes']);
 
+  // =====================
+  // COST FACTORS (multiplicadores por modelo)
+  // =====================
+  const COST_FACTORS = {
+    'gpt-3.5-turbo': 0.2,
+    'gpt-4.1-nano': 0.3,
+    'gpt-4.1-mini': 0.8,
+    'gpt-4o-mini': 1.0,
+    'o4-mini': 2.0,
+    'o3-mini': 3.0,
+    'gpt-4.1': 5.5,
+    'gpt-4-turbo': 6.0,
+    'gpt-4o': 8.0,
+    'o3': 12,
+    'claude-3-haiku': 10,
+    'claude-haiku-4-5': 12,
+    'claude-haiku-4-5-20251001': 12,
+    'claude-3-opus-20240229': 40,
+    'claude-opus-4-6': 50,
+    'claude-3.5-sonnet': 25,
+    'claude-sonnet-4-6': 35,
+    'gemini-2.0-flash': 2.5,
+    'gemini-1.5-flash': 2.0,
+    'gemini-1.5-pro': 5.0,
+    'whisper-1': 0.5,
+    'tts-1': 0.3,
+    'tts-1-hd': 1.0
+  };
+
   function showPage(name, el) {
     // Bloqueia membro de acessar páginas não permitidas
     if (currentProfile?.role === 'membro' && !_membroAllowedPages.has(name)) return;
@@ -4136,6 +4243,7 @@
     if (name === 'kpis') loadKPIsPage();
     if (name === 'monitoramento') loadMonitoramentoPage();
     if (name === 'clientes') { loadClients(); loadTokenUsageAdmin(); }
+    if (name === 'admin-model-costs') loadAdminModelCosts();
     if (name === 'faturamento') {
       loadBilling();
       loadCredits();
@@ -4188,6 +4296,9 @@
         document.getElementById('settings-perfil-email-contato').value = me.email || '';
       }
     }
+
+    // Carregar relatório de tokens por modelo
+    loadClientModelUsage();
   }
 
   async function savePerfilMembro() {
@@ -4447,6 +4558,24 @@
     updateAgentePausadoUI(conv.agente_pausado);
     renderMessages(conv);
     renderConvList(allConversations);
+    
+    // Inicializar modelo selecionado
+    if (currentProfile?.id) {
+      db.from('agente_config')
+        .select('valor')
+        .eq('user_id', currentProfile.id)
+        .eq('chave', 'ultimo_modelo_chat')
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data?.valor) {
+            const selector = document.getElementById('chat-model-selector');
+            if (selector) selector.value = data.valor;
+          }
+          updateCostPreview();
+        });
+    } else {
+      updateCostPreview();
+    }
   }
 
   function updateAgentePausadoUI(pausado) {
@@ -4504,14 +4633,46 @@
     }
   }
 
+  // Atualizar preview de custo
+  function updateCostPreview() {
+    const chatInput = document.getElementById('chat-input');
+    const modelSelector = document.getElementById('chat-model-selector');
+    const costPreview = document.getElementById('chat-cost-preview');
+
+    if (!modelSelector || !costPreview || !chatInput) return;
+
+    const model = modelSelector.value;
+    const costFactor = COST_FACTORS[model] || 1.0;
+    
+    // Estimativa: ~4 caracteres = 1 token
+    const estimatedTokens = Math.ceil((chatInput.value?.length || 0) / 4);
+    const estimatedCost = Math.round(estimatedTokens * costFactor);
+
+    // Color-coding baseado no custo estimado
+    const color = estimatedCost > 10000 ? '#ef4444' : estimatedCost > 5000 ? '#f59e0b' : '#a3e635';
+    costPreview.style.color = color;
+    costPreview.textContent = `${estimatedCost.toLocaleString('pt-BR')} tokens`;
+  }
+
   async function sendManualMessage() {
     if (!selectedConv) return;
     const input = document.getElementById('chat-input');
+    const modelSelector = document.getElementById('chat-model-selector');
+    const model = modelSelector?.value || 'gpt-4o-mini';
     const msg = input.value.trim();
     if (!msg) return;
     const btn = document.getElementById('btn-send');
     btn.disabled = true; input.value = ''; input.style.height = 'auto';
     try {
+      // Salvar modelo selecionado na configuração do usuário
+      if (currentProfile?.id) {
+        await db.from('agente_config').upsert({
+          user_id: currentProfile.id,
+          chave: 'ultimo_modelo_chat',
+          valor: model
+        }, { onConflict: 'user_id,chave' });
+      }
+      
       await evoProxy('send-text', { number: selectedConv, text: msg });
       // Atualiza histórico local
       await loadConversations();
@@ -4519,6 +4680,7 @@
       alert('Erro ao enviar mensagem: ' + e.message);
     }
     btn.disabled = false;
+    updateCostPreview(); // Reset preview
   }
 
   // ── Envio de arquivo / foto ───────────────────────────────────────────────
@@ -9448,6 +9610,130 @@
           '</tr>';
         }).join('')}</tbody>
       </table>`;
+  }
+
+  // Função para admin visualizar custo por modelo
+  async function loadAdminModelCosts() {
+    if (currentProfile?.role !== 'admin') return;
+    const cardsEl = document.getElementById('admin-model-cost-cards');
+    const tableEl = document.getElementById('admin-model-cost-table');
+
+    if (!cardsEl || !tableEl) return;
+
+    cardsEl.innerHTML = '<p class="loading">Carregando...</p>';
+    tableEl.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#6e7681;">Carregando...</td></tr>';
+
+    const { data, error } = await db.rpc('admin_get_model_costs');
+
+    if (error) {
+      cardsEl.innerHTML = '<p class="error" style="color:#ef4444;">Erro: ' + error.message + '</p>';
+      tableEl.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#ef4444;">Erro ao carregar dados</td></tr>';
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      cardsEl.innerHTML = '<p class="empty-state">Nenhum dado de uso de tokens este mês</p>';
+      tableEl.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:24px;color:#6e7681;">Sem dados</td></tr>';
+      return;
+    }
+
+    // Cards
+    const totalGasto = data.reduce((s, r) => s + (r.receita_estimada||0), 0);
+    const marginMedia = data.reduce((s, r) => s + (r.margem_percentual||0), 0) / data.length;
+    const modeloCaro = data[0];
+
+    cardsEl.innerHTML = `
+      <div class="card" style="padding:16px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;">Receita Total (este mês)</div>
+        <div style="font-size:24px;font-weight:700;color:var(--lime);">R$ ${totalGasto.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+      </div>
+      <div class="card" style="padding:16px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;">Margem Média</div>
+        <div style="font-size:24px;font-weight:700;color:${marginMedia > 50 ? '#a3e635' : marginMedia > 20 ? '#f59e0b' : '#ef4444'};">${marginMedia.toFixed(1)}%</div>
+      </div>
+      <div class="card" style="padding:16px;">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;">Modelo Mais Custoso</div>
+        <div style="font-size:16px;font-weight:700;color:#f59e0b;">${modeloCaro?.modelo || '—'}</div>
+      </div>
+    `;
+
+    // Tabela
+    tableEl.innerHTML = data.map(r => {
+      const margem = r.margem_percentual || 0;
+      const corMargem = margem > 50 ? '#a3e635' : margem > 20 ? '#f59e0b' : '#ef4444';
+      const diferenca = (r.total_tokens_deduzidos - r.total_tokens_reais) || 0;
+
+      return `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:12px;font-weight:600;color:var(--lime);">${r.modelo}</td>
+          <td style="padding:12px;text-align:right;color:#8b949e;">${(r.total_tokens_reais/1000000).toFixed(2)}M</td>
+          <td style="padding:12px;text-align:right;font-weight:700;color:#a3e635;">${(r.total_tokens_deduzidos/1000000).toFixed(2)}M</td>
+          <td style="padding:12px;text-align:right;color:#f59e0b;">${(diferenca/1000000).toFixed(2)}M</td>
+          <td style="padding:12px;text-align:center;color:#8b949e;">${r.clientes_unicos}</td>
+          <td style="padding:12px;text-align:center;color:#8b949e;">${r.num_conversas}</td>
+          <td style="padding:12px;text-align:right;font-weight:700;color:${corMargem};">${margem.toFixed(1)}%</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Função para cliente visualizar seu uso de tokens por modelo
+  async function loadClientModelUsage() {
+    const userId = currentProfile?.id;
+    if (!userId) return;
+
+    const tableEl = document.getElementById('cliente-model-usage-table');
+    if (!tableEl) return;
+
+    tableEl.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#6e7681;">Carregando...</td></tr>';
+
+    // Buscar uso de tokens dos últimos 30 dias
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const isoDate = thirtyDaysAgo.toISOString();
+
+    const { data, error } = await db
+      .from('token_usage')
+      .select('modelo, tokens_total')
+      .eq('user_id', userId)
+      .gte('criado_em', isoDate);
+
+    if (error || !data || data.length === 0) {
+      tableEl.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#6e7681;">Sem dados neste mês</td></tr>';
+      return;
+    }
+
+    // Agrupar tokens por modelo
+    const byModel = {};
+    data.forEach(row => {
+      if (!byModel[row.modelo]) byModel[row.modelo] = 0;
+      byModel[row.modelo] += row.tokens_total;
+    });
+
+    const totalTokens = Object.values(byModel).reduce((a, b) => a + b, 0);
+
+    // Renderizar tabela com color-coding
+    tableEl.innerHTML = Object.entries(byModel)
+      .sort((a, b) => b[1] - a[1]) // Ordenar por quantidade decrescente
+      .map(([modelo, tokens]) => {
+        const costFactor = COST_FACTORS[modelo] || 1.0;
+        const tokensDeduzidos = Math.round(tokens * costFactor);
+        const percentualTotal = ((tokens * 100) / totalTokens).toFixed(1);
+        const corFator = costFactor > 20 ? '#ef4444' : costFactor > 10 ? '#f59e0b' : costFactor > 5 ? '#f59e0b' : '#a3e635';
+
+        return `
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:12px;font-weight:600;color:var(--lime);">${modelo}</td>
+            <td style="padding:12px;text-align:right;color:#8b949e;">${(tokens/1000000).toFixed(3)}M</td>
+            <td style="padding:12px;text-align:center;">
+              <span style="background:#30363d;padding:2px 6px;border-radius:3px;font-size:12px;color:#a3e635;">${costFactor}x</span>
+            </td>
+            <td style="padding:12px;text-align:right;font-weight:700;color:#a3e635;">${(tokensDeduzidos/1000000).toFixed(3)}M</td>
+            <td style="padding:12px;text-align:right;color:#f59e0b;font-weight:600;">${percentualTotal}%</td>
+          </tr>
+        `;
+      })
+      .join('');
   }
 
   // =============================================
