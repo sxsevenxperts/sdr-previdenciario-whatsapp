@@ -1050,6 +1050,7 @@
     #modal-usuario-extra { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; display:none; align-items:center; justify-content:center; }
     #modal-usuario-extra.open { display:flex; }
     #modal-admin-equipe.open { display:flex; }
+    #modal-kpi.open { display:flex; }
     .usuario-modal-box { background:#161b22; border:1px solid #30363d; border-radius:16px; padding:28px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; }
     .usuario-modal-title { font-size:16px; font-weight:700; color:#e6edf3; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
     .usuario-cor-picker { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
@@ -1360,6 +1361,9 @@
         <span class="icon"></span> Designer de Fluxos
       </div>
       <div class="nav-section">Conta</div>
+      <div class="nav-item membro-hidden" onclick="showPage('kpis', this)">
+        <span class="icon">📊</span> KPIs & OKRs
+      </div>
       <div class="nav-item membro-hidden" onclick="showPage('faturamento', this)">
         <span class="icon"></span> Faturamento
       </div>
@@ -2567,6 +2571,63 @@
       </div>
     </div>
 
+    <!-- KPIs & OKRs -->
+    <div class="page" id="page-kpis">
+      <div class="page-header">
+        <h1>📊 KPIs & OKRs</h1>
+        <p>Defina e acompanhe suas metas e objetivos</p>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">Meus KPIs</h3>
+          <button class="btn-primary" onclick="abrirModalKPI()">➕ Adicionar KPI</button>
+        </div>
+        <div id="kpis-tabela"><p class="loading">Carregando...</p></div>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3 style="margin:0">Meus OKRs</h3>
+          <button class="btn-primary" onclick="abrirModalOKR()">➕ Adicionar OKR</button>
+        </div>
+        <div id="okrs-tabela"><p class="loading">Carregando...</p></div>
+      </div>
+    </div>
+
+    <!-- Modal Adicionar/Editar KPI -->
+    <div id="modal-kpi" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:none;align-items:center;justify-content:center;">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;width:500px;max-width:95vw;padding:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <h3 style="margin:0;font-size:16px;font-weight:700;" id="kpi-modal-titulo">Adicionar KPI</h3>
+          <button onclick="fecharModalKPI()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;">✕</button>
+        </div>
+        <input type="hidden" id="kpi-id" />
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">TIPO DE KPI</label>
+          <select id="kpi-tipo" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);">
+            <option value="">— Selecione um tipo —</option>
+            <option value="taxa_finalizacao">Taxa de Finalização</option>
+            <option value="leads_semana">Leads por Semana</option>
+            <option value="conversao">Conversão</option>
+            <option value="customizado">Customizado</option>
+          </select>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">NOME</label>
+          <input type="text" id="kpi-nome" placeholder="Ex: Aumentar taxa de finalização" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);box-sizing:border-box;" />
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="font-size:12px;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">META</label>
+          <input type="number" id="kpi-meta" placeholder="50" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);box-sizing:border-box;" />
+        </div>
+        <div style="display:flex;gap:10px;margin-top:20px;">
+          <button class="btn-primary" style="flex:1;" onclick="salvarKPI()">💾 Salvar</button>
+          <button class="btn-secondary" style="flex:1;" onclick="fecharModalKPI()">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
     <!-- FATURAMENTO -->
     <div class="page" id="page-faturamento">
       <div class="page-header"><h1>Faturamento</h1><p>Gerencie sua assinatura e adicione recursos ao plano</p></div>
@@ -3747,6 +3808,7 @@
     if (name === 'pdfs') loadPDFList();
     if (name === 'analytics') loadDashboard();
     if (name === 'scoring') loadScoring();
+    if (name === 'kpis') loadKPIsPage();
     if (name === 'monitoramento') loadMonitoramentoPage();
     if (name === 'clientes') { loadClients(); loadTokenUsageAdmin(); }
     if (name === 'faturamento') {
@@ -6168,6 +6230,156 @@
         </tr>`;
       }).join('')}</tbody>
     </table>`
+  }
+
+  // =====================
+  // KPIs & OKRs
+  // =====================
+  async function loadKPIsPage() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) return;
+
+    const { data: kpis } = await db.from('user_kpis')
+      .select('*')
+      .eq('user_id', user.id)
+      .neq('tipo', 'okr')
+      .order('criado_em');
+
+    const { data: okrs } = await db.from('user_kpis')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('tipo', 'okr')
+      .order('criado_em');
+
+    renderKPIsTabela(kpis || []);
+    renderOKRsTabela(okrs || []);
+  }
+
+  function renderKPIsTabela(kpis) {
+    const el = document.getElementById('kpis-tabela');
+    if (!kpis.length) {
+      el.innerHTML = '<p style="color:#8b949e;text-align:center;padding:20px;">Nenhum KPI definido. Clique em "➕ Adicionar KPI" para começar.</p>';
+      return;
+    }
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse;">
+      <thead style="background:var(--bg-card2);border-bottom:1px solid var(--border);">
+        <tr>
+          <th style="padding:12px;text-align:left;font-weight:700;">KPI</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Meta</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Atual</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Progresso</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${kpis.map(k => {
+          const progresso = k.percentual || 0;
+          const cor = progresso >= 100 ? '#16a34a' : progresso >= 50 ? '#ca8a04' : '#dc2626';
+          return `<tr style="border-bottom:1px solid var(--border2);">
+            <td style="padding:12px;"><strong>${escapeHtml(k.nome)}</strong></td>
+            <td style="padding:12px;text-align:center;">${k.meta_definida || '—'}</td>
+            <td style="padding:12px;text-align:center;font-weight:700;">${k.valor_atual || 0}</td>
+            <td style="padding:12px;text-align:center;">
+              <div style="display:flex;align-items:center;gap:8px;justify-content:center;">
+                <div style="width:100px;height:8px;background:var(--bg-card2);border-radius:4px;overflow:hidden;">
+                  <div style="height:100%;background:${cor};width:${Math.min(progresso, 100)}%;"></div>
+                </div>
+                <span style="font-weight:700;color:${cor};font-size:12px;min-width:40px;">${progresso.toFixed(0)}%</span>
+              </div>
+            </td>
+            <td style="padding:12px;text-align:center;">
+              <button class="btn-secondary" style="font-size:11px;padding:4px 10px;margin-right:4px;" onclick="abrirModalKPI('${k.id}')">✏️</button>
+              <button class="btn-danger" style="font-size:11px;padding:4px 10px;" onclick="removerKPI('${k.id}','${escapeHtml(k.nome)}')">🗑️</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  function renderOKRsTabela(okrs) {
+    const el = document.getElementById('okrs-tabela');
+    if (!okrs.length) {
+      el.innerHTML = '<p style="color:#8b949e;text-align:center;padding:20px;">Nenhum OKR definido. Clique em "➕ Adicionar OKR" para começar.</p>';
+      return;
+    }
+    el.innerHTML = `<table style="width:100%;border-collapse:collapse;">
+      <thead style="background:var(--bg-card2);border-bottom:1px solid var(--border);">
+        <tr>
+          <th style="padding:12px;text-align:left;font-weight:700;">Objetivo</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Resultado-Chave</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Status</th>
+          <th style="padding:12px;text-align:center;font-weight:700;">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${okrs.map(o => `<tr style="border-bottom:1px solid var(--border2);">
+          <td style="padding:12px;"><strong>${escapeHtml(o.nome)}</strong></td>
+          <td style="padding:12px;text-align:center;">${o.valor_atual || '—'}</td>
+          <td style="padding:12px;text-align:center;"><span style="font-weight:700;${o.status === 'alcancado' ? 'color:#16a34a' : 'color:#8b949e'}">${o.status === 'alcancado' ? '✅ Alcançado' : '⏳ Em progresso'}</span></td>
+          <td style="padding:12px;text-align:center;">
+            <button class="btn-secondary" style="font-size:11px;padding:4px 10px;margin-right:4px;" onclick="abrirModalOKR('${o.id}')">✏️</button>
+            <button class="btn-danger" style="font-size:11px;padding:4px 10px;" onclick="removerKPI('${o.id}','${escapeHtml(o.nome)}')">🗑️</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  }
+
+  function abrirModalKPI(kpiId) {
+    document.getElementById('kpi-id').value = kpiId || '';
+    document.getElementById('kpi-tipo').value = '';
+    document.getElementById('kpi-nome').value = '';
+    document.getElementById('kpi-meta').value = '';
+    document.getElementById('kpi-modal-titulo').textContent = kpiId ? 'Editar KPI' : 'Adicionar KPI';
+    document.getElementById('modal-kpi').classList.add('open');
+  }
+
+  function abrirModalOKR(okrId) {
+    abrirModalKPI(okrId);
+    document.getElementById('kpi-tipo').value = 'okr';
+    document.getElementById('kpi-modal-titulo').textContent = okrId ? 'Editar OKR' : 'Adicionar OKR';
+  }
+
+  function fecharModalKPI() {
+    document.getElementById('modal-kpi').classList.remove('open');
+  }
+
+  async function salvarKPI() {
+    const { data: { user } } = await db.auth.getUser();
+    const id = document.getElementById('kpi-id').value.trim();
+    const tipo = document.getElementById('kpi-tipo').value;
+    const nome = document.getElementById('kpi-nome').value.trim();
+    const meta = parseFloat(document.getElementById('kpi-meta').value) || 0;
+
+    if (!tipo || !nome || !meta) {
+      showToast('Preencha todos os campos.', 'error');
+      return;
+    }
+
+    if (!id) {
+      const { error } = await db.from('user_kpis').insert({
+        user_id: user.id, tipo, nome, meta_definida: meta, valor_atual: 0, percentual: 0
+      });
+      if (error) { showToast('Erro ao salvar KPI: ' + error.message, 'error'); return; }
+    } else {
+      const { error } = await db.from('user_kpis').update({
+        tipo, nome, meta_definida: meta
+      }).eq('id', id);
+      if (error) { showToast('Erro ao atualizar KPI: ' + error.message, 'error'); return; }
+    }
+
+    fecharModalKPI();
+    loadKPIsPage();
+    showToast('KPI salvo com sucesso!', 'success');
+  }
+
+  async function removerKPI(id, nome) {
+    if (!confirm(`Remover "${nome}"?`)) return;
+    const { error } = await db.from('user_kpis').delete().eq('id', id);
+    if (error) { showToast('Erro ao remover: ' + error.message, 'error'); return; }
+    loadKPIsPage();
+    showToast('KPI removido.', 'success');
   }
 
   async function loadMonitoramentoPage() {
