@@ -7801,7 +7801,10 @@
     // Zoom inicial afastado para ver mais canvas
     editor.zoom = 0.35;
     if (editor.precanvas) editor.precanvas.style.transform = 'translate(0px,0px) scale(0.35)';
-    // Garante que o precanvas do Drawflow aceita drag & drop da paleta lateral
+    // Garanta que o precanvas e drawflow aceitam drag & drop
+    const dfEl = document.getElementById('drawflow');
+    dfEl.addEventListener('dragover', function(e) { e.preventDefault(); });
+    dfEl.addEventListener('drop', drop);
     editor.precanvas.addEventListener('dragover', function(e) { e.preventDefault(); });
     editor.precanvas.addEventListener('drop', drop);
     // Registra tipos de nó (etapa usa placeholder – substituído no drop)
@@ -7819,7 +7822,9 @@
 
   function drag(event, type) {
     dragNodeType = type;
+    event.dataTransfer.effectAllowed = 'copy';
     event.dataTransfer.setData('text', type);
+    console.log('📍 Drag iniciado:', type);
   }
 
   // Adiciona linha de campo customizado no nó Campos & Tags
@@ -7848,8 +7853,13 @@
   function drop(event) {
     event.preventDefault();
     const type = dragNodeType || event.dataTransfer.getData('text');
-    if (!type || !NODE_TEMPLATES[type]) return;
+    console.log('🎯 Drop detectado - tipo:', type, 'dragNodeType:', dragNodeType);
+    if (!type || !NODE_TEMPLATES[type]) {
+      console.warn('❌ Tipo inválido ou não existe template:', type);
+      return;
+    }
     const cfg = NODE_TEMPLATES[type];
+    console.log('✅ Config encontrada para:', type);
     // Converte coordenadas de tela → coordenadas do canvas (zoom + pan)
     const dfEl = document.getElementById('drawflow');
     const rect  = dfEl.getBoundingClientRect();
@@ -7857,6 +7867,7 @@
     const zoom  = editor.zoom || 1;
     const x = (event.clientX - rect.left - mat.m41) / zoom;
     const y = (event.clientY - rect.top  - mat.m42) / zoom;
+    console.log('📐 Coordenadas - clientX:', event.clientX, 'clientY:', event.clientY, 'rect.left:', rect.left, 'rect.top:', rect.top, 'zoom:', zoom, 'x:', x, 'y:', y);
 
     // Opções de números (usadas em etapa e departamento)
     const numerosOpts = _fluxoNumeros.length
@@ -7893,6 +7904,7 @@
       {},
       nodeHtml
     );
+    console.log('✨ Nó adicionado com sucesso!');
     dragNodeType = null;
   }
 
