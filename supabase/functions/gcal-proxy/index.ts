@@ -90,6 +90,18 @@ Deno.serve(async (req) => {
         return json(result, 200, cors);
       }
 
+      case "list-events": {
+        const daysAhead = 30;
+        const events = await listGoogleCalendarEvents(user.id, daysAhead);
+        return json({ events }, 200, cors);
+      }
+
+      case "sync-calendar": {
+        const daysAhead = 30;
+        const syncResult = await syncCalendarEvents(user.id, daysAhead);
+        return json(syncResult, 200, cors);
+      }
+
       default:
         return json({ error: `Action "${action}" não suportada` }, 400, cors);
     }
@@ -227,6 +239,72 @@ async function upsertConfig(userId: string, chave: string, valor: string) {
     { user_id: userId, chave, valor },
     { onConflict: "user_id,chave" }
   );
+}
+
+// ── List Google Calendar events (próximos N dias) ────────────────────────────
+async function listGoogleCalendarEvents(userId: string, daysAhead: number = 30) {
+  const accessToken = await getFreshToken(userId);
+
+  const now = new Date();
+  const future = new Date(now.getTime() + daysAhead * 24 * 60 * 60 * 1000);
+
+  const res = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/primary/events?` +
+    `timeMin=${now.toISOString()}&` +
+    `timeMax=${future.toISOString()}&` +
+    `maxResults=100&` +
+    `orderBy=startTime&` +
+    `singleEvents=true`,
+    {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }
+  );
+
+  if (!res.ok) throw new Error("Falha ao listar eventos do Google Calendar");
+  const data = await res.json();
+
+  return (data.items ?? []).map((event: any) => ({
+    id: event.id,
+    title: event.summary,
+    description: event.description,
+    start_time: event.start.dateTime || event.start.date,
+    end_time: event.end.dateTime || event.end.date,
+    location: event.location,
+    attendees: event.attendees?.map((a: any) => ({ email: a.email, name: a.displayName })),
+  }));
+}
+
+// ── Sync Google Calendar events to database ────────────────────────────────
+async function syncCalendarEvents(userId: string, daysAhead: number = 30) {
+  const events = await listGoogleCalendarEvents(userId, daysAhead);
+
+  // Insert/update events in calendar_events table
+  const syncedEvents = [];
+  for (const event of events) {
+    const { data, error } = await adminDb
+      .from("calendar_events")
+      .upsert(
+        {
+          user_id: userId,
+          calendar_provider: "google",
+          event_id: event.id,
+          title: event.title,
+          description: event.description,
+          start_time: event.start_time,
+          end_time: event.end_time,
+          location: event.location,
+          attendees: event.attendees,
+          synced_at: new Date(),
+        },
+        { onConflict: "user_id,calendar_provider,event_id" }
+      )
+      .select()
+      .single();
+
+    if (data) syncedEvents.push(data);
+  }
+
+  return { synced_count: syncedEvents.length, events: syncedEvents };
 }
 
 function json(data: unknown, status = 200, headers: Record<string, string> = {}) {
