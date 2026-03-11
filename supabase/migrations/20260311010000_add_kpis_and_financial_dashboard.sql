@@ -60,13 +60,15 @@ EXECUTE FUNCTION update_kpi_percentual();
 -- 5. RLS: user_kpis — cada usuário vê APENAS seus próprios KPIs
 ALTER TABLE user_kpis ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "user_kpis_own" ON user_kpis
+DROP POLICY IF EXISTS "user_kpis_own" ON user_kpis;
+CREATE POLICY "user_kpis_own" ON user_kpis
   FOR ALL
   USING (user_id = auth.uid())
   WITH CHECK (user_id = auth.uid());
 
 -- Admin pode ver KPIs de todos os usuários (para analytics futura)
-CREATE POLICY IF NOT EXISTS "user_kpis_admin" ON user_kpis
+DROP POLICY IF EXISTS "user_kpis_admin" ON user_kpis;
+CREATE POLICY "user_kpis_admin" ON user_kpis
   FOR ALL
   USING (
     (SELECT role FROM profiles WHERE id = auth.uid()) = 'admin'
