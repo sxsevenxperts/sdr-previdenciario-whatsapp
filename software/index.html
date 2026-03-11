@@ -440,6 +440,12 @@
     .admin-only { display:none !important; }
     .admin-only.visible { display:flex !important; }
     .nav-section.admin-only.visible { display:block !important; }
+    .membro-hidden { display:none !important; }
+    .membro-hidden.visible { display:flex !important; }
+    .nav-section.membro-hidden.visible { display:block !important; }
+    .client-only { display:none !important; }
+    .client-only.visible { display:flex !important; }
+    .nav-section.client-only.visible { display:block !important; }
     .client-tag { font-size:10px; background:#f0fdf4; color:#16a34a; padding:2px 7px; border-radius:10px; font-weight:700; }
     .client-tag.inactive { background:#fee2e2; color:#dc2626; }
 
@@ -1046,6 +1052,7 @@
     /* Modal Usuário Extra */
     #modal-usuario-extra { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:1000; display:none; align-items:center; justify-content:center; }
     #modal-usuario-extra.open { display:flex; }
+    #modal-admin-equipe.open { display:flex; }
     .usuario-modal-box { background:#161b22; border:1px solid #30363d; border-radius:16px; padding:28px; width:100%; max-width:440px; max-height:90vh; overflow-y:auto; }
     .usuario-modal-title { font-size:16px; font-weight:700; color:#e6edf3; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
     .usuario-cor-picker { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
@@ -1311,8 +1318,8 @@
       <div class="nav-item active" onclick="showPage('overview', this)">
         <span class="icon"></span> Visão Geral
       </div>
-      <div class="nav-section">WhatsApp</div>
-      <div class="nav-item" onclick="showPage('whatsapp', this)" id="nav-whatsapp">
+      <div class="nav-section">Atendimento</div>
+      <div class="nav-item membro-hidden" onclick="showPage('whatsapp', this)" id="nav-whatsapp">
         <span class="icon"></span> Conexão QR Code
         <span class="badge-dot offline" id="nav-wa-dot"></span>
       </div>
@@ -1322,41 +1329,41 @@
       <div class="nav-item" onclick="showPage('crm', this)">
         <span class="icon"></span> CRM — Pipeline
       </div>
-      <div class="nav-item" onclick="showPage('calendario', this)">
+      <div class="nav-item membro-hidden" onclick="showPage('calendario', this)">
         <span class="icon">📅</span> Calendário
       </div>
-      <div class="nav-item" onclick="showPage('equipe', this)">
+      <div class="nav-item client-only" onclick="showPage('equipe', this)">
         <span class="icon">👥</span> Equipe
       </div>
-      <div class="nav-section">Configuração</div>
-      <div class="nav-item" onclick="showPage('agente', this)">
+      <div class="nav-section membro-hidden">Configuração</div>
+      <div class="nav-item membro-hidden" onclick="showPage('agente', this)">
         <span class="icon"></span> Agente & Prompt
       </div>
-      <div class="nav-item" onclick="showPage('comunicacao', this)">
+      <div class="nav-item membro-hidden" onclick="showPage('comunicacao', this)">
         <span class="icon"></span> Comunicação
       </div>
-      <div class="nav-item" onclick="showPage('qualificacao', this)">
+      <div class="nav-item membro-hidden" onclick="showPage('qualificacao', this)">
         <span class="icon"></span> Qualificação
       </div>
-      <div class="nav-item" onclick="showPage('pdfs', this)">
+      <div class="nav-item membro-hidden" onclick="showPage('pdfs', this)">
         <span class="icon"></span> Base de Conhecimento
       </div>
       <div class="nav-section">Resultados</div>
-      <div class="nav-item" onclick="showPage('analytics', this)">
+      <div class="nav-item membro-hidden" onclick="showPage('analytics', this)">
         <span class="icon"></span> Analytics
       </div>
       <div class="nav-item" onclick="showPage('leads', this)">
         <span class="icon"></span> Leads
       </div>
-      <div class="nav-section">Ferramentas</div>
-      <div class="nav-item" onclick="showPage('scoring', this)">
+      <div class="nav-section membro-hidden">Ferramentas</div>
+      <div class="nav-item membro-hidden" onclick="showPage('scoring', this)">
         <span class="icon"></span> Lead Scoring
       </div>
-      <div class="nav-item" onclick="showPage('fluxos', this)">
+      <div class="nav-item membro-hidden" onclick="showPage('fluxos', this)">
         <span class="icon"></span> Designer de Fluxos
       </div>
       <div class="nav-section">Conta</div>
-      <div class="nav-item" onclick="showPage('faturamento', this)">
+      <div class="nav-item membro-hidden" onclick="showPage('faturamento', this)">
         <span class="icon"></span> Faturamento
       </div>
       <div class="nav-item" onclick="showPage('configuracoes', this)">
@@ -2465,7 +2472,7 @@
     </div>
 
     <!-- EQUIPE -->
-    <div class="page" id="page-equipe">
+    <div class="page client-only" id="page-equipe">
       <div class="page-header">
         <div>
           <h1>👥 Equipe</h1>
@@ -2546,6 +2553,17 @@
           <button class="btn-primary" style="flex:1;" onclick="salvarUsuarioExtra()">💾 Salvar</button>
           <button class="btn-secondary" style="flex:1;" onclick="fecharModalUsuario()">Cancelar</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Modal Admin: Ver Equipe de um cliente -->
+    <div id="modal-admin-equipe" style="position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:none;align-items:center;justify-content:center;">
+      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;width:520px;max-width:95vw;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--border2);">
+          <span id="admin-equipe-titulo" style="font-weight:700;font-size:15px;"></span>
+          <button onclick="fecharModalAdminEquipe()" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;line-height:1;">✕</button>
+        </div>
+        <div id="admin-equipe-lista" style="overflow-y:auto;flex:1;"></div>
       </div>
     </div>
 
@@ -3188,6 +3206,34 @@
           </div>
         </div>
 
+        <!-- Meu Perfil (visível apenas para membros) -->
+        <div class="card" id="settings-perfil-card" style="padding:24px;display:none;">
+          <h3 style="margin:0 0 16px;font-size:15px;font-weight:700;">👤 Meu Perfil</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div>
+              <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">NOME COMPLETO</label>
+              <input type="text" id="settings-perfil-nome" placeholder="Seu nome"
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg-input,var(--bg-secondary));color:var(--text);font-size:14px;box-sizing:border-box;" />
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">FUNÇÃO / CARGO</label>
+              <input type="text" id="settings-perfil-cargo" placeholder="Ex: Atendente, SDR..."
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg-input,var(--bg-secondary));color:var(--text);font-size:14px;box-sizing:border-box;" />
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">WHATSAPP DE CONTATO</label>
+              <input type="tel" id="settings-perfil-whatsapp" placeholder="55 11 99999-9999"
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg-input,var(--bg-secondary));color:var(--text);font-size:14px;box-sizing:border-box;" />
+            </div>
+            <div>
+              <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">E-MAIL DE CONTATO</label>
+              <input type="email" id="settings-perfil-email-contato" placeholder="seu@email.com"
+                style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg-input,var(--bg-secondary));color:var(--text);font-size:14px;box-sizing:border-box;" />
+            </div>
+          </div>
+          <button class="btn-save" onclick="savePerfilMembro()" style="width:100%;">Salvar Perfil</button>
+        </div>
+
         <!-- Alterar senha -->
         <div class="card" style="padding:24px;">
           <h3 style="margin:0 0 16px;font-size:15px;font-weight:700;">🔑 Alterar Senha</h3>
@@ -3463,7 +3509,8 @@
   let chatRealtimeChannel = null;   // canal Supabase Realtime para Bate-Papo
   let waStatusInterval = null;
   let qrCountdownInterval = null;
-  let currentProfile = null; // { id, role, display_name, evo_instance, active }
+  let currentProfile = null; // { id, role, display_name, evo_instance, active, owner_id }
+  let _effectiveUserId = null; // para membros: owner_id; para admin/client: user.id
 
   // ── Toast notification ──────────────────────────────────────────────────
   function showToast(msg, type = 'success') {
@@ -3628,9 +3675,28 @@
       const { data: profile } = await db.from('profiles').select('*').eq('id', user.id).single();
       currentProfile = profile;
 
-      // Se admin: exibe menu de clientes
+      const isMembro = profile?.role === 'membro';
+
+      // Define o ID efetivo para queries de dados:
+      // membro usa owner_id (dados do chefe), outros usam o próprio id
+      _effectiveUserId = (isMembro && profile?.owner_id) ? profile.owner_id : user.id;
+
+      // Se admin: exibe menu de clientes (e oculta client-only)
       if (profile?.role === 'admin') {
         document.querySelectorAll('.admin-only').forEach(el => el.classList.add('visible'));
+        document.querySelectorAll('.client-only').forEach(el => el.classList.remove('visible'));
+      } else {
+        // regular user: mostra client-only
+        document.querySelectorAll('.client-only').forEach(el => el.classList.add('visible'));
+      }
+
+      // Se membro: oculta itens restritos, mostra página inicial correta
+      if (isMembro) {
+        document.querySelectorAll('.membro-hidden').forEach(el => el.classList.remove('visible'));
+        // membro-hidden já começa oculto via CSS; garante que não ficou visível por engano
+      } else {
+        // não-membro: torna visíveis os itens que eram membro-hidden
+        document.querySelectorAll('.membro-hidden').forEach(el => el.classList.add('visible'));
       }
 
       // Atualiza nome/instância na sidebar
@@ -3639,7 +3705,9 @@
       const nameEl = document.getElementById('sidebar-user-name');
       if (nameEl) nameEl.textContent = profile?.display_name || user.email;
       const roleEl = document.getElementById('sidebar-user-role');
-      if (roleEl) roleEl.textContent = profile?.role === 'admin' ? '🔑 Super Admin' : '👤 Cliente';
+      if (roleEl) roleEl.textContent =
+        profile?.role === 'admin'  ? '🔑 Super Admin' :
+        profile?.role === 'membro' ? '👤 Atendente' : '👤 Cliente';
       // Exibe nome da empresa no logo
       const compEl = document.getElementById('sidebar-company-name');
       if (compEl && profile?.display_name) compEl.textContent = profile.display_name;
@@ -3655,7 +3723,12 @@
   // =====================
   // NAVEGAÇÃO
   // =====================
+  const _membroAllowedPages = new Set(['overview','batepapo','crm','leads','configuracoes']);
+
   function showPage(name, el) {
+    // Bloqueia membro de acessar páginas não permitidas
+    if (currentProfile?.role === 'membro' && !_membroAllowedPages.has(name)) return;
+
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + name).classList.add('active');
@@ -3698,10 +3771,49 @@
   // =====================
   async function loadConfiguracoes() {
     const { data: { user } } = await db.auth.getUser();
-    if (user) {
-      document.getElementById('settings-email').value = user.email;
+    if (!user) return;
+    document.getElementById('settings-email').value = user.email;
+
+    // Para membros: exibe card de perfil e carrega dados de usuarios_extras
+    if (currentProfile?.role === 'membro') {
+      const card = document.getElementById('settings-perfil-card');
+      if (card) card.style.display = 'block';
+      const { data: me } = await db.from('usuarios_extras')
+        .select('nome, cargo, whatsapp_contato, email')
+        .eq('owner_id', currentProfile.owner_id)
+        .eq('email', user.email)
+        .maybeSingle();
+      if (me) {
+        document.getElementById('settings-perfil-nome').value = me.nome || '';
+        document.getElementById('settings-perfil-cargo').value = me.cargo || '';
+        document.getElementById('settings-perfil-whatsapp').value = me.whatsapp_contato || '';
+        document.getElementById('settings-perfil-email-contato').value = me.email || '';
+      }
     }
   }
+
+  async function savePerfilMembro() {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user || currentProfile?.role !== 'membro') return;
+    const nome     = document.getElementById('settings-perfil-nome').value.trim();
+    const cargo    = document.getElementById('settings-perfil-cargo').value.trim();
+    const whatsapp = document.getElementById('settings-perfil-whatsapp').value.trim();
+    const emailC   = document.getElementById('settings-perfil-email-contato').value.trim();
+    const { error } = await db.from('usuarios_extras')
+      .update({ nome: nome || undefined, cargo: cargo || undefined,
+                whatsapp_contato: whatsapp || null, email: emailC || null })
+      .eq('owner_id', currentProfile.owner_id)
+      .eq('email', user.email);
+    if (error) { showToast('Erro ao salvar perfil: ' + error.message, 'error'); return; }
+    // Atualiza display_name no perfil e na sidebar
+    if (nome) {
+      await db.from('profiles').update({ display_name: nome }).eq('id', user.id);
+      const nameEl = document.getElementById('sidebar-user-name');
+      if (nameEl) nameEl.textContent = nome;
+    }
+    showToast('Perfil atualizado!', 'success');
+  }
+
 
   async function saveNewPassword() {
     const newPass    = document.getElementById('settings-new-password').value.trim();
@@ -4100,7 +4212,7 @@
   async function clearSession() {
     if (!selectedConv) return;
     if (!confirm(`Reiniciar a conversa com ${formatPhone(selectedConv)}? O histórico será apagado.`)) return;
-    await db.from('sessoes').delete().eq('numero_whatsapp', selectedConv).eq('user_id', currentProfile.id);
+    await db.from('sessoes').delete().eq('numero_whatsapp', selectedConv).eq('user_id', _effectiveUserId || currentProfile.id);
     selectedConv = null;
     document.getElementById('chat-placeholder').style.display = 'flex';
     document.getElementById('chat-active').style.display = 'none';
@@ -4611,7 +4723,7 @@
     const dataVenc   = document.getElementById('nova-tarefa-data').value || null;
     const atribuidoA = document.getElementById('nova-tarefa-atribuido')?.value || null;
     await db.from('lead_tarefas').insert({
-      lead_id: crmOpenLeadId, user_id: user.id, descricao: desc,
+      lead_id: crmOpenLeadId, user_id: _effectiveUserId || user.id, descricao: desc,
       data_vencimento: dataVenc, atribuido_a: atribuidoA || null
     });
     document.getElementById('nova-tarefa-desc').value = '';
@@ -4647,9 +4759,9 @@
       setTimeout(async () => {
         selectConv(numero);
         // Pausa o agente automaticamente
-        const { data: conv } = await db.from('sessoes').select('agente_pausado').eq('numero_whatsapp', numero).eq('user_id', currentProfile?.id).single();
+        const { data: conv } = await db.from('sessoes').select('agente_pausado').eq('numero_whatsapp', numero).eq('user_id', _effectiveUserId || currentProfile?.id).single();
         if (conv && !conv.agente_pausado) {
-          await db.from('sessoes').update({ agente_pausado: true, pausado_em: new Date().toISOString() }).eq('numero_whatsapp', numero).eq('user_id', currentProfile?.id);
+          await db.from('sessoes').update({ agente_pausado: true, pausado_em: new Date().toISOString() }).eq('numero_whatsapp', numero).eq('user_id', _effectiveUserId || currentProfile?.id);
           updateAgentePausadoUI(true);
         }
       }, 600);
@@ -4801,7 +4913,7 @@
     const { error } = await db.from('leads').insert({
       numero_whatsapp: numero, nome, email, tese, assunto,
       data_aniversario: aniversario,
-      user_id: user.id, stage: 'novo_contato',
+      user_id: _effectiveUserId || user.id, stage: 'novo_contato',
       atualizado_em: new Date().toISOString()
     });
     if (btn) { btn.disabled = false; btn.textContent = '✅ Criar lead'; }
@@ -6041,11 +6153,59 @@
             ${p.role !== 'admin' ? `
               <button onclick="toggleClient('${p.id}',${p.active})" style="padding:5px 10px;font-size:12px;" class="btn-secondary">${p.active?'Desativar':'Ativar'}</button>
               <button onclick="openAddCreditsModal('${p.id}','${escapeHtml(p.display_name||'')}')" style="padding:5px 10px;font-size:12px;" class="btn-success">💰 Créditos</button>
+              <button onclick="verEquipeAdmin('${p.id}','${escapeHtml(p.display_name||'')}')" style="padding:5px 10px;font-size:12px;" class="btn-secondary">👥 Equipe</button>
             ` : '<span style="color:#bbb;font-size:12px;">—</span>'}
           </td>
         </tr>`;
       }).join('')}</tbody>
     </table>`
+  }
+
+  async function verEquipeAdmin(clientId, clientNome) {
+    const modal = document.getElementById('modal-admin-equipe');
+    document.getElementById('admin-equipe-titulo').textContent = `👥 Equipe de ${clientNome}`;
+    document.getElementById('admin-equipe-lista').innerHTML = '<p style="color:#8b949e;padding:20px;text-align:center;">Carregando...</p>';
+    modal.classList.add('open');
+
+    const { data: membros } = await db.from('usuarios_extras')
+      .select('id, nome, cargo, email, ativo')
+      .eq('owner_id', clientId)
+      .order('nome');
+
+    const lista = document.getElementById('admin-equipe-lista');
+    if (!membros || !membros.length) {
+      lista.innerHTML = '<p style="color:#8b949e;padding:20px;text-align:center;">Nenhum membro cadastrado.</p>';
+      return;
+    }
+    lista.innerHTML = membros.map(m => `
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border2);">
+        <div>
+          <div style="font-weight:600;font-size:13px;">${escapeHtml(m.nome)}</div>
+          <div style="font-size:11px;color:#8b949e;">${escapeHtml(m.cargo||'Colaborador')}${m.email ? ' · ' + escapeHtml(m.email) : ''}</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-size:11px;font-weight:700;${m.ativo ? 'color:#a3e635' : 'color:#6e7681'};">${m.ativo ? '● Ativo' : '○ Inativo'}</span>
+          ${m.ativo
+            ? `<button class="btn-danger" style="font-size:11px;padding:4px 10px;" onclick="revogarAcessoAdmin('${m.id}','${escapeHtml(m.nome)}','${clientId}','${escapeHtml(clientNome)}')">🚫 Revogar</button>`
+            : `<button class="btn-secondary" style="font-size:11px;padding:4px 10px;" onclick="reativarAcessoAdmin('${m.id}','${escapeHtml(m.nome)}','${clientId}','${escapeHtml(clientNome)}')">✅ Reativar</button>`
+          }
+        </div>
+      </div>`).join('');
+  }
+
+  async function revogarAcessoAdmin(membroId, membroNome, clientId, clientNome) {
+    if (!confirm(`Revogar acesso de "${membroNome}"?\n\nEle não conseguirá mais fazer login no painel.`)) return;
+    await db.from('usuarios_extras').update({ ativo: false }).eq('id', membroId);
+    verEquipeAdmin(clientId, clientNome);
+  }
+
+  async function reativarAcessoAdmin(membroId, membroNome, clientId, clientNome) {
+    await db.from('usuarios_extras').update({ ativo: true }).eq('id', membroId);
+    verEquipeAdmin(clientId, clientNome);
+  }
+
+  function fecharModalAdminEquipe() {
+    document.getElementById('modal-admin-equipe').classList.remove('open');
   }
 
   function openCreateClientModal() {
@@ -6753,6 +6913,8 @@
         <select class="etapa-select etapa-numero">ETAPA_NUMEROS_OPTIONS</select>
         <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">🤖 Agente de IA</label>
         <select class="etapa-select etapa-agente">ETAPA_AGENTES_OPTIONS</select>
+        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">👤 Colaborador responsável</label>
+        <select class="etapa-select etapa-colaborador">ETAPA_COLABORADORES_OPTIONS</select>
         <label class="etapa-relatorio-wrap" title="O resumo do atendimento anterior é enviado para este agente antes de ele responder">
           <input type="checkbox" class="etapa-relatorio" checked />
           📊 Receber relatório do atendimento anterior
@@ -7777,10 +7939,11 @@
   }
 
   // ── Dados de plano carregados para o designer de fluxos ─────────────
-  let _fluxoNumeros  = [];    // carregado ao abrir Designer de Fluxos
-  let _fluxoAgentes  = [];
-  let _fluxoObjecao  = false; // true se o usuário comprou addon_objecao
-  let _fluxosSalvos  = [];    // lista {id,nome} para o nó Mudar de Fluxo
+  let _fluxoNumeros       = [];    // carregado ao abrir Designer de Fluxos
+  let _fluxoAgentes       = [];
+  let _fluxoColaboradores = [];    // membros da equipe (usuarios_extras)
+  let _fluxoObjecao       = false; // true se o usuário comprou addon_objecao
+  let _fluxosSalvos       = [];    // lista {id,nome} para o nó Mudar de Fluxo
 
   async function loadFluxosPage() {
     // 1. Inicializa Drawflow se necessário
@@ -7817,6 +7980,15 @@
 
     _fluxoAgentes = ['Agente 1 (Principal)'];
     for (let i = 1; i <= extraAgts; i++) _fluxoAgentes.push(`Agente ${i + 1}`);
+
+    // 4b. Carrega colaboradores da equipe
+    const efetivo = _effectiveUserId || user.id;
+    const { data: colaboradores } = await db.from('usuarios_extras')
+      .select('id, nome, cargo')
+      .eq('owner_id', efetivo)
+      .eq('ativo', true)
+      .order('nome');
+    _fluxoColaboradores = colaboradores || [];
 
     // 5. Atualiza badges de plano
     const statusEl = document.getElementById('flow-plan-status');
@@ -7880,6 +8052,7 @@
       const safeHtml = cfg.html
         .replace('ETAPA_NUMEROS_OPTIONS','')
         .replace('ETAPA_AGENTES_OPTIONS','')
+        .replace('ETAPA_COLABORADORES_OPTIONS','<option value="">— Sem responsável —</option>')
         .replace('FLUXOS_OPTIONS','<option value="">— carregando fluxos —</option>');
       editor.registerNode(type, {
         html: `<div class="title-box">${cfg.title}</div>${safeHtml}`,
@@ -7935,6 +8108,8 @@
       : '<option value="">Nenhum número configurado</option>';
     const agentesOpts = '<option value="">Sem agente (humano)</option>' +
       _fluxoAgentes.map((a, i) => `<option value="${i}">${escapeHtml(a)}</option>`).join('');
+    const colaboradoresOpts = '<option value="">— Sem responsável (qualquer) —</option>' +
+      _fluxoColaboradores.map(c => `<option value="${escapeHtml(c.id)}">${escapeHtml(c.nome)}${c.cargo ? ' · ' + escapeHtml(c.cargo) : ''}</option>`).join('');
     // Opções de fluxos salvos (usado em mudar_fluxo)
     const fluxosOpts = _fluxosSalvos.length
       ? _fluxosSalvos.map(f => `<option value="${f.id}">${escapeHtml(f.nome)}</option>`).join('')
@@ -7944,7 +8119,8 @@
     if (type === 'etapa') {
       const body = cfg.html
         .replace('ETAPA_NUMEROS_OPTIONS', numerosOpts)
-        .replace('ETAPA_AGENTES_OPTIONS', agentesOpts);
+        .replace('ETAPA_AGENTES_OPTIONS', agentesOpts)
+        .replace('ETAPA_COLABORADORES_OPTIONS', colaboradoresOpts);
       nodeHtml = `<div class="title-box">📞 Etapa de Atendimento</div>${body}`;
     } else if (type === 'departamento') {
       // Popula o select de número do departamento
