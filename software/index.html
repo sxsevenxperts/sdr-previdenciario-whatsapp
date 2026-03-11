@@ -1359,6 +1359,9 @@
       <div class="nav-item" onclick="showPage('faturamento', this)">
         <span class="icon"></span> Faturamento
       </div>
+      <div class="nav-item" onclick="showPage('configuracoes', this)">
+        <span class="icon">⚙️</span> Configurações
+      </div>
       <div class="nav-section admin-only" id="admin-nav-section">Super Admin</div>
       <div class="nav-item admin-only" id="admin-nav-clientes" onclick="showPage('clientes', this)">
         <span class="icon"></span> Clientes
@@ -3165,6 +3168,45 @@
       </div>
     </div>
 
+    <!-- CONFIGURAÇÕES -->
+    <div class="page" id="page-configuracoes">
+      <div class="page-header">
+        <h1>Configurações</h1>
+        <p>Gerencie as informações da sua conta</p>
+      </div>
+
+      <div style="max-width:520px;display:flex;flex-direction:column;gap:20px;">
+
+        <!-- Dados da conta -->
+        <div class="card" style="padding:24px;">
+          <h3 style="margin:0 0 16px;font-size:15px;font-weight:700;">👤 Dados da Conta</h3>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">E-MAIL</label>
+            <input type="email" id="settings-email" readonly disabled
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg-secondary);color:var(--text-secondary);font-size:14px;cursor:not-allowed;box-sizing:border-box;" />
+            <p style="font-size:11px;color:var(--text-secondary);margin:6px 0 0;">O e-mail não pode ser alterado.</p>
+          </div>
+        </div>
+
+        <!-- Alterar senha -->
+        <div class="card" style="padding:24px;">
+          <h3 style="margin:0 0 16px;font-size:15px;font-weight:700;">🔑 Alterar Senha</h3>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">NOVA SENHA</label>
+            <input type="password" id="settings-new-password" placeholder="Mínimo 6 caracteres" autocomplete="new-password"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg-input,var(--bg-secondary));color:var(--text);font-size:14px;box-sizing:border-box;" />
+          </div>
+          <div style="margin-bottom:20px;">
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">CONFIRMAR NOVA SENHA</label>
+            <input type="password" id="settings-confirm-password" placeholder="Repita a nova senha" autocomplete="new-password"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg-input,var(--bg-secondary));color:var(--text);font-size:14px;box-sizing:border-box;" />
+          </div>
+          <button class="btn-save" onclick="saveNewPassword()" style="width:100%;">Salvar Nova Senha</button>
+        </div>
+
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -3639,6 +3681,7 @@
     }
     if (name === 'equipe') loadEquipePage();
     if (name === 'calendario') loadCalendario();
+    if (name === 'configuracoes') loadConfiguracoes();
     if (name === 'fluxos') {
       setTimeout(() => loadFluxosPage(), 100);
     }
@@ -3647,6 +3690,31 @@
       setupRealtimeChat();
     } else {
       teardownRealtimeChat();
+    }
+  }
+
+  // =====================
+  // CONFIGURAÇÕES
+  // =====================
+  async function loadConfiguracoes() {
+    const { data: { user } } = await db.auth.getUser();
+    if (user) {
+      document.getElementById('settings-email').value = user.email;
+    }
+  }
+
+  async function saveNewPassword() {
+    const newPass    = document.getElementById('settings-new-password').value.trim();
+    const confirmPass = document.getElementById('settings-confirm-password').value.trim();
+    if (newPass.length < 6) { showToast('A senha deve ter pelo menos 6 caracteres.', 'error'); return; }
+    if (newPass !== confirmPass) { showToast('As senhas não coincidem.', 'error'); return; }
+    const { error } = await db.auth.updateUser({ password: newPass });
+    if (error) {
+      showToast('Erro ao alterar senha: ' + error.message, 'error');
+    } else {
+      showToast('Senha alterada com sucesso!', 'success');
+      document.getElementById('settings-new-password').value = '';
+      document.getElementById('settings-confirm-password').value = '';
     }
   }
 
@@ -7824,7 +7892,6 @@
     dragNodeType = type;
     event.dataTransfer.effectAllowed = 'copy';
     event.dataTransfer.setData('text', type);
-    console.log('📍 Drag iniciado:', type);
   }
 
   // Adiciona linha de campo customizado no nó Campos & Tags
@@ -7852,22 +7919,15 @@
 
   function drop(event) {
     event.preventDefault();
+    event.stopPropagation();
     const type = dragNodeType || event.dataTransfer.getData('text');
-    console.log('🎯 Drop detectado - tipo:', type, 'dragNodeType:', dragNodeType);
-    if (!type || !NODE_TEMPLATES[type]) {
-      console.warn('❌ Tipo inválido ou não existe template:', type);
-      return;
-    }
+    if (!type || !NODE_TEMPLATES[type]) return;
     const cfg = NODE_TEMPLATES[type];
-    console.log('✅ Config encontrada para:', type);
-    // Converte coordenadas de tela → coordenadas do canvas (zoom + pan)
-    const dfEl = document.getElementById('drawflow');
-    const rect  = dfEl.getBoundingClientRect();
-    const mat   = new DOMMatrix(getComputedStyle(editor.precanvas).transform);
-    const zoom  = editor.zoom || 1;
-    const x = (event.clientX - rect.left - mat.m41) / zoom;
-    const y = (event.clientY - rect.top  - mat.m42) / zoom;
-    console.log('📐 Coordenadas - clientX:', event.clientX, 'clientY:', event.clientY, 'rect.left:', rect.left, 'rect.top:', rect.top, 'zoom:', zoom, 'x:', x, 'y:', y);
+    // Fórmula oficial Drawflow para converter coordenadas de tela → canvas
+    const zoom = editor.zoom || 1;
+    const preRect = editor.precanvas.getBoundingClientRect();
+    const x = (event.clientX - preRect.x) * (editor.precanvas.clientWidth  / (editor.precanvas.clientWidth  * zoom));
+    const y = (event.clientY - preRect.y) * (editor.precanvas.clientHeight / (editor.precanvas.clientHeight * zoom));
 
     // Opções de números (usadas em etapa e departamento)
     const numerosOpts = _fluxoNumeros.length
@@ -7904,7 +7964,6 @@
       {},
       nodeHtml
     );
-    console.log('✨ Nó adicionado com sucesso!');
     dragNodeType = null;
   }
 
