@@ -3036,8 +3036,7 @@
         </div>
 
         <!-- Canvas Drawflow -->
-        <div class="flow-canvas-wrap" id="flow-canvas-wrap"
-             ondrop="drop(event)" ondragover="allowDrop(event)">
+        <div class="flow-canvas-wrap" id="flow-canvas-wrap">
           <div id="drawflow"></div>
           <!-- Legenda do rodapé do canvas -->
           <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(13,17,23,.85);backdrop-filter:blur(6px);border-top:1px solid rgba(163,230,53,.15);padding:6px 16px;display:flex;align-items:center;gap:16px;font-size:11px;color:#6e7681;pointer-events:none;z-index:10;">
@@ -7801,9 +7800,12 @@
     // Zoom inicial afastado para ver mais canvas
     editor.zoom = 0.35;
     if (editor.precanvas) editor.precanvas.style.transform = 'translate(0px,0px) scale(0.35)';
-    // Garante que o precanvas do Drawflow aceita drag & drop da paleta lateral
-    editor.precanvas.addEventListener('dragover', function(e) { e.preventDefault(); });
-    editor.precanvas.addEventListener('drop', drop);
+    // Drag & drop: listeners em CAPTURE phase no container — garante que
+    // o dragover é prevenido ANTES de qualquer handler interno do Drawflow,
+    // e que o drop dispara apenas uma vez (stopImmediatePropagation).
+    const wrap = document.getElementById('flow-canvas-wrap');
+    wrap.addEventListener('dragover', function(e) { e.preventDefault(); }, true);
+    wrap.addEventListener('drop', function(e) { e.preventDefault(); e.stopImmediatePropagation(); drop(e); }, true);
     // Registra tipos de nó (etapa usa placeholder – substituído no drop)
     Object.entries(NODE_TEMPLATES).forEach(([type, cfg]) => {
       const safeHtml = cfg.html
