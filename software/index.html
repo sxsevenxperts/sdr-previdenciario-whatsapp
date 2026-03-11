@@ -1266,6 +1266,36 @@
     a, button, .nav-item, .card, .btn-save, .btn-secondary, .btn-primary,
     .mkt-addon-card, .pricing-card, .equipe-card, .stat-card { transition:all .18s cubic-bezier(0.4,0,0.2,1); }
 
+    /* ── CONTA TABS - Responsivo ──────────────────────────────── */
+    .conta-tab-btn {
+      color:var(--text-secondary);
+      border-bottom:3px solid transparent;
+      transition:all 0.2s ease;
+    }
+    .conta-tab-btn:hover {
+      color:var(--text);
+      border-bottom-color:var(--border);
+    }
+    .conta-tab-btn.active {
+      color:var(--text);
+      border-bottom-color:#a3e635;
+    }
+    .conta-tab-pane {
+      animation:fadeIn 0.2s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity:0; }
+      to { opacity:1; }
+    }
+
+    /* Responsivo para mobile */
+    @media (max-width:640px) {
+      .conta-tab-btn {
+        padding:12px 16px !important;
+        font-size:12px !important;
+      }
+    }
+
   </style>
   <link rel="stylesheet" href="https://unpkg.com/drawflow/dist/drawflow.min.css" />
 </head>
@@ -1362,16 +1392,10 @@
       </div>
       <div class="nav-section">Conta</div>
       <div class="nav-item membro-hidden" onclick="showPage('kpis', this)">
-        <span class="icon">📊</span> KPIs & OKRs
+        <span class="icon"></span> KPIs & OKRs
       </div>
-      <div class="nav-item membro-hidden" onclick="showPage('faturamento', this)">
-        <span class="icon"></span> Faturamento
-      </div>
-      <div class="nav-item membro-hidden" onclick="showPage('integracoes', this)">
-        <span class="icon">🔗</span> Integrações
-      </div>
-      <div class="nav-item" onclick="showPage('configuracoes', this)">
-        <span class="icon">⚙️</span> Configurações
+      <div class="nav-item" onclick="showPage('conta', this)">
+        <span class="icon"></span> Gerenciar Conta
       </div>
       <div class="nav-section admin-only" id="admin-nav-section">Super Admin</div>
       <div class="nav-item admin-only" onclick="showPage('monitoramento', this)">
@@ -1409,7 +1433,7 @@
         <h1>Visão Geral</h1>
         <p>Resumo do desempenho do agente XPERT.IA</p>
       </div>
-      <div class="stats-grid">
+      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(250px,1fr));">
         <div class="stat-card">
           <div class="label">Total de Leads</div>
           <div class="value" id="stat-total">—</div>
@@ -1428,7 +1452,7 @@
       </div>
       <div class="card">
         <h3>Últimos Leads</h3>
-        <div id="overview-leads"><p class="loading">Carregando...</p></div>
+        <div id="overview-leads" style="overflow-x:auto;"><p class="loading">Carregando...</p></div>
       </div>
     </div>
 
@@ -2643,7 +2667,128 @@
     </div>
 
     <!-- FATURAMENTO -->
-    <div class="page" id="page-faturamento">
+    <!-- GERENCIAR CONTA - COM ABAS -->
+    <div class="page" id="page-conta">
+      <div class="page-header">
+        <h1>Gerenciar Conta</h1>
+        <p>Configure sua assinatura, integrações e preferências</p>
+      </div>
+
+      <!-- CONTAINER DE ABAS RESPONSIVO -->
+      <div style="border-bottom:2px solid var(--border);margin-bottom:24px;">
+        <div style="display:flex;gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;">
+          <button class="conta-tab-btn active" onclick="selecionarAbaContas('faturamento', this)"
+            style="padding:14px 20px;border:none;background:none;color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all 0.2s;">
+            Faturamento
+          </button>
+          <button class="conta-tab-btn" onclick="selecionarAbaContas('integracoes', this)"
+            style="padding:14px 20px;border:none;background:none;color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all 0.2s;">
+            Integrações
+          </button>
+          <button class="conta-tab-btn" onclick="selecionarAbaContas('configuracoes', this)"
+            style="padding:14px 20px;border:none;background:none;color:var(--text-secondary);font-size:13px;font-weight:600;cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap;transition:all 0.2s;">
+            Configurações
+          </button>
+        </div>
+      </div>
+
+      <!-- CONTEÚDO DAS ABAS -->
+      <div id="conta-aba-faturamento" class="conta-tab-pane active" style="display:block;">
+        <!-- FATURAMENTO AQUI (será preenchido dinamicamente) -->
+      </div>
+
+      <div id="conta-aba-integracoes" class="conta-tab-pane" style="display:none;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:24px;">
+
+          <!-- SEÇÃO DE CALENDÁRIOS -->
+          <div>
+            <h3 style="margin-bottom:16px;color:var(--text);">Calendários</h3>
+
+            <!-- Google Calendar -->
+            <div class="card" style="margin-bottom:16px;padding:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div>
+                  <h4 style="margin:0;color:var(--text);">Google Calendar</h4>
+                  <p style="margin:4px 0 0;font-size:12px;color:var(--text2);">Sincronize seus eventos</p>
+                </div>
+                <div id="gcal-status-badge" class="integration-badge disconnected" style="padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;">Desconectado</div>
+              </div>
+              <button class="btn-secondary" id="gcal-btn" onclick="conectarGoogleCalendar()" style="width:100%;padding:10px;margin-bottom:8px;">Conectar Google</button>
+              <button class="btn-secondary" id="gcal-disconnect-btn" onclick="desconectarGoogleCalendar()" style="width:100%;padding:10px;display:none;">Desconectar</button>
+              <div id="gcal-email" style="font-size:12px;color:var(--text2);margin-top:8px;display:none;">Email: <span id="gcal-email-text"></span></div>
+            </div>
+
+            <!-- Apple Calendar -->
+            <div class="card" style="margin-bottom:16px;padding:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div>
+                  <h4 style="margin:0;color:var(--text);">Apple Calendar</h4>
+                  <p style="margin:4px 0 0;font-size:12px;color:var(--text2);">iCloud CalDAV</p>
+                </div>
+                <div id="apple-status-badge" class="integration-badge disconnected" style="padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;">Desconectado</div>
+              </div>
+              <p style="font-size:11px;color:var(--text-secondary);margin:0 0 12px;">Faça login no iCloud para configurar CalDAV</p>
+              <button class="btn-secondary" id="apple-btn" onclick="conectarAppleCalendar()" style="width:100%;padding:10px;margin-bottom:8px;">Abrir iCloud</button>
+              <button class="btn-secondary" id="apple-disconnect-btn" onclick="desconectarAppleCalendar()" style="width:100%;padding:10px;display:none;">Desconectar</button>
+            </div>
+
+            <!-- Calendly -->
+            <div class="card" style="padding:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <div>
+                  <h4 style="margin:0;color:var(--text);">Calendly</h4>
+                  <p style="margin:4px 0 0;font-size:12px;color:var(--text2);">Agendamento de reuniões</p>
+                </div>
+                <div id="calendly-status-badge" class="integration-badge disconnected" style="padding:6px 10px;border-radius:6px;font-size:11px;font-weight:600;">Desconectado</div>
+              </div>
+              <button class="btn-secondary" id="calendly-btn" onclick="conectarCalendly()" style="width:100%;padding:10px;margin-bottom:8px;">Conectar Calendly</button>
+              <button class="btn-secondary" id="calendly-disconnect-btn" onclick="desconectarCalendly()" style="width:100%;padding:10px;display:none;">Desconectar</button>
+              <div id="calendly-uri" style="font-size:12px;color:var(--text2);margin-top:8px;display:none;">ID: <span id="calendly-uri-text"></span></div>
+            </div>
+          </div>
+
+          <!-- SEÇÃO DE WEBHOOKS -->
+          <div>
+            <h3 style="margin-bottom:16px;color:var(--text);">Webhooks</h3>
+
+            <!-- Webhooks Outbound -->
+            <div class="card" style="margin-bottom:16px;padding:16px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                <h4 style="margin:0;color:var(--text);">Webhooks Saída</h4>
+                <button class="btn-primary" onclick="abrirModalCriarWebhook()" style="padding:6px 12px;font-size:12px;">Novo</button>
+              </div>
+              <p style="font-size:12px;color:var(--text2);margin:0 0 12px;">Enviar dados para sistemas externos</p>
+              <div id="webhooks-outbound-list" style="max-height:300px;overflow-y:auto;">
+                <p style="font-size:12px;color:var(--text2);text-align:center;padding:20px;">Carregando...</p>
+              </div>
+            </div>
+
+            <!-- Webhooks Inbound -->
+            <div class="card" style="padding:16px;">
+              <h4 style="margin:0 0 12px;color:var(--text);">Webhooks Entrada</h4>
+              <p style="font-size:12px;color:var(--text2);margin:0 0 12px;">Receber dados de sistemas externos</p>
+              <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;">
+                <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">URL:</div>
+                <div id="webhook-inbound-url" style="font-size:12px;color:var(--text);word-break:break-all;font-family:monospace;background:var(--bg);padding:8px;border-radius:4px;margin-bottom:8px;">—</div>
+                <button class="btn-secondary" onclick="copiarURLWebhookInbound()" style="padding:6px 12px;font-size:12px;width:100%;">Copiar URL</button>
+              </div>
+              <div style="background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:12px;">
+                <div style="font-size:11px;color:var(--text2);margin-bottom:6px;">Token:</div>
+                <div id="webhook-inbound-token" style="font-size:12px;color:var(--text);word-break:break-all;font-family:monospace;background:var(--bg);padding:8px;border-radius:4px;margin-bottom:8px;">—</div>
+                <button class="btn-secondary" onclick="regenerarTokenWebhookInbound()" style="padding:6px 12px;font-size:12px;width:100%;">Regenerar Token</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="conta-aba-configuracoes" class="conta-tab-pane" style="display:none;">
+        <!-- CONFIGURAÇÕES AQUI (será preenchido dinamicamente) -->
+      </div>
+    </div>
+
+    <!-- PÁGINA ANTIGA DE FATURAMENTO (OCULTA) -->
+    <div class="page" id="page-faturamento" style="display:none;">
       <div class="page-header"><h1>Faturamento</h1><p>Gerencie sua assinatura e adicione recursos ao plano</p></div>
 
       <!-- Tabs de navegação -->
@@ -3158,25 +3303,25 @@
       </div>
 
       <!-- Cards de resumo (KPIs) -->
-      <div id="dashboard-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px;">
+      <div id="dashboard-cards" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px;margin-bottom:24px;">
         <div class="card" style="padding:16px;">
-          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">✅ Ativas</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;">Ativas</div>
           <div style="font-size:28px;font-weight:700;color:var(--lime);" id="card-ativas">—</div>
         </div>
         <div class="card" style="padding:16px;">
-          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">⏳ Prestes a Vencer</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;">Prestes a Vencer</div>
           <div style="font-size:28px;font-weight:700;color:#60a5fa;" id="card-proximas">—</div>
         </div>
         <div class="card" style="padding:16px;">
-          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">🔴 Suspensas</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;">Suspensas</div>
           <div style="font-size:28px;font-weight:700;color:#f87171;" id="card-suspensas">—</div>
         </div>
         <div class="card" style="padding:16px;">
-          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">⚫ Canceladas</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;">Canceladas</div>
           <div style="font-size:28px;font-weight:700;color:#a3a3a3;" id="card-canceladas">—</div>
         </div>
         <div class="card" style="padding:16px;">
-          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">🗑️ Banco Apagado</div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600;">Banco Apagado</div>
           <div style="font-size:28px;font-weight:700;color:#6e7681;" id="card-apagadas">—</div>
         </div>
       </div>
@@ -3189,12 +3334,12 @@
 
       <!-- Seção de Forma de Pagamento -->
       <div class="card" style="margin-top:24px;">
-        <h3>💳 Distribuição por Forma de Pagamento</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
-          <div>
+        <h3>Distribuição por Forma de Pagamento</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;align-items:start;">
+          <div style="min-height:300px;">
             <canvas id="payment-chart" style="max-width:100%;"></canvas>
           </div>
-          <div>
+          <div style="overflow-x:auto;">
             <table style="width:100%;border-collapse:collapse;">
               <thead style="background:var(--bg-card2);border-bottom:1px solid var(--border);">
                 <tr>
@@ -3213,12 +3358,12 @@
 
       <!-- Seção de Distribuição de Addons -->
       <div class="card" style="margin-top:24px;">
-        <h3>📦 Distribuição de Addons</h3>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
-          <div>
+        <h3>Distribuição de Addons</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;align-items:start;">
+          <div style="min-height:300px;">
             <canvas id="addon-chart" style="max-width:100%;"></canvas>
           </div>
-          <div>
+          <div style="overflow-x:auto;">
             <table style="width:100%;border-collapse:collapse;">
               <thead style="background:var(--bg-card2);border-bottom:1px solid var(--border);">
                 <tr>
@@ -3389,8 +3534,9 @@
                 <div id="apple-badge" style="display:none;width:10px;height:10px;border-radius:50%;background:#10b981;"></div>
               </div>
               <div id="apple-email" style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;display:none;"></div>
+              <p style="font-size:11px;color:var(--text-secondary);margin:0 0 12px;">Faça login no iCloud para configurar CalDAV</p>
               <div style="display:flex;gap:8px;flex-wrap:wrap;">
-                <button class="btn-secondary" id="apple-btn" onclick="abrirModalAppleCalendar()" style="font-size:13px;padding:8px 12px;">🔗 Conectar</button>
+                <button class="btn-secondary" id="apple-btn" onclick="conectarAppleCalendar()" style="font-size:13px;padding:8px 12px;">Abrir iCloud</button>
                 <button class="btn-secondary" onclick="desconectarCalendar('apple')" style="font-size:13px;padding:8px 12px;display:none;" id="apple-disconnect">Desconectar</button>
               </div>
             </div>
@@ -4030,6 +4176,7 @@
     }
     if (name === 'equipe') loadEquipePage();
     if (name === 'calendario') loadCalendario();
+    if (name === 'conta') loadPageConta();
     if (name === 'integracoes') loadIntegracoes();
     if (name === 'configuracoes') loadConfiguracoes();
     if (name === 'fluxos') {
@@ -9465,6 +9612,55 @@
   }
 
   // ═══════════════════════════════════════════════════════════════
+  // GERENCIAR CONTA - ABAS
+  // ═══════════════════════════════════════════════════════════════
+
+  async function loadPageConta() {
+    // Carrega o conteúdo inicial da aba Faturamento
+    await selecionarAbaContas('faturamento');
+  }
+
+  async function selecionarAbaContas(aba) {
+    // Remove classe active de todas as abas e botões
+    document.querySelectorAll('.conta-tab-pane').forEach(p => {
+      p.style.display = 'none';
+      p.classList.remove('active');
+    });
+    document.querySelectorAll('.conta-tab-btn').forEach(b => b.classList.remove('active'));
+
+    // Mostra a aba selecionada
+    const paineId = `conta-aba-${aba}`;
+    const paine = document.getElementById(paineId);
+    if (paine) {
+      paine.style.display = 'block';
+      paine.classList.add('active');
+    }
+
+    // Marca botão como ativo
+    event.target.classList.add('active');
+
+    // Carrega conteúdo baseado na aba
+    if (aba === 'faturamento') {
+      loadBilling();
+      loadCredits();
+      if (currentProfile?.role === 'admin') {
+        const adminCard = document.getElementById('billing-admin-card');
+        const pedidosCard = document.getElementById('admin-pedidos-card');
+        const banner = document.getElementById('admin-marketplace-banner');
+        if (adminCard) adminCard.classList.add('visible');
+        if (pedidosCard) pedidosCard.classList.add('visible');
+        if (banner) banner.style.display = 'flex';
+        loadAdminBilling();
+        loadAdminPedidos();
+      }
+    } else if (aba === 'integracoes') {
+      await loadIntegracoes();
+    } else if (aba === 'configuracoes') {
+      await loadConfiguracoes();
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════════
   // INTEGRAÇÕES: CALENDÁRIOS E WEBHOOKS
   // ═══════════════════════════════════════════════════════════════
 
@@ -9513,67 +9709,18 @@
   }
 
   // ─── Apple Calendar ───────────────────────────────────────────
-  function abrirModalAppleCalendar() {
-    const modal = document.getElementById('modal-apple-calendar') || criarModalAppleCalendar();
-    modal.style.display = 'flex';
-  }
-
-  function criarModalAppleCalendar() {
-    const modal = document.createElement('div');
-    modal.id = 'modal-apple-calendar';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:1000;display:none;align-items:center;justify-content:center;';
-    modal.innerHTML = `
-      <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;width:400px;max-width:95vw;padding:24px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h2 style="margin:0;font-size:16px;font-weight:700;">Conectar Apple Calendar</h2>
-          <button onclick="this.closest('[id=modal-apple-calendar]').style.display='none'" style="background:none;border:none;font-size:20px;cursor:pointer;">✕</button>
-        </div>
-
-        <div style="display:flex;flex-direction:column;gap:12px;">
-          <div>
-            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Servidor CalDAV</label>
-            <input type="text" id="apple-server" placeholder="caldav.icloud.com" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);font-size:13px;box-sizing:border-box;" />
-          </div>
-          <div>
-            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Nome de Usuário</label>
-            <input type="text" id="apple-username" placeholder="seu@icloud.com" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);font-size:13px;box-sizing:border-box;" />
-          </div>
-          <div>
-            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">Senha</label>
-            <input type="password" id="apple-password" placeholder="Sua senha" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);font-size:13px;box-sizing:border-box;" />
-          </div>
-          <div>
-            <label style="font-size:12px;font-weight:600;display:block;margin-bottom:6px;">E-mail</label>
-            <input type="email" id="apple-email-input" placeholder="seu@email.com" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;background:var(--bg-input);font-size:13px;box-sizing:border-box;" />
-          </div>
-        </div>
-
-        <button onclick="conectarAppleCalendar()" class="btn-primary" style="width:100%;margin-top:16px;">Conectar</button>
-      </div>
-    `;
-    document.body.appendChild(modal);
-    return modal;
-  }
-
   async function conectarAppleCalendar() {
-    const server = document.getElementById('apple-server')?.value;
-    const username = document.getElementById('apple-username')?.value;
-    const password = document.getElementById('apple-password')?.value;
-    const email = document.getElementById('apple-email-input')?.value;
+    // Abre uma nova aba para autenticação com iCloud/Apple Calendar
+    // O usuário fará login no navegador do Chrome/Safari
+    window.open('https://www.icloud.com/', 'apple-calendar-auth', 'width=800,height=600');
 
-    if (!server || !username || !password) {
-      alert('Preencha todos os campos');
-      return;
-    }
-
-    const result = await callFunction('applecal-proxy', 'auth', { serverUrl: server, username, password, email });
-    if (result?.success) {
-      alert('Apple Calendar conectado com sucesso!');
-      document.getElementById('modal-apple-calendar').style.display = 'none';
-      await verificarStatusAppleCalendar();
-    } else {
-      alert('Erro ao conectar: ' + (result?.error || 'Desconhecido'));
-    }
+    // Mostra instrução ao usuário
+    setTimeout(() => {
+      alert('Uma nova aba foi aberta para você fazer login com sua conta Apple.\n\n' +
+            'Após fazer login, você poderá acessar suas configurações de CalDAV em:\n' +
+            'iCloud Settings → Apps and Websites → Gerar senha de app específica\n\n' +
+            'Cole a senha gerada e seu email na próxima tela.');
+    }, 500);
   }
 
   async function verificarStatusAppleCalendar() {
