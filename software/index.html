@@ -7824,7 +7824,6 @@
     dragNodeType = type;
     event.dataTransfer.effectAllowed = 'copy';
     event.dataTransfer.setData('text', type);
-    console.log('📍 Drag iniciado:', type);
   }
 
   // Adiciona linha de campo customizado no nó Campos & Tags
@@ -7852,22 +7851,15 @@
 
   function drop(event) {
     event.preventDefault();
+    event.stopPropagation();
     const type = dragNodeType || event.dataTransfer.getData('text');
-    console.log('🎯 Drop detectado - tipo:', type, 'dragNodeType:', dragNodeType);
-    if (!type || !NODE_TEMPLATES[type]) {
-      console.warn('❌ Tipo inválido ou não existe template:', type);
-      return;
-    }
+    if (!type || !NODE_TEMPLATES[type]) return;
     const cfg = NODE_TEMPLATES[type];
-    console.log('✅ Config encontrada para:', type);
-    // Converte coordenadas de tela → coordenadas do canvas (zoom + pan)
-    const dfEl = document.getElementById('drawflow');
-    const rect  = dfEl.getBoundingClientRect();
-    const mat   = new DOMMatrix(getComputedStyle(editor.precanvas).transform);
-    const zoom  = editor.zoom || 1;
-    const x = (event.clientX - rect.left - mat.m41) / zoom;
-    const y = (event.clientY - rect.top  - mat.m42) / zoom;
-    console.log('📐 Coordenadas - clientX:', event.clientX, 'clientY:', event.clientY, 'rect.left:', rect.left, 'rect.top:', rect.top, 'zoom:', zoom, 'x:', x, 'y:', y);
+    // Fórmula oficial Drawflow para converter coordenadas de tela → canvas
+    const zoom = editor.zoom || 1;
+    const preRect = editor.precanvas.getBoundingClientRect();
+    const x = (event.clientX - preRect.x) * (editor.precanvas.clientWidth  / (editor.precanvas.clientWidth  * zoom));
+    const y = (event.clientY - preRect.y) * (editor.precanvas.clientHeight / (editor.precanvas.clientHeight * zoom));
 
     // Opções de números (usadas em etapa e departamento)
     const numerosOpts = _fluxoNumeros.length
@@ -7904,7 +7896,6 @@
       {},
       nodeHtml
     );
-    console.log('✨ Nó adicionado com sucesso!');
     dragNodeType = null;
   }
 
