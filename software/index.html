@@ -3336,20 +3336,20 @@
       </div>
 
       <!-- Colunas: Contas e Tokens -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-            <h3 style="margin:0">Contas cadastradas</h3>
-            <button class="btn-save" onclick="openCreateClientModal()">Novo Cliente</button>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+        <div class="card" style="padding:12px;display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h3 style="margin:0;font-size:14px;">Contas cadastradas</h3>
+            <button class="btn-save" style="padding:6px 12px;font-size:12px;" onclick="openCreateClientModal()">Novo Cliente</button>
           </div>
-          <div id="clients-table"><p class="loading">Carregando...</p></div>
+          <div id="clients-table" style="flex:1;overflow-y:auto;max-height:350px;"><p class="loading">Carregando...</p></div>
         </div>
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-            <h3 style="margin:0">Uso de Tokens GPT (este mês)</h3>
-            <button class="btn-secondary" style="padding:7px 14px;font-size:13px" onclick="loadTokenUsageAdmin()">Atualizar</button>
+        <div class="card" style="padding:12px;display:flex;flex-direction:column;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h3 style="margin:0;font-size:14px;">Uso de Tokens GPT (este mês)</h3>
+            <button class="btn-secondary" style="padding:6px 12px;font-size:12px;" onclick="loadTokenUsageAdmin()">Atualizar</button>
           </div>
-          <div id="token-usage-admin-table"><p class="loading">Carregando...</p></div>
+          <div id="token-usage-admin-table" style="flex:1;overflow-y:auto;max-height:350px;"><p class="loading">Carregando...</p></div>
         </div>
       </div>
 
