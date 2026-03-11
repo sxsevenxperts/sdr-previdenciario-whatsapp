@@ -3353,30 +3353,35 @@
         </div>
       </div>
 
-      <!-- Abas: Assinaturas, Atividades, Integrações -->
+      <!-- Aba: Atividades -->
+      <div class="card">
+        <div style="display:flex;gap:12px;border-bottom:1px solid var(--border);margin-bottom:12px;padding-bottom:8px;">
+          <button class="tab-btn" onclick="switchClientTab('atividades')" id="tab-atividades-btn" style="border-bottom:2px solid var(--lime);color:var(--lime);background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">Atividades</button>
+        </div>
+        <div id="tab-atividades" style="display:block;">
+          <p style="color:var(--text2);font-size:13px;text-align:center;padding:24px;">Histórico de atividades</p>
+        </div>
+      </div>
+
+      <!-- Aba: Assinaturas -->
       <div class="card">
         <div style="display:flex;gap:12px;border-bottom:1px solid var(--border);margin-bottom:12px;padding-bottom:8px;">
           <button class="tab-btn" onclick="switchClientTab('assinaturas')" id="tab-assinaturas-btn" style="border-bottom:2px solid var(--lime);color:var(--lime);background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">Assinaturas</button>
-          <button class="tab-btn" onclick="switchClientTab('atividades')" id="tab-atividades-btn" style="border-bottom:2px solid transparent;color:var(--text2);background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">Atividades</button>
-          <button class="tab-btn" onclick="switchClientTab('integracoes')" id="tab-integracoes-btn" style="border-bottom:2px solid transparent;color:var(--text2);background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">Integrações</button>
         </div>
         <div id="tab-assinaturas" style="display:block;">
           <p style="color:var(--text2);font-size:13px;text-align:center;padding:24px;">Detalhes de assinaturas dos clientes</p>
         </div>
-        <div id="tab-atividades" style="display:none;">
-          <p style="color:var(--text2);font-size:13px;text-align:center;padding:24px;">Histórico de atividades</p>
-        </div>
-        <div id="tab-integracoes" style="display:none;">
-          <p style="color:var(--text2);font-size:13px;text-align:center;padding:24px;">Gerenciamento de integrações dos clientes</p>
-        </div>
       </div>
 
       <!-- ── HOTMART WEBHOOK CONFIG ─────────────────────────────────────── -->
-      <div class="card" id="card-hotmart-config">
+      <div class="card" id="card-hotmart-config" style="margin-top:12px;">
+        <div style="display:flex;gap:12px;border-bottom:1px solid var(--border);margin-bottom:12px;padding-bottom:8px;">
+          <button class="tab-btn" style="border-bottom:2px solid var(--lime);color:var(--lime);background:none;border:none;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">Integração Hotmart</button>
+        </div>
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
           <div style="width:36px;height:36px;border-radius:8px;background:rgba(255,76,0,.15);border:1px solid rgba(255,76,0,.3);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">H</div>
           <div>
-            <h3 style="margin:0;font-size:15px;">Integração Hotmart</h3>
+            <h3 style="margin:0;font-size:15px;">Hotmart</h3>
             <p style="margin:2px 0 0;font-size:12px;color:#8b949e;">Clientes são criados automaticamente após compra aprovada</p>
           </div>
         </div>
@@ -9658,15 +9663,12 @@
     // Esconde todas as abas
     document.getElementById('tab-assinaturas').style.display = 'none';
     document.getElementById('tab-atividades').style.display = 'none';
-    document.getElementById('tab-integracoes').style.display = 'none';
 
     // Remove estilos active de todos os botões
     document.getElementById('tab-assinaturas-btn').style.borderBottomColor = 'transparent';
     document.getElementById('tab-assinaturas-btn').style.color = 'var(--text2)';
     document.getElementById('tab-atividades-btn').style.borderBottomColor = 'transparent';
     document.getElementById('tab-atividades-btn').style.color = 'var(--text2)';
-    document.getElementById('tab-integracoes-btn').style.borderBottomColor = 'transparent';
-    document.getElementById('tab-integracoes-btn').style.color = 'var(--text2)';
 
     // Mostra aba selecionada
     if (tabName === 'assinaturas') {
@@ -9677,10 +9679,6 @@
       document.getElementById('tab-atividades').style.display = 'block';
       document.getElementById('tab-atividades-btn').style.borderBottomColor = 'var(--lime)';
       document.getElementById('tab-atividades-btn').style.color = 'var(--lime)';
-    } else if (tabName === 'integracoes') {
-      document.getElementById('tab-integracoes').style.display = 'block';
-      document.getElementById('tab-integracoes-btn').style.borderBottomColor = 'var(--lime)';
-      document.getElementById('tab-integracoes-btn').style.color = 'var(--lime)';
     }
   }
 
