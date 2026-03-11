@@ -582,8 +582,8 @@
     .flow-toolbar input { flex:1; min-width:200px; padding:9px 14px; border:1.5px solid #e0e0e0; border-radius:8px; font-size:14px; }
     .flow-toolbar input:focus { outline:none; border-color:#a3e635; }
     .flow-layout { display:grid; grid-template-columns:200px 1fr; gap:0; height:calc(100vh - 220px); min-height:500px; background:#161b22; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); overflow:hidden; }
-    /* Canvas expandido — ocupa tela toda, cancela padding do main-content */
-    #page-fluxos { margin:-32px -32px -52px !important; padding:8px 12px 0 !important; display:flex !important; flex-direction:column !important; height:calc(100vh) !important; overflow:hidden; }
+    /* Canvas expandido — ocupa tela toda via position:fixed, sem hack de margem */
+    #page-fluxos.active { position:fixed !important; inset:0 0 32px 240px !important; margin:0 !important; padding:8px 12px 0 !important; display:flex !important; flex-direction:column !important; overflow:hidden; z-index:50; background:#0d1117; }
     #page-fluxos .page-header { display:none !important; }
     #page-fluxos .flow-toolbar { flex-shrink:0; }
     #page-fluxos .flow-layout { flex:1 1 0 !important; height:0 !important; min-height:0 !important; }
@@ -597,10 +597,17 @@
     .flow-canvas-wrap { position:relative; overflow:hidden; background:#1c2128; }
     #drawflow { width:100%; height:100%; }
     .drawflow { background-color:#ffffff !important; background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px) !important; background-size: 24px 24px !important; }
-    .drawflow .drawflow-node { background:#161b22; border:2px solid #e5e7eb; border-radius:10px; min-width:140px; box-shadow:0 2px 8px rgba(0,0,0,.08); }
-    .drawflow .drawflow-node.selected { border-color:#a3e635; box-shadow:0 0 0 3px rgba(79,70,229,.2); }
-    .drawflow .drawflow-node .title-box { background:#a3e635; color:#fff; padding:8px 12px; border-radius:8px 8px 0 0; font-size:12px; font-weight:700; }
-    .drawflow .drawflow-node .box { padding:12px; font-size:12px; color:#c9d1d9; }
+    .drawflow .drawflow-node { background:#161b22; border:2px solid #e5e7eb; border-radius:12px; min-width:280px; box-shadow:0 4px 16px rgba(0,0,0,.12); }
+    .drawflow .drawflow-node.selected { border-color:#a3e635; box-shadow:0 0 0 4px rgba(163,230,53,.18); }
+    .drawflow .drawflow-node .title-box { background:#a3e635; color:#fff; padding:10px 16px; border-radius:10px 10px 0 0; font-size:13px; font-weight:700; letter-spacing:.2px; }
+    .drawflow .drawflow-node .box { padding:14px 16px; font-size:13px; color:#c9d1d9; }
+    /* ── Nó toggle (ver mais / ocultar) ─────────────────────────────────── */
+    .node-details-body { display:none; }
+    .node-details-body.open { display:block; }
+    .node-toggle-btn { display:flex; align-items:center; justify-content:center; gap:5px; width:100%; padding:6px; margin-top:10px; background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.08); border-radius:7px; color:#8b949e; font-size:11px; font-weight:700; cursor:pointer; letter-spacing:.3px; transition:all .15s; user-select:none; }
+    .node-toggle-btn:hover { background:rgba(163,230,53,.08); color:#a3e635; border-color:rgba(163,230,53,.25); }
+    .node-compact-info { display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px; }
+    .node-compact-tag { background:rgba(163,230,53,.08); border:1px solid rgba(163,230,53,.2); border-radius:5px; color:#a3e635; font-size:10px; font-weight:700; padding:2px 7px; }
     .drawflow .drawflow-node.node-inicio .title-box { background:#16a34a; }
     .drawflow .drawflow-node.node-fim .title-box { background:#dc2626; }
     .drawflow .drawflow-node.node-qualificado .title-box { background:#16a34a; }
@@ -610,13 +617,15 @@
     .drawflow .drawflow-node.node-followup .title-box { background:#0891b2; }
     .drawflow .drawflow-node.node-aguardar .title-box { background:#d97706; }
     .drawflow .drawflow-node.node-etapa .title-box { background:linear-gradient(135deg,#16a34a,#065f46); color:#fff; }
-    .drawflow .drawflow-node.node-etapa { min-width:220px; }
+    .drawflow .drawflow-node.node-etapa { min-width:310px; }
     .drawflow .drawflow-node.node-departamento .title-box { background:#b45309; }
     .drawflow .drawflow-node.node-captura .title-box { background:#0e7490; }
     .drawflow .drawflow-node.node-contexto .title-box { background:#7c3aed; }
     .drawflow .drawflow-node.node-mover-pipeline .title-box { background:#0f766e; }
+    .drawflow .drawflow-node.node-mudar-fluxo .title-box { background:linear-gradient(135deg,#4f46e5,#7c3aed); }
+    .drawflow .drawflow-node.node-mudar-fluxo { border-color:#6366f1; }
     .drawflow .drawflow-node.node-objecao .title-box { background:linear-gradient(135deg,#dc2626,#9f1239); }
-    .drawflow .drawflow-node.node-objecao { border-color:#dc2626; min-width:300px; }
+    .drawflow .drawflow-node.node-objecao { border-color:#dc2626; min-width:360px; }
     /* Novos nós */
     .drawflow .drawflow-node.node-entrada .title-box { background:linear-gradient(135deg,#a3e635,#4ade80); color:#0a0a0a; }
     .drawflow .drawflow-node.node-entrada { border-color:#a3e635; }
@@ -2995,6 +3004,7 @@
           <div class="palette-node" draggable="true" ondragstart="drag(event,'divisao')">🔱 Divisão de Fluxo</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'expediente')">🕐 Verificar Expediente</div>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'aguardar')">⏳ Aguardar / Wait</div>
+          <div class="palette-node" draggable="true" ondragstart="drag(event,'mudar_fluxo')" style="border-color:rgba(99,102,241,.4);color:#818cf8;">🔀 Mudar de Fluxo</div>
 
           <h4 style="margin-top:14px">IA &amp; Automação</h4>
           <div class="palette-node" draggable="true" ondragstart="drag(event,'modelo_ia')">🤖 Escolha Modelo IA</div>
@@ -6780,105 +6790,75 @@
         </select>
       </div>`
     },
+
+    mudar_fluxo: {
+      title: '🔀 Mudar de Fluxo', inputs: 1, outputs: 1, cls: 'node-mudar-fluxo',
+      html: `<div class="box">
+        <label style="font-size:11px;font-weight:600;color:#818cf8;display:block;margin-bottom:4px;">🔀 Ir para o fluxo:</label>
+        <select class="etapa-select" style="border-color:rgba(99,102,241,.4);margin-bottom:6px;">FLUXOS_OPTIONS</select>
+        <label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.2);border-radius:7px;padding:7px 9px;font-size:11px;color:#a5b4fc;line-height:1.4;">
+          <input type="checkbox" checked style="accent-color:#6366f1;margin-top:1px;flex-shrink:0;" />
+          <span><strong style="display:block;margin-bottom:1px;">Manter contexto</strong>O histórico da conversa atual é passado para o novo fluxo.</span>
+        </label>
+      </div>`
+    },
     objecao: {
       title: '🛡️ Identificar Objeção + Plano de Ação (IA)', inputs: 1, outputs: 2, cls: 'node-objecao',
       html: `<div class="box">
         <div class="objecao-badge">⚡ Agente IA especializado em objeções comerciais</div>
-
-        <!-- 1. DADOS DO LEAD QUE O AGENTE USA -->
-        <div class="objecao-divider"><span>1 · Dados do lead para análise</span></div>
-        <div class="objecao-tipos">
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Nome</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Celular</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> O que buscava</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Por que não fechou</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Histórico completo</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Produto/Serviço buscado</label>
-          <label class="objecao-tipo-check"><input type="checkbox" /> Aniversário / datas</label>
-        </div>
-
-        <!-- 2. TIPOS DE OBJEÇÃO A IDENTIFICAR -->
-        <div class="objecao-divider"><span>2 · Tipos de objeção a identificar</span></div>
-        <div class="objecao-tipos">
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Preço / custo</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Urgência / "depois"</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Confiança / credibilidade</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Necessidade / "não preciso"</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Autoridade / "preciso consultar"</label>
-          <label class="objecao-tipo-check"><input type="checkbox" checked /> Medo / risco percebido</label>
-          <label class="objecao-tipo-check"><input type="checkbox" /> Concorrência / "já tenho fornecedor"</label>
-          <label class="objecao-tipo-check"><input type="checkbox" /> Desconfiança no prestador</label>
-        </div>
-
-        <!-- 3. PARÂMETROS QUE DIFICULTARAM A CONVERSÃO -->
-        <div class="objecao-divider"><span>3 · O que dificultou a conversão</span></div>
-        <label class="objecao-check-full">
-          <input type="checkbox" checked />
-          ⏱️ Tempo de resposta do agente (lentidão entre mensagens)
-        </label>
-        <label class="objecao-check-full">
-          <input type="checkbox" checked />
-          🕐 Horário do contato (fora do horário ideal)
-        </label>
-        <label class="objecao-check-full">
-          <input type="checkbox" checked />
-          🔇 Mensagens sem resposta do lead (desengajamento)
-        </label>
-        <label class="objecao-check-full">
-          <input type="checkbox" checked />
-          💬 Tom ou abordagem inadequada do agente
-        </label>
-        <label class="objecao-check-full">
-          <input type="checkbox" checked />
-          📋 Informações insuficientes fornecidas ao lead
-        </label>
-        <label class="objecao-check-full">
-          <input type="checkbox" checked />
-          🔁 Interrupção ou abandono da conversa
-        </label>
-        <label class="objecao-check-full">
-          <input type="checkbox" />
-          📉 Queda de engajamento ao longo do atendimento
-        </label>
-
-        <!-- 4. PLANO DE AÇÃO -->
-        <div class="objecao-divider"><span>4 · Plano de ação gerado pela IA</span></div>
-        <label class="objecao-check-full">
-          <input type="checkbox" checked />
-          🎯 Gerar argumentos personalizados para contornar a objeção
-        </label>
-        <label class="objecao-check-full">
-          <input type="checkbox" checked />
-          📅 Sugerir melhor momento e abordagem para retomar contato
-        </label>
-        <label class="objecao-check-full">
-          <input type="checkbox" checked />
-          📝 Gerar script de follow-up pronto para envio
-        </label>
-        <label class="objecao-check-full">
-          <input type="checkbox" checked />
-          🔍 Apontar erros do atendimento que prejudicaram a conversão
-        </label>
-        <label class="objecao-check-full">
-          <input type="checkbox" />
-          💡 Sugerir ajuste no fluxo/agente para casos similares
-        </label>
-        <div style="margin-top:6px;">
-          <div style="font-size:10px;font-weight:600;color:#8b949e;margin-bottom:3px;">Instruções adicionais para o agente (opcional):</div>
-          <textarea class="objecao-textarea" placeholder="Ex: Sempre reforçar diferenciais do serviço. Para objeção de preço, apresentar parcelamento. Para objeção de urgência, destacar vagas limitadas..."></textarea>
-        </div>
-
-        <!-- 5. ENVIO DO RELATÓRIO -->
-        <div class="objecao-divider"><span>5 · Enviar relatório via WhatsApp</span></div>
-        <input class="etapa-select" placeholder="5511999999999 (WhatsApp do responsável)" style="margin-bottom:4px;" />
-        <div style="font-size:10px;color:#8b949e;margin-bottom:6px;line-height:1.5;">
-          O agente envia: <strong style="color:#fca5a5;">nome do lead · celular · o que buscava · motivo do não fechamento · objeção identificada · fatores que dificultaram · plano de ação + script de follow-up</strong>
-        </div>
-
-        <!-- SAÍDAS -->
+        <!-- WhatsApp do responsável (sempre visível) -->
+        <div style="font-size:10px;font-weight:600;color:#8b949e;margin-bottom:3px;margin-top:4px;">📱 WhatsApp do responsável</div>
+        <input class="etapa-select" placeholder="5511999999999" style="margin-bottom:6px;" />
+        <!-- SAÍDAS compactas -->
         <div class="objecao-outputs">
-          <span style="color:#dc2626;font-weight:700;">🛡️ Com objeção → saída 1</span>
-          <span style="color:#16a34a;font-weight:700;">✅ Sem objeção → saída 2</span>
+          <span style="color:#dc2626;font-weight:700;">🛡️ Com objeção → 1</span>
+          <span style="color:#16a34a;font-weight:700;">✅ Sem objeção → 2</span>
+        </div>
+        <!-- Toggle detalhes -->
+        <button class="node-toggle-btn" onclick="toggleNodeDetails(this)">
+          <span class="toggle-icon">▼</span>
+          <span class="toggle-label">Ver detalhes</span>
+        </button>
+        <div class="node-details-body">
+          <div class="objecao-divider"><span>1 · Dados do lead para análise</span></div>
+          <div class="objecao-tipos">
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> Nome</label>
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> Celular</label>
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> O que buscava</label>
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> Por que não fechou</label>
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> Histórico completo</label>
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> Produto/Serviço buscado</label>
+            <label class="objecao-tipo-check"><input type="checkbox" /> Aniversário / datas</label>
+          </div>
+          <div class="objecao-divider"><span>2 · Tipos de objeção</span></div>
+          <div class="objecao-tipos">
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> Preço / custo</label>
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> Urgência / "depois"</label>
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> Confiança</label>
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> Necessidade</label>
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> Autoridade</label>
+            <label class="objecao-tipo-check"><input type="checkbox" checked /> Medo / risco</label>
+            <label class="objecao-tipo-check"><input type="checkbox" /> Concorrência</label>
+            <label class="objecao-tipo-check"><input type="checkbox" /> Desconfiança</label>
+          </div>
+          <div class="objecao-divider"><span>3 · O que dificultou a conversão</span></div>
+          <label class="objecao-check-full"><input type="checkbox" checked /> ⏱️ Tempo de resposta lento</label>
+          <label class="objecao-check-full"><input type="checkbox" checked /> 🕐 Horário fora do ideal</label>
+          <label class="objecao-check-full"><input type="checkbox" checked /> 🔇 Desengajamento do lead</label>
+          <label class="objecao-check-full"><input type="checkbox" checked /> 💬 Tom inadequado do agente</label>
+          <label class="objecao-check-full"><input type="checkbox" checked /> 📋 Informações insuficientes</label>
+          <label class="objecao-check-full"><input type="checkbox" checked /> 🔁 Abandono da conversa</label>
+          <label class="objecao-check-full"><input type="checkbox" /> 📉 Queda de engajamento</label>
+          <div class="objecao-divider"><span>4 · Plano de ação gerado</span></div>
+          <label class="objecao-check-full"><input type="checkbox" checked /> 🎯 Argumentos personalizados</label>
+          <label class="objecao-check-full"><input type="checkbox" checked /> 📅 Melhor momento para retomar</label>
+          <label class="objecao-check-full"><input type="checkbox" checked /> 📝 Script de follow-up</label>
+          <label class="objecao-check-full"><input type="checkbox" checked /> 🔍 Apontar erros do atendimento</label>
+          <label class="objecao-check-full"><input type="checkbox" /> 💡 Sugerir ajuste no fluxo</label>
+          <div style="margin-top:6px;">
+            <div style="font-size:10px;font-weight:600;color:#8b949e;margin-bottom:3px;">Instruções adicionais (opcional):</div>
+            <textarea class="objecao-textarea" placeholder="Ex: Para objeção de preço, oferecer parcelamento..."></textarea>
+          </div>
         </div>
       </div>`
     },
@@ -6904,16 +6884,22 @@
     enviar_relatorio: {
       title: '📊 Enviar Relatório', inputs: 1, outputs: 1, cls: 'node-enviar-relatorio',
       html: `<div class="box">
-        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">📊 Conteúdo do relatório</label>
-        <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" checked style="accent-color:#0ea5e9;" /> Dados do lead</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" checked style="accent-color:#0ea5e9;" /> Resumo da conversa</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" checked style="accent-color:#0ea5e9;" /> Resultado da qualificação</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" style="accent-color:#0ea5e9;" /> Score do lead</label>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" style="accent-color:#0ea5e9;" /> Transcrição completa</label>
-        </div>
         <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">📱 Enviar para (WhatsApp)</label>
         <input class="etapa-select" placeholder="5511999999999" style="margin-bottom:0;" />
+        <button class="node-toggle-btn" onclick="toggleNodeDetails(this)">
+          <span class="toggle-icon">▼</span>
+          <span class="toggle-label">Ver conteúdo</span>
+        </button>
+        <div class="node-details-body">
+          <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:6px;margin-top:4px;">📊 Conteúdo do relatório</label>
+          <div style="display:flex;flex-direction:column;gap:4px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" checked style="accent-color:#0ea5e9;" /> Dados do lead</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" checked style="accent-color:#0ea5e9;" /> Resumo da conversa</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" checked style="accent-color:#0ea5e9;" /> Resultado da qualificação</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" style="accent-color:#0ea5e9;" /> Score do lead</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#c9d1d9;cursor:pointer;"><input type="checkbox" style="accent-color:#0ea5e9;" /> Transcrição completa</label>
+          </div>
+        </div>
       </div>`
     },
 
@@ -6999,13 +6985,19 @@
             <input type="time" class="etapa-select" value="18:00" style="margin-bottom:0;font-size:12px;" />
           </div>
         </div>
-        <div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:4px;">Dias da semana:</div>
-        <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:6px;">
-          ${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map((d,i) => `<label style="display:flex;align-items:center;gap:2px;font-size:10px;color:#c9d1d9;cursor:pointer;background:rgba(255,255,255,.05);padding:2px 5px;border-radius:4px;"><input type="checkbox" ${i<5?'checked':''} style="accent-color:#a3e635;" />${d}</label>`).join('')}
-        </div>
-        <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:4px;">
-          <span style="color:#16a34a;font-weight:600;">✅ Dentro do expediente → saída 1</span>
+        <div style="display:flex;justify-content:space-between;font-size:10px;">
+          <span style="color:#16a34a;font-weight:600;">✅ Dentro → saída 1</span>
           <span style="color:#dc2626;font-weight:600;">❌ Fora → saída 2</span>
+        </div>
+        <button class="node-toggle-btn" onclick="toggleNodeDetails(this)">
+          <span class="toggle-icon">▼</span>
+          <span class="toggle-label">Ver dias</span>
+        </button>
+        <div class="node-details-body">
+          <div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:4px;margin-top:4px;">Dias da semana:</div>
+          <div style="display:flex;flex-wrap:wrap;gap:3px;">
+            ${['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map((d,i) => `<label style="display:flex;align-items:center;gap:2px;font-size:10px;color:#c9d1d9;cursor:pointer;background:rgba(255,255,255,.05);padding:2px 5px;border-radius:4px;"><input type="checkbox" ${i<5?'checked':''} style="accent-color:#a3e635;" />${d}</label>`).join('')}
+          </div>
         </div>
       </div>`
     },
@@ -7020,7 +7012,6 @@
           <button class="node-prov-btn" onclick="(function(btn){const box=btn.closest('.box');box.querySelectorAll('[data-prov]').forEach(e=>e.style.display='none');box.querySelector('[data-prov=google]').style.display='block';box.querySelectorAll('.node-prov-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');updateNodeFator(box.querySelector('[data-prov=google] select'));})(this)" style="flex:1;padding:4px 0;font-size:11px;font-weight:600;border-radius:5px;border:1px solid rgba(66,133,244,.3);background:rgba(66,133,244,.08);color:#93c5fd;cursor:pointer;">Google</button>
         </div>
         <div data-prov="openai">
-          <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Modelo OpenAI:</label>
           <select class="etapa-select" style="margin-bottom:6px;" onchange="updateNodeFator(this)">
             <option value="gpt-3.5-turbo">gpt-3.5-turbo — fator 0.2×</option>
             <option value="gpt-4.1-nano">gpt-4.1-nano — fator 0.3×</option>
@@ -7035,7 +7026,6 @@
           </select>
         </div>
         <div data-prov="claude" style="display:none;">
-          <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Modelo Claude:</label>
           <select class="etapa-select" style="margin-bottom:6px;" onchange="updateNodeFator(this)">
             <option value="claude-haiku-4-5-20251001">claude-haiku-4-5 — fator 0.9× (rec.)</option>
             <option value="claude-3-5-haiku-20241022">claude-3-5-haiku — fator 0.9×</option>
@@ -7046,7 +7036,6 @@
           </select>
         </div>
         <div data-prov="google" style="display:none;">
-          <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Modelo Gemini:</label>
           <select class="etapa-select" style="margin-bottom:6px;" onchange="updateNodeFator(this)">
             <option value="gemini-2.0-flash-lite">gemini-2.0-flash-lite — fator 0.1× 🆓</option>
             <option value="gemini-2.0-flash">gemini-2.0-flash — fator 0.2× 🆓</option>
@@ -7055,14 +7044,19 @@
             <option value="gemini-2.5-pro-exp-03-25">gemini-2.5-pro-exp — fator 5.0×</option>
           </select>
         </div>
-        <!-- Badge de fator do modelo -->
-        <div class="node-fator-badge" style="display:flex;align-items:center;justify-content:space-between;background:rgba(163,230,53,.07);border:1px solid rgba(163,230,53,.18);border-radius:6px;padding:5px 10px;margin-bottom:8px;font-size:11px;">
+        <div class="node-fator-badge" style="display:flex;align-items:center;justify-content:space-between;background:rgba(163,230,53,.07);border:1px solid rgba(163,230,53,.18);border-radius:6px;padding:5px 10px;font-size:11px;">
           <span style="color:#6e7681;">Fator multiplicador:</span>
           <span class="node-fator-valor" style="font-weight:800;color:#6ee7b7;">1.0× <span style="font-weight:400;opacity:.7;">(base)</span></span>
         </div>
-        <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">Temperatura (criatividade 0–1):</label>
-        <input type="range" min="0" max="1" step="0.1" value="0.7" class="etapa-select" style="padding:0;background:none;border:none;" oninput="this.nextElementSibling.textContent=this.value" />
-        <span style="font-size:11px;color:#a3e635;font-weight:700;">0.7</span>
+        <button class="node-toggle-btn" onclick="toggleNodeDetails(this)">
+          <span class="toggle-icon">▼</span>
+          <span class="toggle-label">Ver detalhes</span>
+        </button>
+        <div class="node-details-body">
+          <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-top:6px;margin-bottom:4px;">Temperatura (criatividade 0–1):</label>
+          <input type="range" min="0" max="1" step="0.1" value="0.7" class="etapa-select" style="padding:0;background:none;border:none;" oninput="this.nextElementSibling.textContent=this.value" />
+          <span style="font-size:11px;color:#a3e635;font-weight:700;">0.7</span>
+        </div>
       </div>`
     },
 
@@ -7070,9 +7064,9 @@
       title: '🎙️ Enviar Voz por IA', inputs: 1, outputs: 1, cls: 'node-voz-ia',
       html: `<div class="box">
         <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">💬 Texto a converter em voz</label>
-        <textarea class="etapa-select" style="resize:vertical;min-height:60px;font-size:12px;margin-bottom:6px;" placeholder="Olá {{nome}}! Preparamos uma mensagem especial para você...&#10;Variáveis: {{nome}}, {{telefone}}, {{servico}}"></textarea>
+        <textarea class="etapa-select" style="resize:vertical;min-height:56px;font-size:12px;margin-bottom:6px;" placeholder="Olá {{nome}}! Variáveis: {{nome}}, {{telefone}}, {{servico}}"></textarea>
         <label style="font-size:11px;font-weight:600;color:#8b949e;display:block;margin-bottom:4px;">🎤 Voz</label>
-        <select class="etapa-select" style="margin-bottom:8px;">
+        <select class="etapa-select" style="margin-bottom:0;">
           <option>Alloy — Neutro</option>
           <option>Echo — Masculino profissional</option>
           <option>Fable — Expressivo</option>
@@ -7080,58 +7074,65 @@
           <option>Nova — Feminino amigável</option>
           <option>Shimmer — Feminino suave</option>
         </select>
-        <label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;background:rgba(147,51,234,.08);border:1px solid rgba(147,51,234,.2);border-radius:7px;padding:8px 10px;font-size:11px;color:#c4b5fd;line-height:1.4;">
-          <input type="checkbox" checked style="accent-color:#9333ea;margin-top:1px;flex-shrink:0;cursor:pointer;" />
-          <span><strong style="display:block;margin-bottom:2px;">Modo contextual</strong>Envia áudio <em>somente</em> quando o lead também enviou um áudio. Se a mensagem for texto, responde em texto.</span>
-        </label>
+        <button class="node-toggle-btn" onclick="toggleNodeDetails(this)">
+          <span class="toggle-icon">▼</span>
+          <span class="toggle-label">Ver opções</span>
+        </button>
+        <div class="node-details-body">
+          <label style="display:flex;align-items:flex-start;gap:7px;cursor:pointer;background:rgba(147,51,234,.08);border:1px solid rgba(147,51,234,.2);border-radius:7px;padding:8px 10px;font-size:11px;color:#c4b5fd;line-height:1.4;margin-top:4px;">
+            <input type="checkbox" checked style="accent-color:#9333ea;margin-top:1px;flex-shrink:0;cursor:pointer;" />
+            <span><strong style="display:block;margin-bottom:2px;">Modo contextual</strong>Envia áudio <em>somente</em> se o lead também enviou áudio.</span>
+          </label>
+        </div>
       </div>`
     },
 
     agendar_gcal: {
       title: '📅 Agendar no Google Agenda', inputs: 1, outputs: 1, cls: 'node-agendar-gcal',
       html: `<div class="box">
-        <div style="font-size:11px;font-weight:600;color:#93c5fd;margin-bottom:8px;display:flex;align-items:center;gap:5px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="flex-shrink:0"><rect width="24" height="24" rx="4" fill="#1a73e8"/><path d="M7 2v2h10V2h2v2h2a2 2 0 012 2v14a2 2 0 01-2 2H3a2 2 0 01-2-2V6a2 2 0 012-2h2V2h2zm-4 8v10h18V10H3z" fill="#fff"/></svg>
-          Criar evento no Google Calendar via OAuth
-        </div>
         <div style="margin-bottom:6px;">
-          <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Título do evento</div>
-          <input type="text" class="etapa-select" style="margin-bottom:0;font-size:11px;" placeholder="Ex: Reunião com {{nome}}" value="Reunião com {{nome}}" />
+          <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">📝 Título do evento</div>
+          <input type="text" class="etapa-select" style="margin-bottom:0;font-size:11px;" placeholder="Reunião com {{nome}}" value="Reunião com {{nome}}" />
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
           <div>
-            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Data (variável ou fixa)</div>
-            <input type="text" class="etapa-select" style="margin-bottom:0;font-size:11px;" placeholder="{{data_agendamento}}" value="{{data_agendamento}}" />
+            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">📅 Data</div>
+            <input type="text" class="etapa-select" style="margin-bottom:0;font-size:11px;" value="{{data_agendamento}}" />
           </div>
           <div>
-            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Hora</div>
-            <input type="text" class="etapa-select" style="margin-bottom:0;font-size:11px;" placeholder="{{hora_agendamento}}" value="{{hora_agendamento}}" />
+            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">🕐 Hora</div>
+            <input type="text" class="etapa-select" style="margin-bottom:0;font-size:11px;" value="{{hora_agendamento}}" />
           </div>
         </div>
-        <div style="margin-bottom:6px;">
-          <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Duração (minutos)</div>
-          <input type="number" class="etapa-select" style="margin-bottom:0;font-size:11px;width:80px;" value="60" min="15" step="15" />
-        </div>
-        <div style="margin-bottom:6px;">
-          <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Descrição / Notas</div>
-          <textarea class="etapa-select" style="margin-bottom:0;font-size:11px;height:46px;resize:none;" placeholder="Lead: {{nome}} — {{telefone}}">Lead: {{nome}} — {{telefone}}</textarea>
-        </div>
-        <div style="background:rgba(26,115,232,.1);border:1px solid rgba(26,115,232,.25);border-radius:6px;padding:6px 8px;font-size:10px;color:#93c5fd;">
-          ⚙️ Configure as credenciais OAuth do Google Calendar em <strong>Configuração → Integrações</strong>
+        <button class="node-toggle-btn" onclick="toggleNodeDetails(this)">
+          <span class="toggle-icon">▼</span>
+          <span class="toggle-label">Ver detalhes</span>
+        </button>
+        <div class="node-details-body">
+          <div style="margin-bottom:6px;margin-top:4px;">
+            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">⏱ Duração (minutos)</div>
+            <input type="number" class="etapa-select" style="margin-bottom:0;font-size:11px;width:80px;" value="60" min="15" step="15" />
+          </div>
+          <div style="margin-bottom:6px;">
+            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">📋 Descrição / Notas</div>
+            <textarea class="etapa-select" style="margin-bottom:0;font-size:11px;height:42px;resize:none;">Lead: {{nome}} — {{telefone}}</textarea>
+          </div>
+          <div style="background:rgba(26,115,232,.1);border:1px solid rgba(26,115,232,.25);border-radius:6px;padding:5px 8px;font-size:10px;color:#93c5fd;">
+            ⚙️ Configure OAuth em <strong>Configuração → Integrações</strong>
+          </div>
         </div>
       </div>`
     },
     disparo_programado: {
       title: '⏰ Disparo Programado', inputs: 1, outputs: 1, cls: 'node-disparo-programado',
       html: `<div class="box">
-        <div style="font-size:11px;font-weight:600;color:#fde047;margin-bottom:8px;">⏰ Mensagem Programada</div>
         <div style="margin-bottom:6px;">
-          <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Mensagem</div>
-          <textarea class="etapa-select" style="margin-bottom:0;font-size:11px;height:54px;resize:none;" placeholder="Olá {{nome}}, tudo bem? Ainda tem interesse em...">Olá {{nome}}, aqui é o assistente da {{empresa}}. Passando para verificar se ainda tem interesse 😊</textarea>
+          <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">💬 Mensagem</div>
+          <textarea class="etapa-select" style="margin-bottom:0;font-size:11px;height:50px;resize:none;" placeholder="Olá {{nome}}, aqui é o assistente...">Olá {{nome}}, passando para verificar se ainda tem interesse 😊</textarea>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
           <div>
-            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Enviar após</div>
+            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">⏱ Enviar após</div>
             <input type="number" class="etapa-select" style="margin-bottom:0;font-size:11px;" value="24" min="1" />
           </div>
           <div>
@@ -7143,21 +7144,27 @@
             </select>
           </div>
         </div>
-        <div style="margin-bottom:6px;">
-          <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Enviar somente entre</div>
-          <div style="display:flex;gap:6px;align-items:center;">
-            <input type="time" class="etapa-select" style="margin-bottom:0;font-size:11px;flex:1;" value="08:00" />
-            <span style="font-size:10px;color:#6e7681;">e</span>
-            <input type="time" class="etapa-select" style="margin-bottom:0;font-size:11px;flex:1;" value="20:00" />
+        <button class="node-toggle-btn" onclick="toggleNodeDetails(this)">
+          <span class="toggle-icon">▼</span>
+          <span class="toggle-label">Ver opções</span>
+        </button>
+        <div class="node-details-body">
+          <div style="margin-bottom:6px;margin-top:4px;">
+            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">🕐 Somente entre</div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <input type="time" class="etapa-select" style="margin-bottom:0;font-size:11px;flex:1;" value="08:00" />
+              <span style="font-size:10px;color:#6e7681;">e</span>
+              <input type="time" class="etapa-select" style="margin-bottom:0;font-size:11px;flex:1;" value="20:00" />
+            </div>
           </div>
-        </div>
-        <div>
-          <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">Condição de envio</div>
-          <select class="etapa-select" style="margin-bottom:0;font-size:11px;">
-            <option value="sem_resposta">Lead sem resposta</option>
-            <option value="sempre">Sempre</option>
-            <option value="nao_convertido">Lead não convertido</option>
-          </select>
+          <div>
+            <div style="font-size:10px;color:#6e7681;margin-bottom:3px;">📋 Condição de envio</div>
+            <select class="etapa-select" style="margin-bottom:0;font-size:11px;">
+              <option value="sem_resposta">Lead sem resposta</option>
+              <option value="sempre">Sempre</option>
+              <option value="nao_convertido">Lead não convertido</option>
+            </select>
+          </div>
         </div>
       </div>`
     },
@@ -7186,20 +7193,26 @@
     lead_score_coletor: {
       title: '🎯 Colhedor de Lead Score', inputs: 1, outputs: 2, cls: 'node-lead-score-coletor',
       html: `<div class="box">
-        <div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:6px;">Pontuar lead baseado em critérios:</div>
-        <label class="objecao-check-full"><input type="checkbox" checked /> 📱 Lead respondeu todas as perguntas</label>
-        <label class="objecao-check-full"><input type="checkbox" checked /> ⏱️ Tempo de resposta rápido (&lt;2min)</label>
-        <label class="objecao-check-full"><input type="checkbox" checked /> ✅ Lead confirmou interesse</label>
-        <label class="objecao-check-full"><input type="checkbox" checked /> 📍 Lead dentro do perfil ideal</label>
-        <label class="objecao-check-full"><input type="checkbox" /> 💰 Mencionou orçamento disponível</label>
-        <label class="objecao-check-full"><input type="checkbox" /> 📅 Agendou reunião ou visita</label>
-        <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
-          <span style="font-size:11px;color:#8b949e;white-space:nowrap;">Mín. pontos para qualificar:</span>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+          <span style="font-size:11px;color:#8b949e;white-space:nowrap;">🎯 Mín. pontos para qualificar:</span>
           <input type="number" class="etapa-select" style="width:55px;margin-bottom:0;font-weight:700;" value="3" min="1" max="6" />
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:10px;margin-top:8px;">
-          <span style="color:#16a34a;font-weight:600;">✅ Acima do mín → saída 1</span>
+        <div style="display:flex;justify-content:space-between;font-size:10px;">
+          <span style="color:#16a34a;font-weight:600;">✅ Acima → saída 1</span>
           <span style="color:#dc2626;font-weight:600;">❌ Abaixo → saída 2</span>
+        </div>
+        <button class="node-toggle-btn" onclick="toggleNodeDetails(this)">
+          <span class="toggle-icon">▼</span>
+          <span class="toggle-label">Ver critérios</span>
+        </button>
+        <div class="node-details-body">
+          <div style="font-size:11px;font-weight:600;color:#8b949e;margin-bottom:6px;margin-top:4px;">Critérios de pontuação:</div>
+          <label class="objecao-check-full"><input type="checkbox" checked /> 📱 Respondeu todas as perguntas</label>
+          <label class="objecao-check-full"><input type="checkbox" checked /> ⏱️ Tempo de resposta &lt;2min</label>
+          <label class="objecao-check-full"><input type="checkbox" checked /> ✅ Confirmou interesse</label>
+          <label class="objecao-check-full"><input type="checkbox" checked /> 📍 Dentro do perfil ideal</label>
+          <label class="objecao-check-full"><input type="checkbox" /> 💰 Mencionou orçamento</label>
+          <label class="objecao-check-full"><input type="checkbox" /> 📅 Agendou reunião ou visita</label>
         </div>
       </div>`
     },
@@ -7699,6 +7712,7 @@
   let _fluxoNumeros  = [];    // carregado ao abrir Designer de Fluxos
   let _fluxoAgentes  = [];
   let _fluxoObjecao  = false; // true se o usuário comprou addon_objecao
+  let _fluxosSalvos  = [];    // lista {id,nome} para o nó Mudar de Fluxo
 
   async function loadFluxosPage() {
     // 1. Inicializa Drawflow se necessário
@@ -7787,9 +7801,15 @@
     // Zoom inicial afastado para ver mais canvas
     editor.zoom = 0.35;
     if (editor.precanvas) editor.precanvas.style.transform = 'translate(0px,0px) scale(0.35)';
+    // Garante que o precanvas do Drawflow aceita drag & drop da paleta lateral
+    editor.precanvas.addEventListener('dragover', function(e) { e.preventDefault(); });
+    editor.precanvas.addEventListener('drop', drop);
     // Registra tipos de nó (etapa usa placeholder – substituído no drop)
     Object.entries(NODE_TEMPLATES).forEach(([type, cfg]) => {
-      const safeHtml = cfg.html.replace('ETAPA_NUMEROS_OPTIONS','').replace('ETAPA_AGENTES_OPTIONS','');
+      const safeHtml = cfg.html
+        .replace('ETAPA_NUMEROS_OPTIONS','')
+        .replace('ETAPA_AGENTES_OPTIONS','')
+        .replace('FLUXOS_OPTIONS','<option value="">— carregando fluxos —</option>');
       editor.registerNode(type, {
         html: `<div class="title-box">${cfg.title}</div>${safeHtml}`,
         inputs: cfg.inputs, outputs: cfg.outputs
@@ -7817,15 +7837,26 @@
 
   function allowDrop(event) { event.preventDefault(); }
 
+  function toggleNodeDetails(btn) {
+    const body = btn.closest('.box').querySelector('.node-details-body');
+    if (!body) return;
+    const open = body.classList.toggle('open');
+    btn.querySelector('.toggle-label').textContent = open ? 'Ocultar detalhes' : 'Ver detalhes';
+    btn.querySelector('.toggle-icon').textContent  = open ? '▲' : '▼';
+  }
+
   function drop(event) {
     event.preventDefault();
     const type = dragNodeType || event.dataTransfer.getData('text');
     if (!type || !NODE_TEMPLATES[type]) return;
     const cfg = NODE_TEMPLATES[type];
-    const wrap = document.getElementById('flow-canvas-wrap');
-    const rect = wrap.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    // Converte coordenadas de tela → coordenadas do canvas (zoom + pan)
+    const dfEl = document.getElementById('drawflow');
+    const rect  = dfEl.getBoundingClientRect();
+    const mat   = new DOMMatrix(getComputedStyle(editor.precanvas).transform);
+    const zoom  = editor.zoom || 1;
+    const x = (event.clientX - rect.left - mat.m41) / zoom;
+    const y = (event.clientY - rect.top  - mat.m42) / zoom;
 
     // Opções de números (usadas em etapa e departamento)
     const numerosOpts = _fluxoNumeros.length
@@ -7833,6 +7864,10 @@
       : '<option value="">Nenhum número configurado</option>';
     const agentesOpts = '<option value="">Sem agente (humano)</option>' +
       _fluxoAgentes.map((a, i) => `<option value="${i}">${escapeHtml(a)}</option>`).join('');
+    // Opções de fluxos salvos (usado em mudar_fluxo)
+    const fluxosOpts = _fluxosSalvos.length
+      ? _fluxosSalvos.map(f => `<option value="${f.id}">${escapeHtml(f.nome)}</option>`).join('')
+      : '<option value="">— Nenhum fluxo salvo ainda —</option>';
 
     let nodeHtml;
     if (type === 'etapa') {
@@ -7843,6 +7878,9 @@
     } else if (type === 'departamento') {
       // Popula o select de número do departamento
       const body = cfg.html.replace('ETAPA_NUMEROS_OPTIONS', numerosOpts);
+      nodeHtml = `<div class="title-box">${cfg.title}</div>${body}`;
+    } else if (type === 'mudar_fluxo') {
+      const body = cfg.html.replace('FLUXOS_OPTIONS', fluxosOpts);
       nodeHtml = `<div class="title-box">${cfg.title}</div>${body}`;
     } else {
       nodeHtml = `<div class="title-box">${cfg.title}</div>${cfg.html}`;
@@ -7891,7 +7929,8 @@
   }
 
   async function loadSavedFlows() {
-    const { data } = await db.from('fluxos').select('id,nome,atualizado_em').order('atualizado_em', { ascending: false }).limit(20);
+    const { data } = await db.from('fluxos').select('id,nome,atualizado_em').order('atualizado_em', { ascending: false }).limit(50);
+    _fluxosSalvos = (data || []).map(f => ({ id: f.id, nome: f.nome }));
     const el = document.getElementById('saved-flows-list');
     if (!data || !data.length) {
       el.innerHTML = '<p style="font-size:12px;color:#6e7681;text-align:center;padding:8px;">Nenhum fluxo salvo</p>'; return;

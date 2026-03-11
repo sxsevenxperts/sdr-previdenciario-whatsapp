@@ -3,9 +3,9 @@
   "configurations": [
     {
       "name": "XPERT.IA — Painel Web",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "software", "-p", "3000", "--no-clipboard"],
-      "port": 3000
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "3001", "--directory", "software"],
+      "port": 3001
     }
   ]
 }

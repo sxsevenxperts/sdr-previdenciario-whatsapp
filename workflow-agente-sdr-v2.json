@@ -1,0 +1,198 @@
+{
+  "name": "🤖 XPERT.IA — Agente SDR WhatsApp (v2 — com llm-proxy)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "whatsapp-sdr",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook",
+      "name": "Webhook — Evolution API",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [0, 400],
+      "notes": "Configure este endpoint na Evolution API como webhook de mensagens recebidas."
+    },
+    {
+      "parameters": {
+        "jsCode": "const webhook = $input.first().json;\nconst instanceName = webhook.instance || webhook.body?.instance || webhook.instanceName || webhook.body?.instanceName || webhook.data?.instance || webhook.instanceId || '';\nconst fromMe = webhook.fromMe || webhook.key?.fromMe || webhook.data?.key?.fromMe || webhook.body?.data?.key?.fromMe || false;\nif (fromMe === true) return [];\nconst remoteJid = webhook.sender || webhook.remoteJid || webhook.key?.remoteJid || webhook.data?.key?.remoteJid || webhook.body?.data?.key?.remoteJid || '';\nif (remoteJid.includes('@g.us')) return [];\nconst tipoMensagem = webhook.messageType || webhook.data?.messageType || webhook.body?.data?.messageType || 'conversation';\nconst TIPOS_IGNORADOS = ['senderKeyDistributionMessage','protocolMessage','reactionMessage','pollUpdateMessage'];\nif (TIPOS_IGNORADOS.includes(tipoMensagem)) return [];\nconst numero = remoteJid.replace('@s.whatsapp.net', '');\nconst mensagem = webhook.conversation || webhook.text || webhook.body || webhook.data?.message?.conversation || webhook.data?.message?.extendedTextMessage?.text || webhook.body?.data?.message?.conversation || '';\nconst nomeContato = webhook.pushName || webhook.senderName || webhook.data?.pushName || webhook.body?.data?.pushName || 'Lead';\nif (!mensagem) return [];\nreturn [{ json: { numero, mensagem, nomeContato, instanceName, timestamp: new Date().toISOString() } }];"
+      },
+      "id": "node-normaliza",
+      "name": "Normaliza e filtra mensagem",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/get_token_balance",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_user_id: $('Resolve cliente pelo instanceName').first().json[0]?.id || $('Resolve cliente pelo instanceName').first().json?.id }) }}"
+      },
+      "id": "node-verifica-saldo",
+      "name": "Verifica saldo de tokens",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [780, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "cond-bloqueado",
+              "leftValue": "={{ ($('Verifica saldo de tokens').first().json?.[0]?.saldo_tokens || 0) <= 0 }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equal"
+              }
+            }
+          ]
+        }
+      },
+      "id": "node-if-saldo",
+      "name": "Bloqueado por tokens?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1000, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ `https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/llm-proxy?provider=openai&user_id=${$('Resolve cliente pelo instanceName').first().json[0]?.id || $('Resolve cliente pelo instanceName').first().json?.id}&model=gpt-4o` }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messages: [{ role: 'user', content: $json.mensagem }], system: 'Você é um assistente de vendas profissional. Responda de forma concisa e persuasiva.' }) }}"
+      },
+      "id": "node-llm-openai",
+      "name": "Chama OpenAI via llm-proxy",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ `https://evo.sevenxperts.solutions/message/sendText/${$json.instanceName}` }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "2ae3Y0xQFNxIcng27ufbAaHzioCDfReN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { number: $json.numero, text: $('Chama OpenAI via llm-proxy').first().json.content } }}"
+      },
+      "id": "node-envia-resposta",
+      "name": "Envia resposta ao lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1400, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ `https://evo.sevenxperts.solutions/message/sendText/${$json.instanceName}` }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "2ae3Y0xQFNxIcng27ufbAaHzioCDfReN"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { number: $json.numero, text: '⚠️ Nosso sistema está temporariamente indisponível. Tente novamente mais tarde.' } }}"
+      },
+      "id": "node-aviso-sem-tokens",
+      "name": "Envia aviso: sem tokens",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1200, 500]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/profiles?evo_instance=eq.{{ $json.instanceName }}&select=id",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            }
+          ]
+        }
+      },
+      "id": "node-resolve-cliente",
+      "name": "Resolve cliente pelo instanceName",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [550, 400]
+    }
+  ],
+  "connections": {
+    "node-webhook": {
+      "main": [[{"node": "node-normaliza", "type": "main", "index": 0}]]
+    },
+    "node-normaliza": {
+      "main": [[{"node": "node-resolve-cliente", "type": "main", "index": 0}]]
+    },
+    "node-resolve-cliente": {
+      "main": [[{"node": "node-verifica-saldo", "type": "main", "index": 0}]]
+    },
+    "node-verifica-saldo": {
+      "main": [[{"node": "node-if-saldo", "type": "main", "index": 0}]]
+    },
+    "node-if-saldo": {
+      "main": [
+        [{"node": "node-llm-openai", "type": "main", "index": 0}],
+        [{"node": "node-aviso-sem-tokens", "type": "main", "index": 0}]
+      ]
+    },
+    "node-llm-openai": {
+      "main": [[{"node": "node-envia-resposta", "type": "main", "index": 0}]]
+    }
+  }
+}
