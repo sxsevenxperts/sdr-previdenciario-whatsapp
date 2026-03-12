@@ -449,6 +449,9 @@
     .admin-only { display:none !important; }
     .admin-only.visible { display:flex !important; }
     .nav-section.admin-only.visible { display:block !important; }
+    /* Páginas admin: só aparecem quando ativas, não o tempo todo */
+    .page.admin-only { display:none !important; }
+    .page.admin-only.active { display:block !important; }
     .membro-hidden { display:none !important; }
     .membro-hidden.visible { display:flex !important; }
     .nav-section.membro-hidden.visible { display:block !important; }
@@ -607,6 +610,12 @@
     .palette-node:hover { border-color:#a3e635; background:#1a2e00; color:#a3e635; }
     .palette-node:active { cursor:grabbing; }
     .flow-canvas-wrap { position:relative; overflow:hidden; background:#1c2128; }
+    .flow-zoom-controls { position:absolute; bottom:42px; right:12px; z-index:20; display:flex; align-items:center; gap:2px; background:rgba(13,17,23,.9); border:1px solid rgba(163,230,53,.25); border-radius:8px; padding:3px 5px; }
+    .flow-zoom-btn { background:none; border:none; color:#8b949e; cursor:pointer; font-size:16px; line-height:1; padding:3px 6px; border-radius:5px; transition:all .15s; }
+    .flow-zoom-btn:hover { background:rgba(163,230,53,.12); color:#a3e635; }
+    .flow-zoom-pct { font-size:11px; font-weight:700; color:#8b949e; min-width:36px; text-align:center; cursor:pointer; padding:3px 4px; border-radius:5px; }
+    .flow-zoom-pct:hover { background:rgba(163,230,53,.12); color:#a3e635; }
+    .flow-zoom-sep { width:1px; height:14px; background:rgba(255,255,255,.1); margin:0 2px; }
     #drawflow { width:100%; height:100%; }
     .drawflow { background-color:#ffffff !important; background-image: radial-gradient(circle, #d1d5db 1px, transparent 1px) !important; background-size: 24px 24px !important; }
     .drawflow .drawflow-node { background:#161b22; border:2px solid #e5e7eb; border-radius:12px; min-width:280px; box-shadow:0 4px 16px rgba(0,0,0,.12); }
@@ -3333,6 +3342,14 @@
         <div class="flow-canvas-wrap" id="flow-canvas-wrap"
              ondrop="drop(event)" ondragover="allowDrop(event)">
           <div id="drawflow"></div>
+          <!-- Controles de zoom estilo n8n -->
+          <div class="flow-zoom-controls">
+            <button class="flow-zoom-btn" onclick="dfZoomOut()" title="Diminuir zoom (-)">−</button>
+            <span class="flow-zoom-pct" id="df-zoom-pct" onclick="dfResetZoom()" title="Clique para resetar (100%)">35%</span>
+            <button class="flow-zoom-btn" onclick="dfZoomIn()" title="Aumentar zoom (+)">+</button>
+            <div class="flow-zoom-sep"></div>
+            <button class="flow-zoom-btn" onclick="dfFitScreen()" title="Ajustar à tela">⊡</button>
+          </div>
           <!-- Legenda do rodapé do canvas -->
           <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(13,17,23,.85);backdrop-filter:blur(6px);border-top:1px solid rgba(163,230,53,.15);padding:6px 16px;display:flex;align-items:center;gap:16px;font-size:11px;color:#6e7681;pointer-events:none;z-index:10;">
             <span style="color:#a3e635;font-weight:700;white-space:nowrap;">⚡ Fator multiplicador:</span>
@@ -4186,7 +4203,7 @@
 
       // Se admin: exibe menu de clientes
       if (profile?.role === 'admin') {
-        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('visible'));
+        document.querySelectorAll('.admin-only:not(.page)').forEach(el => el.classList.add('visible'));
       }
 
       // Se membro: oculta itens restritos, mostra página inicial correta
@@ -9507,6 +9524,22 @@
     drag(event, 'objecao');
   }
 
+  // Aplica zoom centrado num pivô (viewport coords); se pivô omitido usa centro do canvas
+  function _dfApplyZoom(newZoom, pivotX, pivotY) {
+    if (!editor) return;
+    const dfEl = document.getElementById('drawflow');
+    const rect = dfEl.getBoundingClientRect();
+    const cx = (pivotX !== undefined ? pivotX : rect.left + rect.width / 2) - rect.left;
+    const cy = (pivotY !== undefined ? pivotY : rect.top + rect.height / 2) - rect.top;
+    newZoom = Math.min(2.5, Math.max(0.05, newZoom));
+    editor.canvas_x = cx - (cx - editor.canvas_x) * newZoom / editor.zoom;
+    editor.canvas_y = cy - (cy - editor.canvas_y) * newZoom / editor.zoom;
+    editor.zoom = newZoom;
+    if (editor.precanvas) editor.precanvas.style.transform = `translate(${editor.canvas_x}px,${editor.canvas_y}px) scale(${newZoom})`;
+    const pct = document.getElementById('df-zoom-pct');
+    if (pct) pct.textContent = Math.round(newZoom * 100) + '%';
+  }
+
   function initDrawflow() {
     if (editor) return;
     const container = document.getElementById('drawflow');
@@ -9532,18 +9565,10 @@
     dfEl.addEventListener('wheel', function(e) {
       e.preventDefault();
       e.stopImmediatePropagation();
-      const step = editor.zoom_value || 0.1;
+      // Passo menor = mais suave (igual n8n usa ~0.05–0.1 por tick)
+      const step = 0.08;
       const delta = e.deltaY < 0 ? step : -step;
-      const newZoom = Math.min(editor.zoom_max || 1.6, Math.max(editor.zoom_min || 0.02, editor.zoom + delta));
-      if (newZoom === editor.zoom) return;
-      const rect = dfEl.getBoundingClientRect();
-      const cx = e.clientX - rect.left;
-      const cy = e.clientY - rect.top;
-      // Mantém o ponto sob o cursor fixo ao mudar o zoom
-      editor.canvas_x = cx - (cx - editor.canvas_x) * newZoom / editor.zoom;
-      editor.canvas_y = cy - (cy - editor.canvas_y) * newZoom / editor.zoom;
-      editor.zoom = newZoom;
-      if (editor.precanvas) editor.precanvas.style.transform = `translate(${editor.canvas_x}px,${editor.canvas_y}px) scale(${newZoom})`;
+      _dfApplyZoom(editor.zoom + delta, e.clientX, e.clientY);
     }, { passive: false, capture: true });
     // Registra tipos de nó (etapa usa placeholder – substituído no drop)
     Object.entries(NODE_TEMPLATES).forEach(([type, cfg]) => {
@@ -9640,6 +9665,54 @@
     );
     dragNodeType = null;
   }
+
+  // ── Controles de zoom estilo n8n ──────────────────────────────
+  function dfZoomIn()  { if (editor) _dfApplyZoom(editor.zoom + 0.1); }
+  function dfZoomOut() { if (editor) _dfApplyZoom(editor.zoom - 0.1); }
+  function dfResetZoom() {
+    if (!editor) return;
+    const dfEl = document.getElementById('drawflow');
+    const rect = dfEl.getBoundingClientRect();
+    _dfApplyZoom(1.0, rect.left + rect.width / 2, rect.top + rect.height / 2);
+  }
+  function dfFitScreen() {
+    if (!editor) return;
+    const data = editor.drawflow?.drawflow?.Home?.data;
+    if (!data || !Object.keys(data).length) { _dfApplyZoom(1.0); return; }
+    const dfEl = document.getElementById('drawflow');
+    const rect = dfEl.getBoundingClientRect();
+    const pad = 60;
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    Object.values(data).forEach(n => {
+      const el = document.querySelector(`#node-${n.id}`);
+      const w = el ? el.offsetWidth : 220;
+      const h = el ? el.offsetHeight : 100;
+      minX = Math.min(minX, n.pos_x);
+      minY = Math.min(minY, n.pos_y);
+      maxX = Math.max(maxX, n.pos_x + w);
+      maxY = Math.max(maxY, n.pos_y + h);
+    });
+    const contentW = maxX - minX;
+    const contentH = maxY - minY;
+    const scaleX = (rect.width  - pad * 2) / contentW;
+    const scaleY = (rect.height - pad * 2) / contentH;
+    const newZoom = Math.min(1.0, Math.max(0.05, Math.min(scaleX, scaleY)));
+    editor.zoom = newZoom;
+    editor.canvas_x = pad - minX * newZoom + (rect.width  - pad * 2 - contentW * newZoom) / 2;
+    editor.canvas_y = pad - minY * newZoom + (rect.height - pad * 2 - contentH * newZoom) / 2;
+    if (editor.precanvas) editor.precanvas.style.transform = `translate(${editor.canvas_x}px,${editor.canvas_y}px) scale(${newZoom})`;
+    const pct = document.getElementById('df-zoom-pct');
+    if (pct) pct.textContent = Math.round(newZoom * 100) + '%';
+  }
+  // Atalhos de teclado no canvas (igual n8n: Ctrl+= zoom in, Ctrl+- zoom out, Ctrl+Shift+H fit)
+  document.addEventListener('keydown', function(e) {
+    if (document.getElementById('page-fluxos')?.classList.contains('active')) {
+      if (e.ctrlKey && (e.key === '=' || e.key === '+')) { e.preventDefault(); dfZoomIn(); }
+      if (e.ctrlKey && e.key === '-') { e.preventDefault(); dfZoomOut(); }
+      if (e.ctrlKey && e.shiftKey && e.key === 'H') { e.preventDefault(); dfFitScreen(); }
+      if (e.ctrlKey && e.key === '0') { e.preventDefault(); dfResetZoom(); }
+    }
+  });
 
   function newFlow() {
     if (!editor) initDrawflow();
