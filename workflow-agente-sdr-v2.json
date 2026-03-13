@@ -585,6 +585,83 @@
         "specifyBody": "json",
         "jsonBody": "={{ { action: 'send-text', instance: $('Resolve cliente pelo instanceName').first().json[0]?.evo_instance, number: $('Busca config AI').first().json?.[0]?.numero_supervisor || '5511999999999', text: `🚨 OBJEÇÃO DETECTADA\\n\\n👤 Cliente: ${$('Resolve cliente pelo instanceName').first().json[0]?.nome}\\n📱 Número: ${$('Normaliza e filtra mensagem').first().json.numero}\\n\\n🎯 Tipo: ${$('Detecta objeção na resposta').first().json.tipoObjecao.toUpperCase()}\\n\\n📋 PLANO DE AÇÃO:\\n${$('Gera plano de ação contra objeção').first().json.content}` } }}"
       }
+    },
+    {
+      "id": "node-calcula-tempo-resposta",
+      "name": "Calcula tempo desde última mensagem do agente",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1550,
+        650
+      ],
+      "parameters": {
+        "jsCode": "const historico = $('Busca histórico da conversa').first().json || [];\nconst ultimaMsgAgente = historico.reverse().find(m => m.sender === 'agent');\nconst agora = new Date();\nconst tempoMs = ultimaMsgAgente ? agora - new Date(ultimaMsgAgente.criado_em) : 0;\nconst tempoSeg = Math.floor(tempoMs / 1000);\n\nreturn [{ json: { tempoDecorridoSeg: tempoSeg, tempoDecorridoMs: tempoMs, deveEsperarSilencio: tempoSeg < 10, tempoRestanteSeg: Math.max(0, 10 - tempoSeg) } }];"
+      }
+    },
+    {
+      "id": "node-if-silencio-estrategico",
+      "name": "Silêncio estratégico?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1650,
+        650
+      ],
+      "parameters": {
+        "options": {
+          "fuzzyCompare": true
+        },
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.deveEsperarSilencio }}",
+              "operation": "equals",
+              "value2": "=true"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-aguarda-silencio",
+      "name": "Aguarda 10 segundos (silêncio estratégico)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1750,
+        700
+      ],
+      "parameters": {
+        "unit": "seconds",
+        "amount": 10
+      }
+    },
+    {
+      "id": "node-pergunta-qualificante",
+      "name": "Faz pergunta qualificante (SDR)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1850,
+        650
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ `https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/llm-proxy?provider=${$('Busca config AI').first().json?.[0]?.ai_provider || 'openai'}&user_id=${$('Resolve cliente pelo instanceName').first().json[0]?.id}&model=${$('Busca config AI').first().json?.[0]?.ai_model || 'gpt-4o'}` }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messages: [{ role: 'user', content: `Conversa com cliente:\\n${($('Busca histórico da conversa').first().json || []).map(m => m.sender === 'user' ? 'Cliente: ' + m.conteudo : 'Você: ' + m.conteudo).join('\\n')}\\n\\n---\\nSeja um SDR profissional. Você ACABA DE ESCUTAR o cliente. Agora faça UMA PERGUNTA qualificante (curta, direta). NÃO discurse. SÓ UMA PERGUNTA focada em:\\n1. Necessidade real\\n2. Autoridade para decidir\\n3. Timeline\\n4. Budget\\n\\nEscolha a pergunta mais incisiva neste momento. Deixe o cliente falar.` }], system: 'Você é um SDR especialista. Faz perguntas que qualificam. Silencia quando deve deixar o cliente falar. Seja estratégico.' }) }}"
+      }
     }
   ],
   "connections": {
@@ -782,7 +859,7 @@
         ],
         [
           {
-            "node": "node-extrai-tokens-usados",
+            "node": "node-calcula-tempo-resposta",
             "type": "main",
             "index": 0
           }
@@ -812,6 +889,57 @@
       ]
     },
     "node-envia-plano-ao-agente": {
+      "main": [
+        [
+          {
+            "node": "node-extrai-tokens-usados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node-calcula-tempo-resposta": {
+      "main": [
+        [
+          {
+            "node": "node-if-silencio-estrategico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node-if-silencio-estrategico": {
+      "main": [
+        [
+          {
+            "node": "node-aguarda-silencio",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "node-pergunta-qualificante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node-aguarda-silencio": {
+      "main": [
+        [
+          {
+            "node": "node-pergunta-qualificante",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node-pergunta-qualificante": {
       "main": [
         [
           {
