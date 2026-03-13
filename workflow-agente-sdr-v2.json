@@ -104,7 +104,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ `https://evo.sevenxperts.solutions/message/sendText/${$json.instanceName}` }}",
+        "url": "={{ $('Resolve cliente pelo instanceName').first().json[0]?.evo_instance + '/message/sendText' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -127,7 +127,7 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ `https://evo.sevenxperts.solutions/message/sendText/${$json.instanceName}` }}",
+        "url": "={{ $('Resolve cliente pelo instanceName').first().json[0]?.evo_instance + '/message/sendText' }}",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
@@ -150,7 +150,7 @@
     {
       "parameters": {
         "method": "GET",
-        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/profiles?evo_instance=eq.{{ $json.instanceName }}&select=id",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/profiles?evo_instance=eq.{{ $json.instanceName }}&select=id,evo_instance",
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
