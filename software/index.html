@@ -9664,16 +9664,23 @@
 
   // Aplica zoom centrado num pivô (viewport coords); se pivô omitido usa centro do canvas
   function _dfApplyZoom(newZoom, pivotX, pivotY) {
-    if (!editor) return;
+    if (!editor || !editor.precanvas) return;
     const dfEl = document.getElementById('drawflow');
     const rect = dfEl.getBoundingClientRect();
     const cx = (pivotX !== undefined ? pivotX : rect.left + rect.width / 2) - rect.left;
     const cy = (pivotY !== undefined ? pivotY : rect.top + rect.height / 2) - rect.top;
     newZoom = Math.min(2.5, Math.max(0.05, newZoom));
+
+    // Sincroniza canvas_x e canvas_y considerando o novo zoom
     editor.canvas_x = cx - (cx - editor.canvas_x) * newZoom / editor.zoom;
     editor.canvas_y = cy - (cy - editor.canvas_y) * newZoom / editor.zoom;
     editor.zoom = newZoom;
-    if (editor.precanvas) editor.precanvas.style.transform = `translate(${editor.canvas_x}px,${editor.canvas_y}px) scale(${newZoom})`;
+
+    // Aplica transform no precanvas com escala CORRETA
+    editor.precanvas.style.transform = `translate(${editor.canvas_x}px, ${editor.canvas_y}px) scale(${newZoom})`;
+    editor.precanvas.style.transformOrigin = '0 0';
+
+    // Atualiza label de zoom
     const pct = document.getElementById('df-zoom-pct');
     if (pct) pct.textContent = Math.round(newZoom * 100) + '%';
   }
