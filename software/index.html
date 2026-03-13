@@ -7,8 +7,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+
+
+</script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4">
+
+
+</script>
   <style>
     :root {
       --bg:       #0d1117;
@@ -1375,6 +1381,9 @@
       <div class="nav-item" onclick="showPage('crm', this)">
         <span class="icon"></span> CRM — Pipeline
       </div>
+      <div class="nav-item" onclick="showPage('historico-leads', this)">
+        <span class="icon">📊</span> Histórico
+      </div>
       <div class="nav-item membro-hidden" onclick="showPage('calendario', this)">
         <span class="icon">📅</span> Calendário
       </div>
@@ -2189,6 +2198,26 @@
     </div>
 
     <!-- COMUNICAÇÃO -->
+    <div class="page" id="page-historico-leads">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h1 style="font-size:20px;font-weight:800;color:#e6edf3;margin:0 0 4px;letter-spacing:-.3px;">📊 Histórico de Leads</h1>
+          <p style="font-size:13px;color:#6e7681;margin:0;">Resumo de contatos finalizados — convertidos e perdidos</p>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-shrink:0;">
+          <input type="date" id="hist-date-from" style="padding:8px 12px;border:1px solid #30363d;background:#0d1117;color:#e6edf3;border-radius:6px;font-size:13px;" />
+          <span style="color:#6e7681;">até</span>
+          <input type="date" id="hist-date-to" style="padding:8px 12px;border:1px solid #30363d;background:#0d1117;color:#e6edf3;border-radius:6px;font-size:13px;" />
+          <button class="btn-secondary" style="padding:8px 14px;font-size:13px;" onclick="loadHistorico()">Filtrar</button>
+          <button class="btn-secondary" style="padding:8px 14px;font-size:13px;" onclick="exportHistoricoCSV()">📥 Exportar</button>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr;gap:16px;max-width:900px;" id="historico-list">
+        <div style="padding:40px;color:#6e7681;font-size:14px;text-align:center;">Carregando histórico...</div>
+      </div>
+    </div>
+
     <div class="page" id="page-comunicacao">
       <div class="page-header"><h1>Comunicação</h1><p>Defina como o agente deve se comunicar</p></div>
       <div class="card">
@@ -4301,6 +4330,7 @@
     if (name === 'leads') loadLeads();
     if (name === 'agente') { loadAiConfig(); loadWebAgente(); checkGCalStatus(); loadAgentes(); }
     if (name === 'crm') { loadCRM(); setTimeout(checkReminders, 500); }
+    if (name === 'historico-leads') loadHistorico();
     if (name === 'pdfs') loadPDFList();
     if (name === 'analytics') loadDashboard();
     if (name === 'scoring') loadScoring();
@@ -10534,7 +10564,129 @@
       alert('URL copiada para clipboard!');
     });
   }
+
+
+
 </script>
-<script src="https://unpkg.com/drawflow/dist/drawflow.min.js"></script>
+<script src="https://unpkg.com/drawflow/dist/drawflow.min.js">
+  // =====================
+  // HISTÓRICO DE LEADS
+  // =====================
+  async function loadHistorico() {
+    const list = document.getElementById('historico-list');
+    list.innerHTML = '<div style="padding:40px;color:#6e7681;font-size:14px;text-align:center;">Carregando...</div>';
+    
+    if (!currentUser) return;
+    
+    // Filtros de data
+    const dateFrom = document.getElementById('hist-date-from').value;
+    const dateTo = document.getElementById('hist-date-to').value;
+    
+    let query = db.from('leads')
+      .select('id, nome, numero_whatsapp, celular, email, resumo, stage, atualizado_em')
+      .in('stage', ['convertido', 'perdido'])
+      .eq('user_id', _effectiveUserId || currentUser.id)
+      .order('atualizado_em', { ascending: false });
+    
+    if (dateFrom) query = query.gte('atualizado_em', dateFrom + 'T00:00:00');
+    if (dateTo) query = query.lte('atualizado_em', dateTo + 'T23:59:59');
+    
+    const { data, error } = await query;
+    
+    if (error || !data || data.length === 0) {
+      list.innerHTML = '<div style="padding:40px;color:#6e7681;font-size:14px;text-align:center;">Nenhum contato finalizado neste período</div>';
+      return;
+    }
+    
+    list.innerHTML = data.map(lead => {
+      const dt = new Date(lead.atualizado_em);
+      const dtStr = dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const stageLabel = { convertido: '🎉 Convertido', perdido: '🚪 Perdido' }[lead.stage] || lead.stage;
+      const stageColor = { convertido: '#16a34a', perdido: '#dc2626' }[lead.stage] || '#6e7681';
+      const phone = lead.celular || lead.numero_whatsapp || '—';
+      
+      return `
+        <div style="border:1px solid #30363d;border-radius:10px;padding:16px;background:#0d1117;border-left:4px solid ${stageColor};">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:12px;">
+            <div>
+              <h3 style="margin:0 0 4px;color:#e6edf3;font-weight:700;font-size:15px;">${escapeHtml(lead.nome || phone)}</h3>
+              <div style="display:flex;gap:8px;font-size:12px;color:#6e7681;margin-bottom:8px;">
+                <span>📱 ${escapeHtml(phone)}</span>
+                ${lead.email ? `<span>✉️ ${escapeHtml(lead.email)}</span>` : ''}
+              </div>
+            </div>
+            <span style="background:${stageColor}20;color:${stageColor};border:1px solid ${stageColor}40;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;white-space:nowrap;">${stageLabel}</span>
+          </div>
+          
+          ${lead.resumo ? `
+            <div style="background:#161b22;border-radius:8px;padding:12px;margin-bottom:10px;border-left:3px solid #6366f1;">
+              <p style="margin:0;color:#c9d1d9;font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;">${escapeHtml(lead.resumo)}</p>
+            </div>
+          ` : `
+            <div style="background:#161b22;border-radius:8px;padding:12px;margin-bottom:10px;color:#6e7681;font-size:13px;font-style:italic;">
+              Sem resumo registrado
+            </div>
+          `}
+          
+          <div style="color:#6e7681;font-size:12px;">
+            📅 ${dtStr}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  async function exportHistoricoCSV() {
+    if (!currentUser) return;
+    
+    const dateFrom = document.getElementById('hist-date-from').value;
+    const dateTo = document.getElementById('hist-date-to').value;
+    
+    let query = db.from('leads')
+      .select('nome, numero_whatsapp, celular, email, resumo, stage, atualizado_em')
+      .in('stage', ['convertido', 'perdido'])
+      .eq('user_id', _effectiveUserId || currentUser.id)
+      .order('atualizado_em', { ascending: false });
+    
+    if (dateFrom) query = query.gte('atualizado_em', dateFrom + 'T00:00:00');
+    if (dateTo) query = query.lte('atualizado_em', dateTo + 'T23:59:59');
+    
+    const { data } = await query;
+    if (!data || data.length === 0) {
+      showNotification('Nenhum dado para exportar', 'warning');
+      return;
+    }
+    
+    // CSV headers
+    const headers = ['Data', 'Nome', 'Celular/WhatsApp', 'Email', 'Status', 'Resumo'];
+    const rows = data.map(lead => {
+      const dt = new Date(lead.atualizado_em);
+      const dtStr = dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+      const stageLabel = { convertido: 'Convertido', perdido: 'Perdido' }[lead.stage] || lead.stage;
+      return [
+        dtStr,
+        `"${(lead.nome || '').replace(/"/g, '""')}"`,
+        `"${(lead.celular || lead.numero_whatsapp || '').replace(/"/g, '""')}"`,
+        `"${(lead.email || '').replace(/"/g, '""')}"`,
+        stageLabel,
+        `"${(lead.resumo || '').replace(/"/g, '""')}"`,
+      ];
+    });
+    
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.setAttribute('href', URL.createObjectURL(blob));
+    link.setAttribute('download', `historico-leads-${new Date().toISOString().slice(0,10)}.csv`);
+    link.click();
+    showNotification('Histórico exportado! 📥', 'success');
+  }
+
+  // Carregar ao abrir página
+  document.addEventListener('page-shown', (e) => {
+    if (e.detail?.page === 'historico-leads') loadHistorico();
+  });
+
+</script>
 </body>
 </html>
