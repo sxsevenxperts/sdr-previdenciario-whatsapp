@@ -10,9 +10,77 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
 
 
+
+  // =====================
+  // =====================
+  // AUTO-SYNC: Lead ↔ Conversa
+  // =====================
+  // Sincroniza dados entre conversa e lead (nome, resumo, primeira mensagem)
+  async function autoSyncLeadFromConversation(numero_whatsapp) {
+    if (!numero_whatsapp || !currentUser) return;
+    
+    // Busca a sessão/conversa
+    const { data: session } = await db.from('sessoes')
+      .select('historico')
+      .eq('numero_whatsapp', numero_whatsapp)
+      .eq('user_id', _effectiveUserId || currentUser.id)
+      .maybeSingle();
+    
+    if (!session || !session.historico) return;
+    
+    // Busca o lead associado
+    const { data: lead } = await db.from('leads')
+      .select('id, nome, resumo')
+      .eq('numero_whatsapp', numero_whatsapp)
+      .eq('user_id', _effectiveUserId || currentUser.id)
+      .maybeSingle();
+    
+    if (!lead) return; // Não há lead associado
+    
+    // Parseia histórico para extrair primeira mensagem
+    const hist = parseHistory(session.historico);
+    if (hist.length === 0) return;
+    
+    const updates = {};
+    
+    // Se lead não tem nome e existe mensagem inicial, extrai do contexto
+    if (!lead.nome && hist.length > 0) {
+      // Tenta extrair nome da primeira mensagem ou usa o número
+      const firstMsg = hist[0].content || '';
+      if (firstMsg.length > 0 && !firstMsg.includes('@') && !firstMsg.includes('http')) {
+        // Se primeira mensagem parece ser um nome (sem emojis, símbolos especiais)
+        const nameMatch = firstMsg.trim().split('\n')[0].slice(0, 50);
+        if (nameMatch.length > 2) {
+          updates.nome = nameMatch;
+        }
+      }
+    }
+    
+    // Se lead não tem resumo e há mensagens, extrai resumo da primeira
+    if (!lead.resumo && hist.length > 0) {
+      const firstMsg = hist[0].content || '';
+      if (firstMsg.length > 10) {
+        updates.resumo = firstMsg.slice(0, 200); // Primeiros 200 chars
+      }
+    }
+    
+    // Salva atualizações se houver
+    if (Object.keys(updates).length > 0) {
+      updates.atualizado_em = new Date().toISOString();
+      await db.from('leads')
+        .update(updates)
+        .eq('id', lead.id);
+      
+      console.log('Lead sincronizado:', numero_whatsapp, updates);
+    }
+  }
+
 </script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4">
 
+
+
+  // =====================
 
 </script>
   <style>
@@ -4636,6 +4704,7 @@
   }
 
   function selectConv(numero) {
+    autoSyncLeadFromConversation(numero);
     selectedConv = numero;
     const conv = allConversations.find(c => c.numero_whatsapp === numero);
     if (!conv) return;
@@ -10567,6 +10636,9 @@
 
 
 
+
+  // =====================
+
 </script>
 <script src="https://unpkg.com/drawflow/dist/drawflow.min.js">
   // =====================
@@ -10686,6 +10758,9 @@
   document.addEventListener('page-shown', (e) => {
     if (e.detail?.page === 'historico-leads') loadHistorico();
   });
+
+
+  // =====================
 
 </script>
 </body>
