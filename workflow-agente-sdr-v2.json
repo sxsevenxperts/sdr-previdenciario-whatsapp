@@ -132,7 +132,7 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ messages: [{ role: 'user', content: $json.mensagem }], system: 'Você é um assistente de vendas profissional. Responda de forma concisa e persuasiva.' }) }}"
+        "jsonBody": "={{ (() => { const historico = ($('Busca histórico da conversa').first().json || []).map(m => ({ role: m.sender === 'user' ? 'user' : 'assistant', content: m.conteudo })); return JSON.stringify({ messages: [...historico, { role: 'user', content: $('Normaliza e filtra mensagem').first().json.mensagem }], system: 'Você é um assistente de vendas profissional. Qualifique o cliente baseado na conversa. Responda de forma concisa e persuasiva.' }); })() }}"
       },
       "id": "node-llm-openai",
       "name": "Chama OpenAI via llm-proxy",
@@ -328,6 +328,135 @@
         1850,
         450
       ]
+    },
+    {
+      "id": "node-busca-historico",
+      "name": "Busca histórico da conversa",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        700,
+        550
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/message_history?lead_id=eq.$('Resolve cliente pelo instanceName').first().json[0]?.id&order=criado_em.asc&limit=10",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-salva-msg-cliente",
+      "name": "Salva mensagem do cliente",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        350,
+        550
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/message_history",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { user_id: $('Resolve cliente pelo instanceName').first().json[0]?.id, lead_id: $('Resolve cliente pelo instanceName').first().json[0]?.id, numero_whatsapp: $('Normaliza e filtra mensagem').first().json.numero, sender: 'user', conteudo: $('Normaliza e filtra mensagem').first().json.mensagem, tipo_mensagem: 'text' } }}"
+      }
+    },
+    {
+      "id": "node-salva-msg-ia",
+      "name": "Salva resposta da IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1450,
+        550
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/message_history",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { user_id: $('Resolve cliente pelo instanceName').first().json[0]?.id, lead_id: $('Resolve cliente pelo instanceName').first().json[0]?.id, numero_whatsapp: $('Normaliza e filtra mensagem').first().json.numero, sender: 'agent', conteudo: $('Chama OpenAI via llm-proxy').first().json.content, tipo_mensagem: 'text', tokens_usados: $('Extrai tokens usados').first().json.tokensUsados } }}"
+      }
+    },
+    {
+      "id": "node-envia-relatorio",
+      "name": "Envia relatório (Nome, Celular, Assunto)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2000,
+        450
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/leads?id=eq.$('Resolve cliente pelo instanceName').first().json[0]?.id",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { resumo: `👤 Nome: $('Resolve cliente pelo instanceName').first().json[0]?.nome\\n📱 Celular: $('Resolve cliente pelo instanceName').first().json[0]?.celular\\n📌 Assunto: $('Resolve cliente pelo instanceName').first().json[0]?.assunto\\n\\n✅ QUALIFICADO` } }}"
+      }
     }
   ],
   "connections": {
@@ -346,6 +475,17 @@
       "main": [
         [
           {
+            "node": "node-salva-msg-cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node-salva-msg-cliente": {
+      "main": [
+        [
+          {
             "node": "node-resolve-cliente",
             "type": "main",
             "index": 0
@@ -354,6 +494,17 @@
       ]
     },
     "node-resolve-cliente": {
+      "main": [
+        [
+          {
+            "node": "node-busca-historico",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node-busca-historico": {
       "main": [
         [
           {
@@ -419,6 +570,17 @@
       "main": [
         [
           {
+            "node": "node-salva-msg-ia",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node-salva-msg-ia": {
+      "main": [
+        [
+          {
             "node": "node-extrai-tokens-usados",
             "type": "main",
             "index": 0
@@ -453,6 +615,17 @@
         [
           {
             "node": "node-atualiza-stage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node-atualiza-stage": {
+      "main": [
+        [
+          {
+            "node": "node-envia-relatorio",
             "type": "main",
             "index": 0
           }
