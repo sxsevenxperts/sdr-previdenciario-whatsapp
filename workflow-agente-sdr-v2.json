@@ -235,6 +235,60 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.1,
       "position": [550, 400]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ `https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/llm-proxy?provider=${$('Busca config AI').first().json?.[0]?.ai_provider || 'openai'}&user_id=${$('Resolve cliente pelo instanceName').first().json[0]?.id || $('Resolve cliente pelo instanceName').first().json?.id}&model=${$('Busca config AI').first().json?.[0]?.ai_model || 'gpt-4o'}` }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ messages: [{ role: 'user', content: `Analise esta conversa de vendas e determine se o lead está qualificado (mostra interesse real, respondeu bem, continua engajado) ou não-qualificado (desinteressado, respostas vagas, sem engajamento).\n\nMensagem do lead: \"${$json.mensagem}\"\nResposta do agente: \"${$('Chama OpenAI via llm-proxy').first().json.content}\"\n\nResponda em JSON: { \"qualificado\": true/false, \"motivo\": \"breve explicação\" }` }], system: 'Você é um analisador de leads vendedor experiente. Avalie se o lead deve ser qualificado ou não.' }) }}"
+      },
+      "id": "node-qualifica-lead",
+      "name": "Qualifica lead com IA",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1700, 450]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/leads?id=eq.{{ $('Resolve cliente pelo instanceName').first().json[0]?.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { stage: JSON.parse($('Qualifica lead com IA').first().json.content).qualificado ? 'qualificado' : 'nao_qualificado' } }}"
+      },
+      "id": "node-atualiza-stage",
+      "name": "Atualiza stage do lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1850, 450]
     }
   ],
   "connections": {
@@ -267,6 +321,12 @@
     },
     "node-extrai-tokens-usados": {
       "main": [[{"node": "node-desconta-tokens", "type": "main", "index": 0}]]
+    },
+    "node-desconta-tokens": {
+      "main": [[{"node": "node-qualifica-lead", "type": "main", "index": 0}]]
+    },
+    "node-qualifica-lead": {
+      "main": [[{"node": "node-atualiza-stage", "type": "main", "index": 0}]]
     }
   }
 }
