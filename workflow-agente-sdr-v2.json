@@ -425,40 +425,6 @@
       }
     },
     {
-      "id": "node-envia-relatorio",
-      "name": "Envia relatório (Nome, Celular, Assunto)",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.1,
-      "position": [
-        2000,
-        450
-      ],
-      "parameters": {
-        "method": "PATCH",
-        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/leads?id=eq.$('Resolve cliente pelo instanceName').first().json[0]?.id",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            {
-              "name": "apikey",
-              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
-            },
-            {
-              "name": "Authorization",
-              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
-            },
-            {
-              "name": "Content-Type",
-              "value": "application/json"
-            }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { resumo: `👤 Nome: $('Resolve cliente pelo instanceName').first().json[0]?.nome\\n📱 Celular: $('Resolve cliente pelo instanceName').first().json[0]?.celular\\n📌 Assunto: $('Resolve cliente pelo instanceName').first().json[0]?.assunto\\n\\n✅ QUALIFICADO` } }}"
-      }
-    },
-    {
       "id": "node-detecta-objecao",
       "name": "Detecta objeção na resposta",
       "type": "n8n-nodes-base.code",
@@ -662,6 +628,130 @@
         "specifyBody": "json",
         "jsonBody": "={{ JSON.stringify({ messages: [{ role: 'user', content: `Conversa com cliente:\\n${($('Busca histórico da conversa').first().json || []).map(m => m.sender === 'user' ? 'Cliente: ' + m.conteudo : 'Você: ' + m.conteudo).join('\\n')}\\n\\n---\\nSeja um SDR profissional. Você ACABA DE ESCUTAR o cliente. Agora faça UMA PERGUNTA qualificante (curta, direta). NÃO discurse. SÓ UMA PERGUNTA focada em:\\n1. Necessidade real\\n2. Autoridade para decidir\\n3. Timeline\\n4. Budget\\n\\nEscolha a pergunta mais incisiva neste momento. Deixe o cliente falar.` }], system: 'Você é um SDR especialista. Faz perguntas que qualificam. Silencia quando deve deixar o cliente falar. Seja estratégico.' }) }}"
       }
+    },
+    {
+      "id": "node-busca-config-relatorio",
+      "name": "Busca config: número/grupo para relatório",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2050,
+        400
+      ],
+      "parameters": {
+        "method": "GET",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/agente_config?user_id=eq.$('Resolve cliente pelo instanceName').first().json[0]?.id&chave=in.(relatorio_numero,relatorio_grupo_id)&select=chave,valor",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-formata-relatorio",
+      "name": "Formata relatório para envio",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2150,
+        400
+      ],
+      "parameters": {
+        "jsCode": "const config = $('Busca config: número/grupo para relatório').first().json || [];\nconst configMap = {};\nconfig.forEach(c => { configMap[c.chave] = c.valor; });\n\nconst numero = $('Normaliza e filtra mensagem').first().json.numero;\nconst nome = $('Resolve cliente pelo instanceName').first().json[0]?.nome || 'Lead';\nconst assunto = $('Resolve cliente pelo instanceName').first().json[0]?.assunto || 'Não especificado';\nconst qualificacao = $('Qualifica lead com IA').first().json.content || '';\nconst objecoes = $('Detecta objeção').first().json.tipoObjecao || 'Nenhuma';\nconst objecoesCount = $('Resolve cliente pelo instanceName').first().json[0]?.objecoes_count || 0;\n\nconst relatorio = `📊 RELATÓRIO DE QUALIFICAÇÃO\n\n👤 Cliente: ${nome}\n📱 Número: ${numero}\n📌 Assunto: ${assunto}\n\n🎯 Qualificação: ${qualificacao.includes('qualificado') ? '✅ QUALIFICADO' : '❌ NÃO QUALIFICADO'}\n\n🚨 Objeções: ${objecoes} (Total: ${objecoesCount})\n\n⏰ ${new Date().toLocaleString('pt-BR')}`;\n\nconst numeroRelatorio = configMap.relatorio_numero;\nconst grupoRelatorio = configMap.relatorio_grupo_id;\n\nreturn [{ json: { relatorio, numeroRelatorio, grupoRelatorio, enviarParaNumero: !!numeroRelatorio, enviarParaGrupo: !!grupoRelatorio } }];"
+      }
+    },
+    {
+      "id": "node-if-tipo-relatorio",
+      "name": "Enviar para número ou grupo?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2250,
+        400
+      ],
+      "parameters": {
+        "options": {
+          "fuzzyCompare": true
+        },
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.enviarParaNumero }}",
+              "operation": "equals",
+              "value2": "=true"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "node-envia-relatorio-numero",
+      "name": "Envia relatório para número (supervisor)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2300,
+        300
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/evo-proxy",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { action: 'send-text', instance: $('Resolve cliente pelo instanceName').first().json[0]?.evo_instance, number: $json.numeroRelatorio, text: $json.relatorio } }}"
+      }
+    },
+    {
+      "id": "node-envia-relatorio-grupo",
+      "name": "Envia relatório para grupo",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2300,
+        500
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/functions/v1/evo-proxy",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { action: 'send-text', instance: $('Resolve cliente pelo instanceName').first().json[0]?.evo_instance, number: $json.grupoRelatorio, text: $json.relatorio } }}"
+      }
     }
   ],
   "connections": {
@@ -830,7 +920,7 @@
       "main": [
         [
           {
-            "node": "node-envia-relatorio",
+            "node": "node-busca-config-relatorio",
             "type": "main",
             "index": 0
           }
@@ -944,6 +1034,46 @@
         [
           {
             "node": "node-extrai-tokens-usados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node-busca-config-relatorio": {
+      "main": [
+        [
+          {
+            "node": "node-formata-relatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node-formata-relatorio": {
+      "main": [
+        [
+          {
+            "node": "node-if-tipo-relatorio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "node-if-tipo-relatorio": {
+      "main": [
+        [
+          {
+            "node": "node-envia-relatorio-numero",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "node-envia-relatorio-grupo",
             "type": "main",
             "index": 0
           }
