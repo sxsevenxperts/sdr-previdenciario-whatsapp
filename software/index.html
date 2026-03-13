@@ -3844,6 +3844,18 @@
           <button class="btn-save" onclick="saveNewPassword()" style="width:100%;">Salvar Nova Senha</button>
         </div>
 
+        <!-- Integração WhatsApp / Evolution -->
+        <div class="card" style="padding:24px;">
+          <h3 style="margin:0 0 16px;font-size:15px;font-weight:700;">💬 Integração WhatsApp</h3>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:12px;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">URL DA INSTÂNCIA EVOLUTION API</label>
+            <input type="text" id="settings-evo-instance" placeholder="https://evolution.sevenxperts.com"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg-input,var(--bg-secondary));color:var(--text);font-size:14px;box-sizing:border-box;" />
+            <p style="font-size:11px;color:var(--text-secondary);margin:6px 0 0;">Configure sua instância Evolution para conectar WhatsApp e gerar QR Code</p>
+          </div>
+          <button class="btn-save" onclick="saveEvoInstance()" style="width:100%;">Salvar Instância Evolution</button>
+        </div>
+
         <!-- Tokens por Modelo (este mês) -->
         <div class="card" style="padding:24px;">
           <h3 style="margin:0 0 16px;font-size:15px;font-weight:700;">📊 Tokens Usados por Modelo (Este Mês)</h3>
@@ -4459,6 +4471,20 @@
       }
     }
 
+    // Carregar Evolution API instance URL
+    if (currentProfile?.id) {
+      const { data: profile } = await db.from('profiles')
+        .select('evo_instance')
+        .eq('id', currentProfile.id)
+        .maybeSingle();
+      if (profile?.evo_instance) {
+        const evoInput = document.getElementById('settings-evo-instance');
+        if (evoInput) {
+          evoInput.value = profile.evo_instance;
+        }
+      }
+    }
+
     // Carregar relatório de tokens por modelo
     loadClientModelUsage();
   }
@@ -4498,6 +4524,32 @@
       showToast('Senha alterada com sucesso!', 'success');
       document.getElementById('settings-new-password').value = '';
       document.getElementById('settings-confirm-password').value = '';
+    }
+  }
+
+  async function saveEvoInstance() {
+    const evoUrl = document.getElementById('settings-evo-instance').value.trim();
+    if (!evoUrl) { showToast('Digite a URL da instância Evolution', 'error'); return; }
+
+    // Validar se é uma URL válida
+    try {
+      new URL(evoUrl);
+    } catch (e) {
+      showToast('URL inválida. Digite uma URL válida (ex: https://evolution.sevenxperts.com)', 'error');
+      return;
+    }
+
+    if (!currentProfile?.id) { showToast('Erro: usuário não carregado', 'error'); return; }
+
+    const { error } = await db.from('profiles')
+      .update({ evo_instance: evoUrl })
+      .eq('id', currentProfile.id);
+
+    if (error) {
+      showToast('Erro ao salvar: ' + error.message, 'error');
+    } else {
+      currentProfile.evo_instance = evoUrl;
+      showToast('Instância Evolution salva com sucesso! Você pode gerar QR Code agora.', 'success');
     }
   }
 

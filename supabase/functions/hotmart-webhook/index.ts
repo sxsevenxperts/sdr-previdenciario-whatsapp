@@ -142,17 +142,33 @@ function generateInstanceName(name: string, email: string): string {
   return validBase + suffix;
 }
 
-async function createEvoInstance(instanceName: string): Promise<void> {
-  if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) return;
+async function createEvoInstance(instanceName: string): Promise<string> {
+  if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
+    console.warn("Evolution API not configured, using fallback instance name");
+    return instanceName;
+  }
   try {
-    const res = await fetch(`${EVOLUTION_API_URL}/instance/create`, {
+    const baseUrl = EVOLUTION_API_URL.replace(/\/+$/, ""); // remove trailing slash
+    const res = await fetch(`${baseUrl}/instance/create`, {
       method: "POST",
       headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY },
       body: JSON.stringify({ instanceName, qrcode: false, integration: "WHATSAPP-BAILEYS" }),
     });
-    if (!res.ok) console.error("EVO create error:", res.status, await res.text());
+
+    if (!res.ok) {
+      console.error("EVO create error:", res.status, await res.text());
+      return instanceName;
+    }
+
+    const data = await res.json();
+    // Evolution retorna { instanceName: "...", hash: "...", ... }
+    // Construir URL completa: https://evo.sevenxperts.solutions/instancia_name
+    const evoInstance = `${baseUrl}/${data.instanceName || instanceName}`;
+    console.log("EVO instância criada:", evoInstance);
+    return evoInstance;
   } catch (e: any) {
     console.error("EVO create exception:", e.message);
+    return instanceName;
   }
 }
 
@@ -375,8 +391,8 @@ async function activateClient(
   // ── Novo cliente ──────────────────────────────────────────────────────
   const instanceName = generateInstanceName(buyerName, buyerEmail);
 
-  // 1. Instância EVO (não-bloqueante)
-  await createEvoInstance(instanceName);
+  // 1. Provisiona instância Evolution e retorna URL
+  const evoInstanceUrl = await createEvoInstance(instanceName);
 
   // 2. Cria usuário no Auth com senha temporária aleatória
   const tempPassword = crypto.randomUUID() + crypto.randomUUID();
@@ -401,12 +417,12 @@ async function activateClient(
     options: { redirectTo: PANEL_URL },
   });
 
-  // 3. Profile
+  // 3. Profile — salva URL da instância Evolution
   await adminDb.from("profiles").upsert({
     id: userId,
     role: "client",
     display_name: buyerName,
-    evo_instance: instanceName,
+    evo_instance: evoInstanceUrl,
     active: true,
   });
 
