@@ -150,6 +150,47 @@
     },
     {
       "parameters": {
+        "jsCode": "const response = $('Chama OpenAI via llm-proxy').first().json;\nconst usage = response.usage || {};\nconst tokensUsados = usage.total_tokens || Math.ceil(($json.mensagem.length + response.content?.length || 0) / 4);\nreturn [{ json: { tokensUsados, inputTokens: usage.prompt_tokens || 0, outputTokens: usage.completion_tokens || 0 } }];"
+      },
+      "id": "node-extrai-tokens-usados",
+      "name": "Extrai tokens usados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1350, 450]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://vyvdrbkcrvklcaombjqu.supabase.co/rest/v1/rpc/decrementar_tokens",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ5dmRyYmtjcnZrbGNhb21ianF1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIwNTMzNTgsImV4cCI6MjA4NzYyOTM1OH0.vmIYb6BGgsksaNGN2XPCm6I_mj02NSa49bLWXlTLQeY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ p_user_id: $('Resolve cliente pelo instanceName').first().json[0]?.id || $('Resolve cliente pelo instanceName').first().json?.id, p_tokens: $('Extrai tokens usados').first().json.tokensUsados }) }}"
+      },
+      "id": "node-desconta-tokens",
+      "name": "Desconta tokens da conta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1550, 450]
+    },
+    {
+      "parameters": {
         "method": "POST",
         "url": "={{ $('Resolve cliente pelo instanceName').first().json[0]?.evo_instance + '/message/sendText' }}",
         "sendHeaders": true,
@@ -220,6 +261,12 @@
     },
     "node-llm-openai": {
       "main": [[{"node": "node-envia-resposta", "type": "main", "index": 0}]]
+    },
+    "node-envia-resposta": {
+      "main": [[{"node": "node-extrai-tokens-usados", "type": "main", "index": 0}]]
+    },
+    "node-extrai-tokens-usados": {
+      "main": [[{"node": "node-desconta-tokens", "type": "main", "index": 0}]]
     }
   }
 }
