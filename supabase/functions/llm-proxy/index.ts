@@ -88,8 +88,50 @@ function estimateTokens(content: string): number {
 async function callOpenAI(
   messages: any[],
   model: string,
-  systemPrompt?: string
+  systemPrompt?: string,
+  webSearch = false
 ) {
+  // Web search: usa OpenAI Responses API com ferramenta web_search_preview
+  if (webSearch) {
+    const input: any[] = [];
+    if (systemPrompt) input.push({ role: "system", content: systemPrompt });
+    input.push(...messages);
+
+    const searchBody = {
+      model: "gpt-4o-search-preview",
+      web_search_options: { search_context_size: "medium" },
+      input,
+    };
+
+    const resp = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(searchBody),
+    });
+
+    if (!resp.ok) {
+      const errTxt = await resp.text();
+      throw new Error(`OpenAI web-search error: ${resp.status} ${errTxt}`);
+    }
+
+    const data = await resp.json();
+    // Responses API retorna output[] com type=message
+    const textItem = data.output?.find((o: any) => o.type === "message");
+    const content = textItem?.content?.[0]?.text || data.output_text || "";
+    const usage = data.usage || {};
+    return {
+      content,
+      usage: {
+        input_tokens:  usage.input_tokens  || estimateTokens(JSON.stringify(messages)),
+        output_tokens: usage.output_tokens || estimateTokens(content),
+      },
+    };
+  }
+
+  // Chat completions padrão
   const body = {
     model,
     messages: systemPrompt
@@ -378,6 +420,7 @@ Deno.serve(async (req: Request) => {
     // ── Chat completions (openai / claude / gemini) ───────────────────────────
     const provider = url.searchParams.get("provider") || "openai";
     const model = url.searchParams.get("model") || "gpt-4o-mini";
+    const webSearch = url.searchParams.get("web_search") === "true";
     const { messages, system } = body;
 
     if (!messages || !Array.isArray(messages)) {
@@ -389,7 +432,7 @@ Deno.serve(async (req: Request) => {
 
     let response;
     if (provider === "openai") {
-      response = await callOpenAI(messages, model, system);
+      response = await callOpenAI(messages, model, system, webSearch);
     } else if (provider === "claude") {
       response = await callClaude(messages, model, system);
     } else if (provider === "gemini") {
